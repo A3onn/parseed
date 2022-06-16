@@ -1,0 +1,6 @@
+# this file will be updated through the developpement of parseed
+expr: term ((PLUS|MINUS) term)*
+
+term: factor ((MUL|DIV) factor)*
+
+factor: NUM_INT|NUM_FLOAT
