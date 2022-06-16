@@ -43,10 +43,19 @@ TT_IDENTIFIER = "IDENTIFIER"
 TT_KEYWORD = "KEYWORD"
 TT_DATA_TYPE = "DATA_TYPE"
 
+TT_EOF = "EOF"
+
 class Token:
-    def __init__(self, type_, value=None):
+    def __init__(self, type_, value=None, pos_start=None, pos_end=None):
         self.type = type_
         self.value = value
+
+        if pos_start:
+            self.pos_start = pos_start.get_copy()
+            self.pos_end = pos_start.get_copy()
+            self.pos_end.advance()
+        if pos_end:
+            self.pos_end = pos_end
     
     def __repr__(self):
         if self.value:
@@ -61,7 +70,7 @@ class Position:
         self.filename = filename
         self.file_text = file_text
     
-    def advance(self, current_char):
+    def advance(self, current_char=None):
         self.idx +=1
         self.col += 1
 

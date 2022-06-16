@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from utils import *
 
-class ParseedError:
+class ParseedError(BaseException):
     def __init__(self, pos_start, pos_end, error_name, details):
         self.pos_start = pos_start
         self.pos_end = pos_end

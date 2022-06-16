@@ -30,33 +30,33 @@ class Lexer:
             elif self.current_char in DIGITS:
                 tokens.append(self._make_number())
             elif self.current_char == "+":
-                tokens.append(Token(TT_PLUS))
+                tokens.append(Token(TT_PLUS, pos_start=self.pos))
                 self._next_token()
             elif self.current_char == "-":
-                tokens.append(Token(TT_MINUS))
+                tokens.append(Token(TT_MINUS, pos_start=self.pos))
                 self._next_token()
             elif self.current_char == "/":
                 tokens.append(self._make_div_or_comment())
             elif self.current_char == "*":
-                tokens.append(Token(TT_MULT))
+                tokens.append(Token(TT_MULT, pos_start=self.pos))
                 self._next_token()
             elif self.current_char == "(":
-                tokens.append(Token(TT_LPAREN))
+                tokens.append(Token(TT_LPAREN, pos_start=self.pos))
                 self._next_token()
             elif self.current_char == ")":
-                tokens.append(Token(TT_RPAREN))
+                tokens.append(Token(TT_RPAREN, pos_start=self.pos))
                 self._next_token()
             elif self.current_char == "[":
-                tokens.append(Token(TT_LBRACK))
+                tokens.append(Token(TT_LBRACK, pos_start=self.pos))
                 self._next_token()
             elif self.current_char == "]":
-                tokens.append(Token(TT_RBRACK))
+                tokens.append(Token(TT_RBRACK, pos_start=self.pos))
                 self._next_token()
             elif self.current_char == "{":
-                tokens.append(Token(TT_LCURLY))
+                tokens.append(Token(TT_LCURLY, pos_start=self.pos))
                 self._next_token()
             elif self.current_char == "}":
-                tokens.append(Token(TT_RCURLY))
+                tokens.append(Token(TT_RCURLY, pos_start=self.pos))
                 self._next_token()
             elif self.current_char in LETTERS:
                 tokens.append(self._make_identifier())
@@ -65,6 +65,8 @@ class Lexer:
                 char = self.current_char
                 self._next_token()
                 return [], IllegalCharacterError(pos_start, self.pos, "'" + char + "'")
+        
+        tokens.append(Token(TT_EOF))
         return tokens, None
 
     def _make_identifier(self):
@@ -82,9 +84,10 @@ class Lexer:
         else:
             token_type = TT_IDENTIFIER
 
-        return Token(token_type, res_identifier)
+        return Token(token_type, res_identifier, pos_start, self.pos)
 
     def _make_number(self):
+        pos_start = self.pos.get_copy()
         res_num = ""
         dot_count = 0
 
@@ -97,11 +100,12 @@ class Lexer:
             res_num += self.current_char
             self._next_token()
         if dot_count == 0:
-            return Token(TT_NUM_INT, res_num)
+            return Token(TT_NUM_INT, res_num, pos_start, self.pos)
         else:
-            return Token(TT_NUM_FLOAT, res_num)
+            return Token(TT_NUM_FLOAT, res_num, pos_start, self.pos)
 
     def _make_div_or_comment(self):
+        pos_start = self.pos.get_copy()
         div_count = 1
 
         self._next_token()
@@ -109,9 +113,9 @@ class Lexer:
             div_count += 1
             self._next_token()
         if div_count == 1:
-            return Token(TT_DIV)
+            return Token(TT_DIV, pos_start=pos_start, pos_end=self.pos)
         else:
-            return Token(TT_COMMENT, self._read_until("\n\r"))
+            return Token(TT_COMMENT, self._read_until("\n\r"), pos_start, self.pos)
 
     def _read_until(self, stop_chars):
         res = ""
