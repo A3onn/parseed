@@ -25,7 +25,7 @@ class Lexer:
         tokens = []
 
         while self.current_char != None:
-            if self.current_char in [" ", "\t"]:
+            if self.current_char in [" ", "\t", "\n"]:
                 self._next_token()
             elif self.current_char in DIGITS:
                 tokens.append(self._make_number())
