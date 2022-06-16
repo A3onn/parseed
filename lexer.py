@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from string import digits as DIGITS
+from string import ascii_letters as LETTERS
 from errors import *
 from utils import *
 
@@ -56,12 +57,27 @@ class Lexer:
             elif self.current_char == "}":
                 tokens.append(Token(TT_RCURLY))
                 self._next_token()
+            elif self.current_char in LETTERS:
+                tokens.append(self._make_identifier())
+                self._next_token()
             else:
                 pos_start = self.pos.get_copy()
                 char = self.current_char
                 self._next_token()
                 return [], IllegalCharacterError(pos_start, self.pos, "'" + char + "'")
         return tokens, None
+
+    def _make_identifier(self):
+        res_identifier = ""
+        pos_start = self.pos.get_copy()
+
+        while self.current_char != None and self.current_char in LETTERS + "_":
+            res_identifier += self.current_char
+            self._next_token()
+        
+        token_type = TT_KEYWORD if res_identifier in KEYWORDS else TT_IDENTIFIER
+
+        return Token(token_type, res_identifier)
 
     def _make_number(self):
         res_num = ""

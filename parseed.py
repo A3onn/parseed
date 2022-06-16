@@ -7,6 +7,11 @@ def main():
         # lexer
         lexer = Lexer(input("shell > "), "<stdin>")
         tokens, error = lexer.run()
+        print("LEXER OUTPUT:")
+        if error:
+            print(error)
+        else:
+            print(tokens)
 
         # parser
         parser = Parser(tokens)

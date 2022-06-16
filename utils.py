@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+KEYWORDS = ["struct", "bitfield"]
+
 # LIST OF TOKENS
 # Numerical values
 TT_NUM_INT = "NUM_INT"
@@ -38,6 +40,9 @@ TT_LCURLY = "LCURLY"
 TT_RCURLY = "RCURLY"
 TT_LBRACK = "LBRACK"
 TT_RBRACK = "RBRACK"
+
+TT_IDENTIFIER = "IDENTIFIER"
+TT_KEYWORD = "KEYWORD"
 
 class Token:
     def __init__(self, type_, value=None):
