@@ -1,23 +1,20 @@
 #!/usr/bin/env python3
 
 KEYWORDS = ["struct", "bitfield"]
+DATA_TYPES = [
+            "uint8","int8",
+            "uint16","int16",
+            "uint24","int24",
+            "uint32","int32",
+            "float", "double"
+            "string",
+            "byte",
+            ]
 
 # LIST OF TOKENS
 # Numerical values
 TT_NUM_INT = "NUM_INT"
 TT_NUM_FLOAT = "NUM_FLOAT"
-
-# Data types
-TT_STRING = "STRING"
-TT_FLOAT = "FLOAT"
-TT_UINT8 = "UINT8"
-TT_INT8 = "INT8"
-TT_UINT16 = "UINT16"
-TT_INT16 = "INT16"
-TT_UINT24 = "UINT24"
-TT_INT24 = "INT24"
-TT_UINT32 = "UINT32"
-TT_INT32 = "INT32"
 
 # Operators
 TT_PLUS = "PLUS"
@@ -40,9 +37,11 @@ TT_LCURLY = "LCURLY"
 TT_RCURLY = "RCURLY"
 TT_LBRACK = "LBRACK"
 TT_RBRACK = "RBRACK"
+TT_COMMENT = "COMMENT"
 
 TT_IDENTIFIER = "IDENTIFIER"
 TT_KEYWORD = "KEYWORD"
+TT_DATA_TYPE = "DATA_TYPE"
 
 class Token:
     def __init__(self, type_, value=None):
