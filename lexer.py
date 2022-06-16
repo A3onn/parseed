@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 from string import digits as DIGITS
+from errors import *
+from utils import *
 
 # LIST OF TOKENS
 # Numerical values
@@ -39,39 +41,6 @@ TT_LCURLY = "LCURLY"
 TT_RCURLY = "RCURLY"
 TT_LBRACK = "LBRACK"
 TT_RBRACK = "RBRACK"
-
-class ParseedError:
-    def __init__(self, pos_start, pos_end, error_name, details):
-        self.pos_start = pos_start
-        self.pos_end = pos_end
-        self.error_name = error_name
-        self.details = details
-    
-    def __str__(self):
-        return f"On line {self.pos_start.ln + 1}: {self.error_name}: {self.details}"
-
-class IllegalCharacterError(ParseedError):
-    def __init__(self, pos_start, pos_end, details):
-        super().__init__(pos_start, pos_end, "IllegalCharacterError", details)
-
-class Position:
-    def __init__(self, idx, ln, col, filename, file_text):
-        self.idx = idx
-        self.ln = ln
-        self.col = col
-        self.filename = filename
-        self.file_text = file_text
-    
-    def advance(self, current_char):
-        self.idx +=1
-        self.col += 1
-
-        if current_char == "\n":
-            self.ln += 1
-            self.col = 0
-    
-    def get_copy(self):
-        return Position(self.idx, self.ln, self.col, self.filename, self.file_text)
 
 class Token:
     def __init__(self, type_, value=None):
