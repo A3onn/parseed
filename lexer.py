@@ -28,7 +28,7 @@ class Lexer:
             if self.current_char in [" ", "\t", "\n"]:
                 self._next_token()
             elif self.current_char in DIGITS:
-                tokens.append(self._make_number())
+                tokens.append(self._make_number_or_dot())
             elif self.current_char == "+":
                 tokens.append(Token(TT_PLUS, pos_start=self.pos))
                 self._next_token()
@@ -62,8 +62,7 @@ class Lexer:
                 tokens.append(Token(TT_COMMA, pos_start=self.pos))
                 self._next_token()
             elif self.current_char == ".":
-                tokens.append(Token(TT_DOT, pos_start=self.pos))
-                self._next_token()
+                tokens.append(self._make_number_or_dot())
             elif self.current_char == ";":
                 tokens.append(Token(TT_SEMICOL, pos_start=self.pos))
                 self._next_token()
@@ -95,17 +94,21 @@ class Lexer:
 
         return Token(token_type, res_identifier, pos_start, self.pos)
 
-    def _make_number(self):
+    def _make_number_or_dot(self):
         pos_start = self.pos.get_copy()
         res_num = ""
         dot_count = 0
 
         while self.current_char != None and self.current_char in DIGITS + ".":
             if self.current_char == ".":
-                if dot_count == 1:
+                # As floating number cannot begin with a '.' and have to begin with a number before,
+                # we can assume that '.' without any number before are TT_DOT
+                if len(res_num) == 0:
+                    self._next_token()
+                    return Token(TT_DOT, pos_start=pos_start)
+                if dot_count == 1: # if we already encounter a dot before
                     break
                 dot_count += 1
-                res_num += "."
             res_num += self.current_char
             self._next_token()
         if dot_count == 0:
