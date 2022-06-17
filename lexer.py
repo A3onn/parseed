@@ -65,6 +65,14 @@ class Lexer:
             elif self.current_char == ";":
                 tokens.append(Token(TT_SEMICOL, pos_start=self.pos))
                 self._next_token()
+            elif self.current_char == "!":
+                tokens.append(self._make_not_equal())
+            elif self.current_char == "=":
+                tokens.append(self._make_equal())
+            elif self.current_char == "<":
+                tokens.append(self._make_less_than())
+            elif self.current_char == ">":
+                tokens.append(self._make_greater_than())
             elif self.current_char in LETTERS:
                 tokens.append(self._make_identifier())
             else:
@@ -127,6 +135,44 @@ class Lexer:
             return Token(TT_DIV, pos_start=pos_start, pos_end=self.pos)
         else:
             return Token(TT_COMMENT, self._read_until("\n\r"), pos_start, self.pos)
+
+    def _make_not_equal(self):
+        pos_start = self.pos.get_copy()
+        self._next_token()
+
+        if self.current_char != "=":
+            raise ExpectedMoreCharError(pos_start, self.pos, "'=' expected")
+        
+        self._next_token()
+        return Token(TT_COMP_NE)
+
+    def _make_equal(self):
+        pos_start = self.pos.get_copy()
+        self._next_token()
+
+        if self.current_char != "=":
+            raise ExpectedMoreCharError(pos_start, self.pos, "'=' expected")
+        
+        self._next_token()
+        return Token(TT_COMP_EQ)
+
+    def _make_less_than(self):
+        pos_start = self.pos.get_copy()
+        self._next_token()
+
+        if self.current_char == "=":
+            self._next_token()
+            return Token(TT_COMP_LEQ)
+        return Token(TT_COMP_LT)
+
+    def _make_greater_than(self):
+        pos_start = self.pos.get_copy()
+        self._next_token()
+
+        if self.current_char == "=":
+            self._next_token()
+            return Token(TT_COMP_GEQ)
+        return Token(TT_COMP_GT)
 
     def _read_until(self, stop_chars):
         res = ""

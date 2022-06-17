@@ -27,8 +27,8 @@ TT_COMP_EQ = "COMP_EQ"
 TT_COMP_NE = "COMP_NE"
 TT_COMP_GT = "COMP_GT"
 TT_COMP_LT = "COMP_LT"
-TT_COMP_GE = "COMP_GE"
-TT_COMP_LE = "COMP_LE"
+TT_COMP_GEQ = "COMP_GEQ" # greater than
+TT_COMP_LEQ = "COMP_LEQ" # less than
 
 # Others
 TT_LPAREN = "LPAREN"
