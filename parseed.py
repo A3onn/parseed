@@ -33,9 +33,12 @@ def run(lexer, arguments):
         print("[i] LEXER OUTPUT: ", end="")
         if error:
             print(error)
-            return 
         else:
             print(tokens)
+
+    if error:
+        print(error)
+        return 
 
     parser = Parser(tokens)
     ast = parser.run()
