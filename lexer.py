@@ -61,6 +61,12 @@ class Lexer:
             elif self.current_char == ",":
                 tokens.append(Token(TT_COMMA, pos_start=self.pos))
                 self._next_token()
+            elif self.current_char == ".":
+                tokens.append(Token(TT_DOT, pos_start=self.pos))
+                self._next_token()
+            elif self.current_char == ";":
+                tokens.append(Token(TT_SEMICOL, pos_start=self.pos))
+                self._next_token()
             elif self.current_char in LETTERS:
                 tokens.append(self._make_identifier())
             else:

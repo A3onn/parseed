@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-KEYWORDS = ["struct", "bitfield"]
+KEYWORDS = ["struct", "bitfield", "stop"]
 DATA_TYPES = [
             "uint8","int8",
             "uint16","int16",
@@ -39,6 +39,8 @@ TT_LBRACK = "LBRACK"
 TT_RBRACK = "RBRACK"
 TT_COMMENT = "COMMENT"
 TT_COMMA = "COMMA"
+TT_DOT = "DOT"
+TT_SEMICOL = "SEMICOL"
 
 TT_IDENTIFIER = "IDENTIFIER"
 TT_KEYWORD = "KEYWORD"
