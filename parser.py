@@ -3,6 +3,7 @@ from errors import *
 from utils import *
 from lexer import *
 
+# NODES
 class NumberNode:
     def __init__(self, token):
         self.token = token
@@ -11,13 +12,21 @@ class NumberNode:
         return str(self.token)
 
 class BinOpNode:
-    def __init__(self, left_node, op_node, right_node):
+    def __init__(self, left_node, op_token, right_node):
         self.left_node = left_node
-        self.op_node = op_node
+        self.op_token = op_token
         self.right_node = right_node
 
     def __repr__(self):
-        return f"({self.left_node}, {self.op_node}, {self.right_node})"
+        return f"({self.left_node}, {self.op_token}, {self.right_node})"
+
+class UnaryOpNode:
+    def __init__(self, op_token, node):
+        self.op_token = op_token
+        self.node = node
+
+    def __repr__(self):
+        return f"({self.op_token}, {self.node})"
 
 class Parser:
     def __init__(self, tokens):
@@ -37,7 +46,16 @@ class Parser:
     def factor(self):
         token = self.current_token
 
-        if token.type in [TT_NUM_INT, TT_NUM_FLOAT]:
+        if token.type in [TT_PLUS, TT_MINUS]:
+            self.advance()
+            return UnaryOpNode(token, self.factor())
+        elif token.type == TT_LPAREN:
+            self.advance()
+            expr = self.expr()
+            if self.current_token.type is TT_RPAREN:
+                self.advance()
+                return expr
+        elif token.type in [TT_NUM_INT, TT_NUM_FLOAT]:
             self.advance()
             return NumberNode(token)
 
