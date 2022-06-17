@@ -13,9 +13,8 @@ class Lexer:
         self.text = text
 
     def run(self):
-        self._next_token() # init
-        tokens, error = self._make_tokens()
-        return tokens, error
+        self._next_token() # init lexer
+        return self._make_tokens()
 
     def _next_token(self):
         self.pos.advance(self.current_char)
@@ -72,10 +71,10 @@ class Lexer:
                 pos_start = self.pos.get_copy()
                 char = self.current_char
                 self._next_token()
-                return [], IllegalCharacterError(pos_start, self.pos, "'" + char + "'")
-        
+                raise IllegalCharacterError(pos_start, self.pos, "'" + char + "'")
+
         tokens.append(Token(TT_EOF))
-        return tokens, None
+        return tokens
 
     def _make_identifier(self):
         res_identifier = ""

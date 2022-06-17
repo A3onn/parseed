@@ -28,17 +28,14 @@ def main():
             run(lexer, arguments)
 
 def run(lexer, arguments):
-    tokens, error = lexer.run()
-    if arguments.show_lexer:
-        print("[i] LEXER OUTPUT: ", end="")
-        if error:
-            print(error)
-        else:
-            print(tokens)
+    try:
+        tokens = lexer.run()
+    except ParseedError as e:
+        print(e) # just print the error
+        return
 
-    if error:
-        print(error)
-        return 
+    if arguments.show_lexer:
+        print("[i] LEXER OUTPUT:", tokens)
 
     parser = Parser(tokens)
     ast = parser.run()
