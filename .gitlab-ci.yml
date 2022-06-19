@@ -12,7 +12,7 @@ flake8:
   stage: lint
   allow_failure: true
   script:
-  - flake8 src/
+  - flake8 --ignore=F405,F403,E127,E501 src/
 
 mypy:
   stage: lint

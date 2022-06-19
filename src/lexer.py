@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 from string import digits as DIGITS
 from string import ascii_letters as LETTERS
-from errors import *
+from errors import IllegalCharacterError, ExpectedMoreCharError
 from utils import *
 
 LETTERS_DIGITS = LETTERS + DIGITS
+
 
 class Lexer:
     def __init__(self, text, filename):
@@ -13,17 +14,17 @@ class Lexer:
         self.text = text
 
     def run(self):
-        self._next_token() # init lexer
+        self._next_token()  # init lexer
         return self._make_tokens()
 
     def _next_token(self):
         self.pos.advance(self.current_char)
         self.current_char = self.text[self.pos.idx] if self.pos.idx < len(self.text) else None
-    
+
     def _make_tokens(self):
         tokens = []
 
-        while self.current_char != None:
+        while self.current_char is not None:
             if self.current_char in [" ", "\t", "\n"]:
                 self._next_token()
             elif self.current_char in DIGITS:
@@ -79,7 +80,7 @@ class Lexer:
                 pos_start = self.pos.get_copy()
                 char = self.current_char
                 self._next_token()
-                raise IllegalCharacterError(pos_start, self.pos, "'" + char + "'")
+                raise IllegalCharacterError(pos_start, self.pos, f"'{char}'")
 
         tokens.append(Token(TT_EOF))
         return tokens
@@ -88,10 +89,10 @@ class Lexer:
         res_identifier = ""
         pos_start = self.pos.get_copy()
 
-        while self.current_char != None and self.current_char in LETTERS_DIGITS + "_":
+        while self.current_char is not None and self.current_char in LETTERS_DIGITS + "_":
             res_identifier += self.current_char
             self._next_token()
-        
+
         if res_identifier in KEYWORDS:
             token_type = TT_KEYWORD
         elif res_identifier in DATA_TYPES:
@@ -106,14 +107,14 @@ class Lexer:
         res_num = ""
         dot_count = 0
 
-        while self.current_char != None and self.current_char in DIGITS + ".":
+        while self.current_char is not None and self.current_char in DIGITS + ".":
             if self.current_char == ".":
                 # As floating number cannot begin with a '.' and have to begin with a number before,
                 # we can assume that '.' without any number before are TT_DOT
                 if len(res_num) == 0:
                     self._next_token()
                     return Token(TT_DOT, pos_start=pos_start)
-                if dot_count == 1: # if we already encounter a dot before
+                if dot_count == 1:  # if we already encounter a dot before
                     break
                 dot_count += 1
             res_num += self.current_char
@@ -128,7 +129,7 @@ class Lexer:
         div_count = 1
 
         self._next_token()
-        while self.current_char != None and self.current_char == "/":
+        while self.current_char is not None and self.current_char == "/":
             div_count += 1
             self._next_token()
         if div_count == 1:
@@ -142,7 +143,7 @@ class Lexer:
 
         if self.current_char != "=":
             raise ExpectedMoreCharError(pos_start, self.pos, "'=' expected")
-        
+
         self._next_token()
         return Token(TT_COMP_NE)
 
@@ -152,7 +153,7 @@ class Lexer:
 
         if self.current_char != "=":
             raise ExpectedMoreCharError(pos_start, self.pos, "'=' expected")
-        
+
         self._next_token()
         return Token(TT_COMP_EQ)
 
@@ -162,8 +163,8 @@ class Lexer:
 
         if self.current_char == "=":
             self._next_token()
-            return Token(TT_COMP_LEQ)
-        return Token(TT_COMP_LT)
+            return Token(TT_COMP_LEQ, pos_start=pos_start, pos_end=self.pos)
+        return Token(TT_COMP_LT, pos_start=pos_start, pos_end=self.pos)
 
     def _make_greater_than(self):
         pos_start = self.pos.get_copy()
@@ -171,14 +172,13 @@ class Lexer:
 
         if self.current_char == "=":
             self._next_token()
-            return Token(TT_COMP_GEQ)
-        return Token(TT_COMP_GT)
+            return Token(TT_COMP_GEQ, pos_start=pos_start, pos_end=self.pos)
+        return Token(TT_COMP_GT, pos_start=pos_start, pos_end=self.pos)
 
     def _read_until(self, stop_chars):
         res = ""
         self._next_token()
-        while self.current_char != None and self.current_char not in stop_chars:
+        while self.current_char is not None and self.current_char not in stop_chars:
             res += self.current_char
             self._next_token()
         return res
-    

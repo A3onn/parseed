@@ -3,6 +3,7 @@ from lexer import *
 from parser import *
 import argparse
 
+
 def main():
     argparser = argparse.ArgumentParser(description="A simple language simplifying the creation of parsers.")
     argparser.add_argument("file", help="File to parse", nargs="?", default="")
@@ -27,11 +28,12 @@ def main():
             lexer = Lexer(f.read(), arguments.file)
             run(lexer, arguments)
 
+
 def run(lexer, arguments):
     try:
         tokens = lexer.run()
     except ParseedError as e:
-        print(e) # just print the error
+        print(e)  # just print the error
         return
 
     if arguments.show_lexer:
@@ -41,6 +43,7 @@ def run(lexer, arguments):
     ast = parser.run()
     if arguments.show_ast:
         print("[i] AST:", ast)
+
 
 if __name__ == "__main__":
     main()
