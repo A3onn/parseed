@@ -2,12 +2,26 @@ image: "python:3.8"
 
 before_script:
   - python --version
-  - pip install flake8
+  - pip install flake8 mypy pytest
 
 stages:
   - lint
+  - tests
 
 flake8:
   stage: lint
+  allow_failure: true
   script:
-  - flake8 src/*.py
+  - flake8 src/
+
+mypy:
+  stage: lint
+  allow_failure: true
+  script:
+    - mypy src/
+
+pytest:
+  stage: tests
+  allow_failure: false
+  script:
+    - pytest
