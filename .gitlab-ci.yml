@@ -8,6 +8,6 @@ stages:
   - lint
 
 flake8:
-  stage: link
+  stage: lint
   script:
   - flake8 src/*.py
