@@ -41,7 +41,11 @@ def run(lexer, arguments):
         print("[i] LEXER OUTPUT:", tokens)
 
     parser = Parser(tokens)
-    ast = parser.run()
+    try:
+        ast = parser.run()
+    except ParseedError as e:
+        print(e)  # just print the error
+        return
     if arguments.show_ast:
         print("[i] AST:", ast)
 

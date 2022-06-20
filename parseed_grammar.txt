@@ -1,8 +1,25 @@
 # this file will be updated through the developpement of parseed
+statements: statement+
+
+statement:  bitfield-stmt
+            struct-stmt
+
+bitfield-stmt:    KEYWORD:bitfield IDENTIFIER LCURLY bitfield-member-def+ RCURLY // bitfield without size (in bytes)
+                  KEYWORD:bitfield IDENTIFIER LPAREN NUM_INT RPAREN LCURLY bitfield-member-def+ RCURLY // bitfield with size specified between parenthesis (in bytes)
+
+struct-stmt:      KEYWORD:struct IDENTIFIER LCURLY struct-member-def RCURLY
+
+bitfield-member-def:    IDENTIFIER (RPAREN NUM_INT LPAREN)? COMMA
+
+struct-member-def:      (DATA-TYPE | IDENTIFIER) IDENTIFIER COMMA
+                        (DATA-TYPE | IDENTIFIER) LBRACK NUM_INT RBRACK IDENTIFIER COMMA
+
 expr: term ((PLUS|MINUS) term)*
 
 term: factor ((MUL|DIV) factor)*
 
-factor: NUM_INT|NUM_FLOAT
-      : (PLUS|MINUS) factor
-      : LPAREN expr RPAREN
+factor:     NUM_INT|NUM_FLOAT
+            (PLUS|MINUS) factor
+            LPAREN expr RPAREN
+            IDENTIFIER
+            IDENTIFIER DOT IDENTIFIER
