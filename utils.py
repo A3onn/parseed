@@ -68,7 +68,7 @@ class Position:
 
     def get_line_text(self) -> str:
         lines: List[str] = self.file_text.split("\n")
-        return lines[self.ln]
+        return lines[self.ln-1]
 
     def get_copy(self):
         return Position(self.idx, self.ln, self.col, self.filename, self.file_text)
