@@ -82,7 +82,7 @@ class Lexer:
                 self._next_token()
                 raise IllegalCharacterError(pos_start, self.pos, f"'{char}'")
 
-        tokens.append(Token(TT_EOF))
+        tokens.append(Token(TT_EOF, pos_start=self.pos))
         return tokens
 
     def _make_identifier(self) -> Token:
