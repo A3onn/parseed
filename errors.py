@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
+from utils import Position
+
+
 class ParseedError(BaseException):
-    def __init__(self, pos_start, pos_end, error_name, details):
+    def __init__(self, pos_start: Position, pos_end: Position, error_name: str, details: str):
         self.pos_start = pos_start
         self.pos_end = pos_end
         self.error_name = error_name
@@ -11,15 +14,15 @@ class ParseedError(BaseException):
 
 
 class IllegalCharacterError(ParseedError):
-    def __init__(self, pos_start, pos_end, details):
+    def __init__(self, pos_start: Position, pos_end: Position, details: str):
         super().__init__(pos_start, pos_end, "IllegalCharacterError", details)
 
 
 class InvalidSyntaxError(ParseedError):
-    def __init__(self, pos_start, pos_end, details):
+    def __init__(self, pos_start: Position, pos_end: Position, details: str):
         super().__init__(pos_start, pos_end, "InvalidSyntaxError", details)
 
 
 class ExpectedMoreCharError(ParseedError):
-    def __init__(self, pos_start, pos_end, details):
+    def __init__(self, pos_start: Position, pos_end: Position, details: str):
         super().__init__(pos_start, pos_end, "ExpectedMoreCharError", details)

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
+from typing import List, Any
 from errors import *
 from utils import *
-from lexer import *
 
 
 # NODES
 class NumberNode:
-    def __init__(self, token):
-        self.token = token
+    def __init__(self, token: Token):
+        self.token: Token = token
 
     def __repr__(self):
         return str(self.token)
@@ -33,22 +33,22 @@ class UnaryOpNode:
 
 
 class Parser:
-    def __init__(self, tokens):
-        self.tokens = tokens
-        self.token_index = -1
+    def __init__(self, tokens: List[Token]):
+        self.tokens: List[Token] = tokens
+        self.token_index: int = -1
         self.advance()
 
-    def run(self):
+    def run(self) -> Any:
         return self.expr()
 
-    def advance(self):
+    def advance(self) -> Token:
         self.token_index += 1
         if self.token_index < len(self.tokens):
-            self.current_token = self.tokens[self.token_index]
+            self.current_token: Token = self.tokens[self.token_index]
         return self.current_token
 
-    def factor(self):
-        token = self.current_token
+    def factor(self) -> Any:
+        token: Token = self.current_token
 
         if token.type in [TT_PLUS, TT_MINUS]:
             self.advance()
@@ -63,13 +63,13 @@ class Parser:
             self.advance()
             return NumberNode(token)
 
-    def expr(self):
+    def expr(self) -> Any:
         return self.binary_op(self.term, [TT_PLUS, TT_MINUS])
 
-    def term(self):
+    def term(self) -> Any:
         return self.binary_op(self.factor, [TT_MULT, TT_DIV])
 
-    def binary_op(self, func, operators):
+    def binary_op(self, func, operators) -> BinOpNode:
         left_token = func()
 
         while self.current_token.type in operators:

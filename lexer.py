@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from typing import List, Optional
 from string import digits as DIGITS
 from string import ascii_letters as LETTERS
 from errors import IllegalCharacterError, ExpectedMoreCharError
@@ -8,21 +9,21 @@ LETTERS_DIGITS = LETTERS + DIGITS
 
 
 class Lexer:
-    def __init__(self, text, filename):
-        self.pos = Position(-1, 0, -1, filename, text)
-        self.current_char = None
-        self.text = text
+    def __init__(self, text: str, filename: str):
+        self.pos: Position = Position(-1, 0, -1, filename, text)
+        self.current_char: Optional[str] = None
+        self.text: str = text
 
-    def run(self):
+    def run(self) -> List[Token]:
         self._next_token()  # init lexer
         return self._make_tokens()
 
-    def _next_token(self):
+    def _next_token(self) -> None:
         self.pos.advance(self.current_char)
         self.current_char = self.text[self.pos.idx] if self.pos.idx < len(self.text) else None
 
-    def _make_tokens(self):
-        tokens = []
+    def _make_tokens(self) -> List[Token]:
+        tokens: List[Token] = []
 
         while self.current_char is not None:
             if self.current_char in [" ", "\t", "\n"]:
@@ -76,17 +77,17 @@ class Lexer:
             elif self.current_char in LETTERS:
                 tokens.append(self._make_identifier())
             else:
-                pos_start = self.pos.get_copy()
-                char = self.current_char
+                pos_start: Position = self.pos.get_copy()
+                char: str = self.current_char
                 self._next_token()
                 raise IllegalCharacterError(pos_start, self.pos, f"'{char}'")
 
         tokens.append(Token(TT_EOF))
         return tokens
 
-    def _make_identifier(self):
-        res_identifier = ""
-        pos_start = self.pos.get_copy()
+    def _make_identifier(self) -> Token:
+        res_identifier: str = ""
+        pos_start: Position = self.pos.get_copy()
 
         while self.current_char is not None and self.current_char in LETTERS_DIGITS + "_":
             res_identifier += self.current_char
@@ -101,10 +102,10 @@ class Lexer:
 
         return Token(token_type, res_identifier, pos_start, self.pos)
 
-    def _make_number_or_dot(self):
-        pos_start = self.pos.get_copy()
-        res_num = ""
-        dot_count = 0
+    def _make_number_or_dot(self) -> Token:
+        pos_start: Position = self.pos.get_copy()
+        res_num: str = ""
+        dot_count: int = 0
 
         if self.current_char == "-":
             res_num += "-"
@@ -131,22 +132,23 @@ class Lexer:
         else:
             return Token(TT_NUM_FLOAT, res_num, pos_start, self.pos)
 
-    def _make_div_or_comment(self):
-        pos_start = self.pos.get_copy()
-        div_count = 1
+    def _make_div_or_comment(self) -> Token:
+        pos_start: Position = self.pos.get_copy()
+        div_count: int = 1
 
         self._next_token()
         while self.current_char is not None and self.current_char == "/":
             div_count += 1
             self._next_token()
+
         if div_count == 1:
             return Token(TT_DIV, pos_start=pos_start, pos_end=self.pos)
         else:
             print(self.current_char)
             return Token(TT_COMMENT, self._read_until("\n\r"), pos_start, self.pos)
 
-    def _make_not_equal(self):
-        pos_start = self.pos.get_copy()
+    def _make_not_equal(self) -> Token:
+        pos_start: Position = self.pos.get_copy()
         self._next_token()
 
         if self.current_char != "=":
@@ -155,8 +157,8 @@ class Lexer:
         self._next_token()
         return Token(TT_COMP_NE)
 
-    def _make_equal(self):
-        pos_start = self.pos.get_copy()
+    def _make_equal(self) -> Token:
+        pos_start: Position = self.pos.get_copy()
         self._next_token()
 
         if self.current_char != "=":
@@ -165,8 +167,8 @@ class Lexer:
         self._next_token()
         return Token(TT_COMP_EQ)
 
-    def _make_less_than(self):
-        pos_start = self.pos.get_copy()
+    def _make_less_than(self) -> Token:
+        pos_start: Position = self.pos.get_copy()
         self._next_token()
 
         if self.current_char == "=":
@@ -174,8 +176,8 @@ class Lexer:
             return Token(TT_COMP_LEQ, pos_start=pos_start, pos_end=self.pos)
         return Token(TT_COMP_LT, pos_start=pos_start, pos_end=self.pos)
 
-    def _make_greater_than(self):
-        pos_start = self.pos.get_copy()
+    def _make_greater_than(self) -> Token:
+        pos_start: Position = self.pos.get_copy()
         self._next_token()
 
         if self.current_char == "=":
@@ -183,8 +185,8 @@ class Lexer:
             return Token(TT_COMP_GEQ, pos_start=pos_start, pos_end=self.pos)
         return Token(TT_COMP_GT, pos_start=pos_start, pos_end=self.pos)
 
-    def _read_until(self, stop_chars):
-        res = ""
+    def _read_until(self, stop_chars: str) -> str:
+        res: str = ""
         while self.current_char is not None and self.current_char not in stop_chars:
             res += self.current_char
             self._next_token()

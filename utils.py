@@ -49,8 +49,28 @@ TT_DATA_TYPE = "DATA_TYPE"
 TT_EOF = "EOF"
 
 
+class Position:
+    def __init__(self, idx: int, ln: int, col: int, filename: str, file_text: str):
+        self.idx = idx
+        self.ln = ln
+        self.col = col
+        self.filename = filename
+        self.file_text = file_text
+
+    def advance(self, current_char: str = None):
+        self.idx += 1
+        self.col += 1
+
+        if current_char == "\n":
+            self.ln += 1
+            self.col = 0
+
+    def get_copy(self):
+        return Position(self.idx, self.ln, self.col, self.filename, self.file_text)
+
+
 class Token:
-    def __init__(self, type_, value=None, pos_start=None, pos_end=None):
+    def __init__(self, type_: str, value: object = None, pos_start: Position = None, pos_end: Position = None) -> None:
         self.type = type_
         self.value = value
 
@@ -65,23 +85,3 @@ class Token:
         if self.value:
             return f"{self.type}:{self.value}"
         return f"{self.type}"
-
-
-class Position:
-    def __init__(self, idx, ln, col, filename, file_text):
-        self.idx = idx
-        self.ln = ln
-        self.col = col
-        self.filename = filename
-        self.file_text = file_text
-
-    def advance(self, current_char=None):
-        self.idx += 1
-        self.col += 1
-
-        if current_char == "\n":
-            self.ln += 1
-            self.col = 0
-
-    def get_copy(self):
-        return Position(self.idx, self.ln, self.col, self.filename, self.file_text)
