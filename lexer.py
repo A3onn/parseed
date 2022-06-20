@@ -33,8 +33,7 @@ class Lexer:
                 tokens.append(Token(TT_PLUS, pos_start=self.pos))
                 self._next_token()
             elif self.current_char == "-":
-                tokens.append(Token(TT_MINUS, pos_start=self.pos))
-                self._next_token()
+                tokens.append(self._make_number_or_dot())
             elif self.current_char == "/":
                 tokens.append(self._make_div_or_comment())
             elif self.current_char == "*":
@@ -107,6 +106,10 @@ class Lexer:
         res_num = ""
         dot_count = 0
 
+        if self.current_char == "-":
+            res_num += "-"
+            self._next_token()
+
         while self.current_char is not None and self.current_char in DIGITS + ".":
             if self.current_char == ".":
                 # As floating number cannot begin with a '.' and have to begin with a number before,
@@ -119,6 +122,10 @@ class Lexer:
                 dot_count += 1
             res_num += self.current_char
             self._next_token()
+
+        if res_num == "-":
+            return Token(TT_MINUS, pos_start=self.pos, pos_end=self.pos)
+
         if dot_count == 0:
             return Token(TT_NUM_INT, res_num, pos_start, self.pos)
         else:
@@ -135,6 +142,7 @@ class Lexer:
         if div_count == 1:
             return Token(TT_DIV, pos_start=pos_start, pos_end=self.pos)
         else:
+            print(self.current_char)
             return Token(TT_COMMENT, self._read_until("\n\r"), pos_start, self.pos)
 
     def _make_not_equal(self):
@@ -177,7 +185,6 @@ class Lexer:
 
     def _read_until(self, stop_chars):
         res = ""
-        self._next_token()
         while self.current_char is not None and self.current_char not in stop_chars:
             res += self.current_char
             self._next_token()
