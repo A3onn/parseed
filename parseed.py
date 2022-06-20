@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-from lexer import *
-from parser import *
+from lexer import Lexer
+from parser import Parser
+from errors import ParseedError
 import argparse
 
 

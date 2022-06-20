@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from typing import List
 
 KEYWORDS = ["struct", "bitfield", "stop"]
 DATA_TYPES = [
@@ -64,6 +65,11 @@ class Position:
         if current_char == "\n":
             self.ln += 1
             self.col = 0
+    
+    def get_line_text(self) -> str:
+        lines: List[str] = self.file_text.split("\n")
+        return lines[self.ln]
+
 
     def get_copy(self):
         return Position(self.idx, self.ln, self.col, self.filename, self.file_text)

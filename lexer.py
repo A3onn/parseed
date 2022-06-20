@@ -144,7 +144,6 @@ class Lexer:
         if div_count == 1:
             return Token(TT_DIV, pos_start=pos_start, pos_end=self.pos)
         else:
-            print(self.current_char)
             return Token(TT_COMMENT, self._read_until("\n\r"), pos_start, self.pos)
 
     def _make_not_equal(self) -> Token:
@@ -152,7 +151,7 @@ class Lexer:
         self._next_token()
 
         if self.current_char != "=":
-            raise ExpectedMoreCharError(pos_start, self.pos, "'=' expected")
+            raise ExpectedMoreCharError(pos_start, self.pos, ["="])
 
         self._next_token()
         return Token(TT_COMP_NE)
@@ -162,7 +161,7 @@ class Lexer:
         self._next_token()
 
         if self.current_char != "=":
-            raise ExpectedMoreCharError(pos_start, self.pos, "'=' expected")
+            raise ExpectedMoreCharError(pos_start, self.pos, ["="])
 
         self._next_token()
         return Token(TT_COMP_EQ)
