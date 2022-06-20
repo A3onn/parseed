@@ -16,12 +16,12 @@ class ParseedError(BaseException):
 
     def _underline_error(self, error_line_text: str) -> str:
         res: str = ""
-        line_length: int = len(error_line_text)
         for i in range(0, self.pos_start.col):
             res += " "
         for i in range(0, self.pos_end.col - self.pos_start.col):
             res += "~"
         return res
+
 
 class IllegalCharacterError(ParseedError):
     def __init__(self, pos_start: Position, pos_end: Position, details: str):
