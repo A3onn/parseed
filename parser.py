@@ -190,6 +190,9 @@ class Parser:
         KEYWORD:struct IDENTIFIER LCURLY struct-member-def RCURLY
         """
         self.advance()
+        if self.current_token.type != TT_IDENTIFIER:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier")
+
         res_struct_def_node: StructDefNode = StructDefNode(self.current_token)
 
         self.advance()
@@ -241,8 +244,7 @@ class Parser:
         if self.current_token.type == TT_COMMA:
             self.advance()
         else:
-            # todo
-            pass
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ','")
 
         return StructMemberNode(member_type, member_name, is_list, list_length_token)
 
