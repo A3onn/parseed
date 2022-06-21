@@ -10,7 +10,7 @@ class NumberNode:
         self.token: Token = token
 
     def __repr__(self):
-        return str(self.token)
+        return f"({self.token})"
 
 
 # operators
@@ -35,15 +35,15 @@ class UnaryOpNode:
 
 # struct
 class StructMemberNode:
-    def __init__(self, type_token: Token, name_token: Token, is_list: bool, list_length_token: Optional[Token] = None):
+    def __init__(self, type_token: Token, name_token: Token, is_list: bool, list_length_node: Optional[Any] = None):
         self.type_token: Token = type_token
         self.name_token: Token = name_token
         self.is_list = is_list
-        self.list_length_token: Optional[Token] = list_length_token
+        self.list_length_node: Optional[Any] = list_length_node
 
     def __repr__(self) -> str:
         if self.is_list:
-            return f"(StructMember {self.type_token}[{self.list_length_token}]: {self.name_token})"
+            return f"(StructMember {self.type_token}[{self.list_length_node}]: {self.name_token})"
         return f"(StructMember {self.type_token}: {self.name_token})"
 
 
@@ -61,15 +61,15 @@ class StructDefNode:
 
 # bitfield
 class BitfieldMemberNode:
-    def __init__(self, name_token: Token, bits_count_token: Optional[Token] = None):
+    def __init__(self, name_token: Token, bits_count_node: Optional[Any] = None):
         self.name_token: Token = name_token
-        self.bits_count_token: Optional[Token] = bits_count_token
+        self.bits_count_node: Optional[Any] = bits_count_node
 
-    def set_explicit_size(self, bit_count_token: Token):
-        self.bits_count_token = bit_count_token
+    def set_explicit_size(self, bit_count_node: Any):
+        self.bits_count_node = bit_count_node
 
     def __repr__(self) -> str:
-        return f"(BitfieldMember {self.name_token}: {self.bits_count_token})"
+        return f"(BitfieldMember {self.name_token}: {self.bits_count_node})"
 
 
 class BitfieldDefNode:
@@ -125,7 +125,7 @@ class Parser:
 
     def bitfield_member_def(self) -> BitfieldMemberNode:
         """
-        IDENTIFIER (RPAREN NUM_INT LPAREN)? COMMA
+        IDENTIFIER (RPAREN expr LPAREN)? COMMA
         """
         if self.current_token.type != TT_IDENTIFIER:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier")
@@ -137,10 +137,7 @@ class Parser:
 
         if self.current_token.type == TT_LPAREN:
             self.advance()
-            if self.current_token.type != TT_NUM_INT:
-                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected integer")
-            res_bitfield_member_node.set_explicit_size(self.current_token)
-            self.advance()
+            res_bitfield_member_node.set_explicit_size(self.expr())
             if self.current_token.type != TT_RPAREN:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
             self.advance()
@@ -154,7 +151,7 @@ class Parser:
     def bitfield_stmt(self) -> BitfieldDefNode:
         """
         Without size in bytes:
-        KEYWORD:bitfield IDENTIFIER LPAREN NUM_INT RPAREN LCURLY bitfield-member-def+ RCURLY
+        KEYWORD:bitfield IDENTIFIER LPAREN expr RPAREN LCURLY bitfield-member-def+ RCURLY
         Implicit size:
         KEYWORD:bitfield IDENTIFIER LCURLY bitfield-member-def+ RCURLY
         """
@@ -164,10 +161,7 @@ class Parser:
         self.advance()
         if self.current_token.type == TT_LPAREN:
             self.advance()
-            if self.current_token.type != TT_NUM_INT:
-                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected integer")
-            res_bitfield_def_node.set_explicit_size(self.current_token)
-            self.advance()
+            res_bitfield_def_node.set_explicit_size(self.expr())
             if self.current_token.type != TT_RPAREN:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')")
             self.advance()
@@ -212,7 +206,7 @@ class Parser:
     def struct_member_def(self) -> StructMemberNode:
         """
         (DATA-TYPE | IDENTIFIER) IDENTIFIER COMMA
-        (DATA-TYPE | IDENTIFIER) LBRACK NUM_INT RBRACK IDENTIFIER COMMA
+        (DATA-TYPE | IDENTIFIER) LBRACK expr RBRACK IDENTIFIER COMMA
         """
         if self.current_token.type not in [TT_DATA_TYPE, TT_IDENTIFIER]:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected data-type or identifier")
@@ -221,17 +215,14 @@ class Parser:
         self.advance()
 
         is_list: bool = False
-        list_length_token: Token = self.current_token
+        list_length_node: Any = None
 
         if self.current_token.type == TT_IDENTIFIER:  # nothing to do, just continue parsing
             pass
         elif self.current_token.type == TT_LBRACK:
             is_list = True
             self.advance()
-            if self.current_token.type != TT_NUM_INT:
-                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected integer")
-            list_length_token = self.current_token
-            self.advance()
+            list_length_node = self.expr()
             if self.current_token.type != TT_RBRACK:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ']'")
             self.advance()
@@ -246,7 +237,7 @@ class Parser:
         else:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ','")
 
-        return StructMemberNode(member_type, member_name, is_list, list_length_token)
+        return StructMemberNode(member_type, member_name, is_list, list_length_node)
 
     def factor(self) -> Any:
         token: Token = self.current_token
