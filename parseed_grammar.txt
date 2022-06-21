@@ -7,7 +7,7 @@ statement:  bitfield-stmt
 bitfield-stmt:    KEYWORD:bitfield IDENTIFIER LCURLY bitfield-member-def+ RCURLY // bitfield without size (in bytes)
                   KEYWORD:bitfield IDENTIFIER LPAREN NUM_INT RPAREN LCURLY bitfield-member-def+ RCURLY // bitfield with size specified between parenthesis (in bytes)
 
-struct-stmt:      KEYWORD:struct IDENTIFIER LCURLY struct-member-def RCURLY
+struct-stmt:      KEYWORD:struct IDENTIFIER LCURLY (struct-member-def)+ RCURLY
 
 bitfield-member-def:    IDENTIFIER (RPAREN NUM_INT LPAREN)? COMMA
 

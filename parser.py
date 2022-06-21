@@ -13,6 +13,7 @@ class NumberNode:
         return str(self.token)
 
 
+# operators
 class BinOpNode:
     def __init__(self, left_node, op_token, right_node):
         self.left_node = left_node
@@ -32,17 +33,18 @@ class UnaryOpNode:
         return f"({self.op_token}, {self.node})"
 
 
+# struct
 class StructMemberNode:
-    def __init__(self, struct_type_token: Token, struct_name_token: Token, is_list: bool, list_length_token: Optional[Token] = None):
-        self.member_type_token: Token = struct_type_token
-        self.member_name_token: Token = struct_name_token
+    def __init__(self, type_token: Token, name_token: Token, is_list: bool, list_length_token: Optional[Token] = None):
+        self.type_token: Token = type_token
+        self.name_token: Token = name_token
         self.is_list = is_list
         self.list_length_token: Optional[Token] = list_length_token
 
     def __repr__(self) -> str:
         if self.is_list:
-            return f"(StructMember {self.member_type_token}[{self.list_length_token}]: {self.member_name_token})"
-        return f"(StructMember {self.member_type_token}: {self.member_name_token})"
+            return f"(StructMember {self.type_token}[{self.list_length_token}]: {self.name_token})"
+        return f"(StructMember {self.type_token}: {self.name_token})"
 
 
 class StructDefNode:
@@ -55,6 +57,35 @@ class StructDefNode:
 
     def __repr__(self) -> str:
         return f"(StructDef {self.struct_name_token} {self.struct_members})"
+
+
+# bitfield
+class BitfieldMemberNode:
+    def __init__(self, name_token: Token, bits_count_token: Optional[Token] = None):
+        self.name_token: Token = name_token
+        self.bits_count_token: Optional[Token] = bits_count_token
+
+    def set_explicit_size(self, bit_count_token: Token):
+        self.bits_count_token = bit_count_token
+
+    def __repr__(self) -> str:
+        return f"(BitfieldMember {self.name_token}: {self.bits_count_token})"
+
+
+class BitfieldDefNode:
+    def __init__(self, bitfield_name_token: Token, bitfield_bytes_count_token: Optional[Token] = None):
+        self.bitfield_name_token: Token = bitfield_name_token
+        self.bitfield_bytes_count_token: Optional[Token] = bitfield_bytes_count_token
+        self.bitfield_members: List[BitfieldMemberNode] = []
+
+    def set_explicit_size(self, bitfield_bytes_count_token: Token):
+        self.bitfield_bytes_count_token = bitfield_bytes_count_token
+
+    def add_member_node(self, member_node: BitfieldMemberNode) -> None:
+        self.bitfield_members.append(member_node)
+
+    def __repr__(self) -> str:
+        return f"(BitfieldDef {self.bitfield_name_token}({self.bitfield_bytes_count_token}) {self.bitfield_members})"
 
 
 class Parser:
@@ -91,6 +122,68 @@ class Parser:
                 return self.bitfield_stmt()
 
         self.advance()
+
+    def bitfield_member_def(self) -> BitfieldMemberNode:
+        """
+        IDENTIFIER (RPAREN NUM_INT LPAREN)? COMMA
+        """
+        if self.current_token.type != TT_IDENTIFIER:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier")
+
+        bitfield_name_token: Token = self.current_token
+        self.advance()
+
+        res_bitfield_member_node: BitfieldMemberNode = BitfieldMemberNode(bitfield_name_token)
+
+        if self.current_token.type == TT_LPAREN:
+            self.advance()
+            if self.current_token.type != TT_NUM_INT:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected integer")
+            res_bitfield_member_node.set_explicit_size(self.current_token)
+            self.advance()
+            if self.current_token.type != TT_RPAREN:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
+            self.advance()
+
+        if self.current_token.type != TT_COMMA:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ','")
+        self.advance()
+
+        return res_bitfield_member_node
+
+    def bitfield_stmt(self) -> BitfieldDefNode:
+        """
+        Without size in bytes:
+        KEYWORD:bitfield IDENTIFIER LPAREN NUM_INT RPAREN LCURLY bitfield-member-def+ RCURLY
+        Implicit size:
+        KEYWORD:bitfield IDENTIFIER LCURLY bitfield-member-def+ RCURLY
+        """
+        self.advance()
+        res_bitfield_def_node: BitfieldDefNode = BitfieldDefNode(self.current_token)
+
+        self.advance()
+        if self.current_token.type == TT_LPAREN:
+            self.advance()
+            if self.current_token.type != TT_NUM_INT:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected integer")
+            res_bitfield_def_node.set_explicit_size(self.current_token)
+            self.advance()
+            if self.current_token.type != TT_RPAREN:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')")
+            self.advance()
+
+        if self.current_token.type != TT_LCURLY:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '{'")
+        self.advance()
+
+        while self.current_token.type not in [TT_RCURLY, TT_EOF]:
+            res_bitfield_def_node.add_member_node(self.bitfield_member_def())
+
+        if self.current_token.type == TT_EOF:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '}'")
+
+        self.advance()
+        return res_bitfield_def_node
 
     def struct_stmt(self) -> StructDefNode:
         """
