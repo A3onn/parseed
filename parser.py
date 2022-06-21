@@ -163,7 +163,7 @@ class Parser:
             self.advance()
             res_bitfield_def_node.set_explicit_size(self.expr())
             if self.current_token.type != TT_RPAREN:
-                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')")
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
             self.advance()
 
         if self.current_token.type != TT_LCURLY:
