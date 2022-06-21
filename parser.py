@@ -248,9 +248,10 @@ class Parser:
         elif token.type == TT_LPAREN:
             self.advance()
             expr = self.expr()
-            if self.current_token.type is TT_RPAREN:
-                self.advance()
-                return expr
+            if self.current_token.type != TT_RPAREN:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
+            self.advance()
+            return expr
         elif token.type in [TT_NUM_INT, TT_NUM_FLOAT]:
             self.advance()
             return NumberNode(token)
@@ -268,5 +269,9 @@ class Parser:
             op_token = self.current_token
             self.advance()
             right_token = func()
+
+            if right_token is None:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected value or expression")
+
             left_token = BinOpNode(left_token, op_token, right_token)
         return left_token
