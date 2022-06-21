@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from typing import List, Any
+from typing import List, Any, Optional
 from errors import InvalidSyntaxError
 from utils import *
 
@@ -33,11 +33,15 @@ class UnaryOpNode:
 
 
 class StructMemberNode:
-    def __init__(self, struct_type_token: Token, struct_name_token: Token):
+    def __init__(self, struct_type_token: Token, struct_name_token: Token, is_list: bool, list_length_token: Optional[Token] = None):
         self.member_type_token: Token = struct_type_token
         self.member_name_token: Token = struct_name_token
+        self.is_list = is_list
+        self.list_length_token: Optional[Token] = list_length_token
 
     def __repr__(self) -> str:
+        if self.is_list:
+            return f"(StructMember {self.member_type_token}[{self.list_length_token}]: {self.member_name_token})"
         return f"(StructMember {self.member_type_token}: {self.member_name_token})"
 
 
@@ -112,7 +116,7 @@ class Parser:
     def struct_member_def(self) -> StructMemberNode:
         """
         (DATA-TYPE | IDENTIFIER) IDENTIFIER COMMA
-        TODO: (DATA-TYPE | IDENTIFIER) LBRACK NUM_INT RBRACK IDENTIFIER COMMA
+        (DATA-TYPE | IDENTIFIER) LBRACK NUM_INT RBRACK IDENTIFIER COMMA
         """
         if self.current_token.type not in [TT_DATA_TYPE, TT_IDENTIFIER]:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected data-type or identifier")
@@ -120,8 +124,23 @@ class Parser:
         member_type: Token = self.current_token
         self.advance()
 
-        if self.current_token.type != TT_IDENTIFIER:
-            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier")
+        is_list: bool = False
+        list_length_token: Token = self.current_token
+
+        if self.current_token.type == TT_IDENTIFIER:  # nothing to do, just continue parsing
+            pass
+        elif self.current_token.type == TT_LBRACK:
+            is_list = True
+            self.advance()
+            if self.current_token.type != TT_NUM_INT:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected integer")
+            list_length_token = self.current_token
+            self.advance()
+            if self.current_token.type != TT_RBRACK:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ']'")
+            self.advance()
+        else:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier or '['")
 
         member_name: Token = self.current_token
         self.advance()
@@ -132,7 +151,7 @@ class Parser:
             # todo
             pass
 
-        return StructMemberNode(member_type, member_name)
+        return StructMemberNode(member_type, member_name, is_list, list_length_token)
 
     def factor(self) -> Any:
         token: Token = self.current_token
