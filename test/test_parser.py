@@ -4,6 +4,7 @@ from lexer import Lexer
 from errors import InvalidSyntaxError
 import pytest
 
+
 def get_tokens(text):
     return Lexer(text, "").run()
 
@@ -128,5 +129,28 @@ def test_struct_members_with_expressions_errors():
         Parser(get_tokens("struct MyStruct { uint8[(2+5*3)/] member, }")).run()
 
 def test_empty_bitfield():
-    parser = Parser(get_tokens("bitfield test { }"))
-    parser.run()
+    parser = Parser(get_tokens("bitfield test { }")).run()
+
+def test_empty_bitfield_with_size_in_bytes():
+    Parser(get_tokens("bitfield test (1) { }")).run()
+    Parser(get_tokens("bitfield test (1+3) { }")).run()
+    Parser(get_tokens("bitfield test (2-1*(3*5)) { }")).run()
+
+def test_bitfield_members():
+    Parser(get_tokens("bitfield test { member, }")).run()
+    Parser(get_tokens("bitfield test { member1, member2, }")).run()
+    Parser(get_tokens("bitfield test { member1, member2, member3, member4, }")).run()
+
+def test_bitfield_members_with_size():
+    Parser(get_tokens("bitfield test { member (2), }")).run()
+    Parser(get_tokens("bitfield test { member1 (1), member2 (3), }")).run()
+    Parser(get_tokens("bitfield test { member1 (1), member2 (3 + 2), }")).run()
+    Parser(get_tokens("bitfield test { member1(1), member2, }")).run()
+    Parser(get_tokens("bitfield test { member1, member2 (3 + 2), }")).run()
+
+def test_bitfield_with_size_with_members():
+    Parser(get_tokens("bitfield test (5) { member (1), }")).run()
+    Parser(get_tokens("bitfield test (5) { member1 (1), member2 (5+2), }")).run()
+    Parser(get_tokens("bitfield test (5) { member1, member2 (5+2), }")).run()
+    Parser(get_tokens("bitfield test (5) { member1(3*(2+3)), member2 (5+2), }")).run()
+    Parser(get_tokens("bitfield test (5) { member1(3*(2+3)), member2, }")).run()
