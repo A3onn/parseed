@@ -2,6 +2,7 @@
 from lexer import Lexer
 from parser import Parser
 from errors import ParseedError
+from utils import AST_pprint
 import argparse
 
 
@@ -47,7 +48,7 @@ def run(lexer, arguments):
         print(e)  # just print the error
         return
     if arguments.show_ast:
-        print("[i] AST:", ast)
+        print("[i] AST:\n", AST_pprint(ast), sep="")
 
 
 if __name__ == "__main__":

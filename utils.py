@@ -93,3 +93,7 @@ class Token:
         if self.value:
             return f"{self.type}:{self.value}"
         return f"{self.type}"
+
+
+def AST_pprint(ast: List):
+    return "\n".join([node.to_str() for node in ast])

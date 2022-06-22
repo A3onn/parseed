@@ -9,8 +9,8 @@ class NumberNode:
     def __init__(self, token: Token):
         self.token: Token = token
 
-    def __repr__(self) -> str:
-        return f"({self.token})"
+    def to_str(self, depth: int = 0) -> str:
+        return "\t" * depth + "NumberNode(" + str(self.token) + ")\n"
 
 
 # operators
@@ -20,8 +20,11 @@ class BinOpNode:
         self.op_token = op_token
         self.right_node = right_node
 
-    def __repr__(self) -> str:
-        return f"({self.left_node}, {self.op_token}, {self.right_node})"
+    def to_str(self, depth: int = 0) -> str:
+        return ("\t" * depth) + "BinOpNode(\n" + self.left_node.to_str(depth + 1) \
+            + ("\t" * (depth + 1)) + str(self.op_token) + "\n" \
+            + self.right_node.to_str(depth + 1) \
+            + ("\t" * depth) + ")\n"
 
 
 class UnaryOpNode:
@@ -29,8 +32,8 @@ class UnaryOpNode:
         self.op_token = op_token
         self.node = node
 
-    def __repr__(self) -> str:
-        return f"({self.op_token}, {self.node})"
+    def to_str(self, depth: int = 0) -> str:
+        return ("\t" * depth) + "UnaryOpNode(\n" + ("\t" * (depth + 1)) + str(self.op_token) + "\n" + self.node.to_str(depth + 1) + ")\n"
 
 
 # struct
@@ -38,8 +41,8 @@ class StructMemberAccessNode:
     def __init__(self, name_token: Token):
         self.name_token: Token = name_token
 
-    def __repr__(self) -> str:
-        return f"(StructMemberAccess {self.name_token})"
+    def to_str(self, depth: int = 0) -> str:
+        return ("\t" * depth) + "StructMemberAccessNode(" + str(self.name_token) + ")\n"
 
 
 class StructMemberDeclareNode:
@@ -49,10 +52,11 @@ class StructMemberDeclareNode:
         self.is_list = is_list
         self.list_length_node: Optional[Any] = list_length_node
 
-    def __repr__(self) -> str:
-        if self.is_list:
-            return f"(StructMemberDeclare {self.type_token}[{self.list_length_node}]: {self.name_token})"
-        return f"(StructMemberDeclare {self.type_token}: {self.name_token})"
+    def to_str(self, depth: int = 0) -> str:
+        res: str = ("\t" * depth) + "StructMemberDeclareNode(" + str(self.type_token) + " " + str(self.name_token)
+        if self.is_list and self.list_length_node:
+            res += " [\n" + self.list_length_node.to_str(depth + 1) + ("\t" * depth) + "]"
+        return res + ")\n"
 
 
 class StructDefNode:
@@ -63,8 +67,11 @@ class StructDefNode:
     def add_member_node(self, member_node: StructMemberDeclareNode) -> None:
         self.struct_members.append(member_node)
 
-    def __repr__(self) -> str:
-        return f"(StructDef {self.struct_name_token} {self.struct_members})"
+    def to_str(self, depth: int = 0) -> str:
+        res: str = ("\t" * depth) + "struct " + str(self.struct_name_token) + "(\n"
+        for node in self.struct_members:
+            res += node.to_str(depth + 1)
+        return res + ")\n"
 
 
 # bitfield
@@ -76,8 +83,11 @@ class BitfieldMemberNode:
     def set_explicit_size(self, bit_count_node: Any):
         self.bits_count_node = bit_count_node
 
-    def __repr__(self) -> str:
-        return f"(BitfieldMember {self.name_token}: {self.bits_count_node})"
+    def to_str(self, depth: int = 0) -> str:
+        res: str = ("\t" * depth) + str(self.name_token)
+        if self.bits_count_node is not None:
+            res += "(\n" + self.bits_count_node.to_str(depth + 1) + ("\t" * depth) + ")"
+        return res + "\n"
 
 
 class BitfieldDefNode:
@@ -92,8 +102,11 @@ class BitfieldDefNode:
     def add_member_node(self, member_node: BitfieldMemberNode) -> None:
         self.bitfield_members.append(member_node)
 
-    def __repr__(self) -> str:
-        return f"(BitfieldDef {self.bitfield_name_token}({self.bitfield_bytes_count_token}) {self.bitfield_members})"
+    def to_str(self, depth: int = 0) -> str:
+        res: str = ("\t" * depth) + str(self.bitfield_name_token) + "\n"
+        for node in self.bitfield_members:
+            res += node.to_str(depth + 1)
+        return res + "\n"
 
 
 class Parser:
