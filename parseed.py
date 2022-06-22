@@ -2,7 +2,7 @@
 from lexer import Lexer
 from parser import Parser
 from errors import ParseedError
-from utils import AST_pprint
+from utils import AST_pprint, lexer_pprint
 import argparse
 
 
@@ -39,7 +39,7 @@ def run(lexer, arguments):
         return
 
     if arguments.show_lexer:
-        print("[i] LEXER OUTPUT:", tokens)
+        print("[i] LEXER OUTPUT:\n", lexer_pprint(tokens), sep="")
 
     parser = Parser(tokens)
     try:

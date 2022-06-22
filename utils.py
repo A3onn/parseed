@@ -99,7 +99,25 @@ class Token:
         return f"{self.type}"
 
 
-def AST_pprint(ast: List):
+def AST_pprint(ast: List) -> str:
     if ast is None:
         return "<Empty>"
     return "\n".join([node.to_str() for node in ast])
+
+
+def lexer_pprint(tokens: List[Token]):
+    if tokens is None:
+        return "<Empty>"
+
+    last_token: Token = tokens[0]
+    res: str = f"({last_token.type}:{last_token.value} "
+    for token in tokens[1:]:
+        if last_token.pos_start.ln != token.pos_start.ln:
+            res += "\n" + (" " * token.pos_start.col)
+
+        if token.value is not None:
+            res += f"({token.type}:{token.value}) "
+        else:
+            res += f"{token.type} "
+        last_token = token
+    return res
