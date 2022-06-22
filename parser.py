@@ -125,6 +125,9 @@ class Parser:
         self.token_index += 1
         if self.token_index < len(self.tokens):
             self.current_token = self.tokens[self.token_index]
+        if self.current_token.type == TT_COMMENT:
+            # just ignore comments, we don't need them when parsing
+            self.advance()
         return self.current_token
 
     def statements(self) -> list:

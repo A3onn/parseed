@@ -7,6 +7,10 @@ DATA_TYPES = [
     "uint16", "int16",
     "uint24", "int24",
     "uint32", "int32",
+    "uint40", "int40",
+    "uint48", "int48",
+    "uint64", "int64",
+    "uint128", "int128",
     "float", "double"
     "string",
     "byte",
