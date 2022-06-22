@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from parser import *
+from parser import Parser
 from lexer import Lexer
 from errors import InvalidSyntaxError
 import pytest
@@ -101,6 +101,10 @@ def test_struct_members_with_expressions_errors():
         Parser(get_tokens("struct MyStruct { uint8[1+2)] member, }")).run()
 
     with pytest.raises(InvalidSyntaxError):
+        # missing left parenthesis
+        Parser(get_tokens("struct MyStruct { uint8[1 struct] member, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
         # wrong number of closing parenthesis
         Parser(get_tokens("struct MyStruct { uint8[((1+2)] member, }")).run()
 
@@ -154,3 +158,80 @@ def test_bitfield_with_size_with_members():
     Parser(get_tokens("bitfield test (5) { member1, member2 (5+2), }")).run()
     Parser(get_tokens("bitfield test (5) { member1(3*(2+3)), member2 (5+2), }")).run()
     Parser(get_tokens("bitfield test (5) { member1(3*(2+3)), member2, }")).run()
+
+def test_bitfield_with_members_with_errors():
+    with pytest.raises(InvalidSyntaxError):
+        # missing size
+        Parser(get_tokens("bitfield test () { }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # invalid size (keyword)
+        Parser(get_tokens("bitfield test (bitfield) { }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # invalid size (identifier)
+        Parser(get_tokens("bitfield test (some_identifier) { }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # invalid size (keyword)
+        Parser(get_tokens("bitfield test (bitfield) { some_flag, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # invalid size (identifier)
+        Parser(get_tokens("bitfield test (some_identifier) { some_flag, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing left parenthesis
+        Parser(get_tokens("bitfield test ) { some_flag, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing right parenthesis
+        Parser(get_tokens("bitfield test ( { some_flag, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing identifier
+        Parser(get_tokens("bitfield test { , }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing left curl-brace
+        Parser(get_tokens("bitfield test }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing right curl-brace
+        Parser(get_tokens("bitfield test {")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing left curl-brace
+        Parser(get_tokens("bitfield test (2) }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing right curl-brace
+        Parser(get_tokens("bitfield test (2) {")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing comma
+        Parser(get_tokens("bitfield test (2) { some_flag }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing comma
+        Parser(get_tokens("bitfield test { some_flag }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing size in parenthesis
+        Parser(get_tokens("bitfield test { some_flag() }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing comma
+        Parser(get_tokens("bitfield test { some_flag (bitfield) }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing left parenthesis
+        Parser(get_tokens("bitfield test { some_flag 8), }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing right parenthesis
+        Parser(get_tokens("bitfield test { some_flag (8, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing comma
+        Parser(get_tokens("bitfield test { some_flag (8) }")).run()
