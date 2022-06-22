@@ -68,7 +68,7 @@ class Position:
 
     def get_line_text(self) -> str:
         lines: List[str] = self.file_text.split("\n")
-        return lines[self.ln - 1]
+        return lines[self.ln]
 
     def get_copy(self):
         return Position(self.idx, self.ln, self.col, self.filename, self.file_text)
@@ -96,4 +96,6 @@ class Token:
 
 
 def AST_pprint(ast: List):
+    if ast is None:
+        return "<Empty>"
     return "\n".join([node.to_str() for node in ast])
