@@ -1,0 +1,12 @@
+// A simple parser for ARP packets
+struct ARP_packet {
+    uint16 htype,
+    uint16 ptype,
+    uint8 hlen,
+    uin8 plen,
+    uint16 op,
+    uint8[6] sha,
+    uint8[4] spa,
+    uint8[6] tha,
+    uint8[4] tpa,
+}
