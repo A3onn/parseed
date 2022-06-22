@@ -34,7 +34,15 @@ class UnaryOpNode:
 
 
 # struct
-class StructMemberNode:
+class StructMemberAccessNode:
+    def __init__(self, name_token: Token):
+        self.name_token: Token = name_token
+
+    def __repr__(self) -> str:
+        return f"(StructMemberAccess {self.name_token})"
+
+
+class StructMemberDeclareNode:
     def __init__(self, type_token: Token, name_token: Token, is_list: bool, list_length_node: Optional[Any] = None):
         self.type_token: Token = type_token
         self.name_token: Token = name_token
@@ -43,16 +51,16 @@ class StructMemberNode:
 
     def __repr__(self) -> str:
         if self.is_list:
-            return f"(StructMember {self.type_token}[{self.list_length_node}]: {self.name_token})"
-        return f"(StructMember {self.type_token}: {self.name_token})"
+            return f"(StructMemberDeclare {self.type_token}[{self.list_length_node}]: {self.name_token})"
+        return f"(StructMemberDeclare {self.type_token}: {self.name_token})"
 
 
 class StructDefNode:
     def __init__(self, struct_name_token):
         self.struct_name_token: Token = struct_name_token
-        self.struct_members: List[StructMemberNode] = []
+        self.struct_members: List[StructMemberDeclareNode] = []
 
-    def add_member_node(self, member_node: StructMemberNode) -> None:
+    def add_member_node(self, member_node: StructMemberDeclareNode) -> None:
         self.struct_members.append(member_node)
 
     def __repr__(self) -> str:
@@ -203,7 +211,7 @@ class Parser:
 
         return res_struct_def_node
 
-    def struct_member_def(self) -> StructMemberNode:
+    def struct_member_def(self) -> StructMemberDeclareNode:
         """
         (DATA-TYPE | IDENTIFIER) IDENTIFIER COMMA
         (DATA-TYPE | IDENTIFIER) LBRACK expr RBRACK IDENTIFIER COMMA
@@ -237,7 +245,7 @@ class Parser:
         else:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ','")
 
-        return StructMemberNode(member_type, member_name, is_list, list_length_node)
+        return StructMemberDeclareNode(member_type, member_name, is_list, list_length_node)
 
     def factor_simple(self) -> Any:
         token: Token = self.current_token
@@ -279,6 +287,9 @@ class Parser:
         elif token.type in [TT_NUM_INT, TT_NUM_FLOAT]:
             self.advance()
             return NumberNode(token)
+        elif token.type == TT_IDENTIFIER:
+            self.advance()
+            return StructMemberAccessNode(token)
         raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier or value")
 
     def expr(self) -> Any:
