@@ -34,7 +34,8 @@ class Lexer:
                 tokens.append(Token(TT_PLUS, pos_start=self.pos))
                 self._next_token()
             elif self.current_char == "-":
-                tokens.append(self._make_number_or_dot())
+                tokens.append(Token(TT_MINUS, pos_start=self.pos))
+                self._next_token()
             elif self.current_char == "/":
                 tokens.append(self._make_div_or_comment())
             elif self.current_char == "*":
@@ -107,10 +108,6 @@ class Lexer:
         res_num: str = ""
         dot_count: int = 0
 
-        if self.current_char == "-":
-            res_num += "-"
-            self._next_token()
-
         while self.current_char is not None and self.current_char in DIGITS + ".":
             if self.current_char == ".":
                 # As floating number cannot begin with a '.' and have to begin with a number before,
@@ -123,9 +120,6 @@ class Lexer:
                 dot_count += 1
             res_num += self.current_char
             self._next_token()
-
-        if res_num == "-":
-            return Token(TT_MINUS, pos_start=self.pos, pos_end=self.pos)
 
         if dot_count == 0:
             return Token(TT_NUM_INT, res_num, pos_start, self.pos)

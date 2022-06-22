@@ -255,6 +255,7 @@ class Parser:
         elif token.type in [TT_NUM_INT, TT_NUM_FLOAT]:
             self.advance()
             return NumberNode(token)
+        raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected value")
 
     def expr(self) -> Any:
         return self.binary_op(self.term, [TT_PLUS, TT_MINUS])
@@ -264,6 +265,9 @@ class Parser:
 
     def binary_op(self, func, operators) -> BinOpNode:
         left_token = func()
+
+        if left_token is None:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected value or expression")
 
         while self.current_token.type in operators:
             op_token = self.current_token

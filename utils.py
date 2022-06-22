@@ -73,6 +73,9 @@ class Position:
     def get_copy(self):
         return Position(self.idx, self.ln, self.col, self.filename, self.file_text)
 
+    def __repr__(self) -> str:
+        return f"Position(idx={self.idx}, ln={self.ln}, col={self.col}, filename={self.filename}, file_text=\"{self.file_text}\")"
+
 
 class Token:
     def __init__(self, type_: str, value: object = None, pos_start: Position = None, pos_end: Position = None) -> None:
