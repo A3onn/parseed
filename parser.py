@@ -9,7 +9,7 @@ class NumberNode:
     def __init__(self, token: Token):
         self.token: Token = token
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"({self.token})"
 
 
@@ -20,7 +20,7 @@ class BinOpNode:
         self.op_token = op_token
         self.right_node = right_node
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"({self.left_node}, {self.op_token}, {self.right_node})"
 
 
@@ -29,7 +29,7 @@ class UnaryOpNode:
         self.op_token = op_token
         self.node = node
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"({self.op_token}, {self.node})"
 
 
@@ -125,7 +125,7 @@ class Parser:
 
     def bitfield_member_def(self) -> BitfieldMemberNode:
         """
-        IDENTIFIER (RPAREN expr LPAREN)? COMMA
+        IDENTIFIER (RPAREN expr-simple LPAREN)? COMMA
         """
         if self.current_token.type != TT_IDENTIFIER:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier")
@@ -137,7 +137,7 @@ class Parser:
 
         if self.current_token.type == TT_LPAREN:
             self.advance()
-            res_bitfield_member_node.set_explicit_size(self.expr())
+            res_bitfield_member_node.set_explicit_size(self.expr_simple())
             if self.current_token.type != TT_RPAREN:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
             self.advance()
@@ -150,8 +150,8 @@ class Parser:
 
     def bitfield_stmt(self) -> BitfieldDefNode:
         """
-        Without size in bytes:
-        KEYWORD:bitfield IDENTIFIER LPAREN expr RPAREN LCURLY bitfield-member-def+ RCURLY
+        Explicit size:
+        KEYWORD:bitfield IDENTIFIER LPAREN expr-simple RPAREN LCURLY bitfield-member-def+ RCURLY // bitfield with size specified between parenthesis (in bytes)
         Implicit size:
         KEYWORD:bitfield IDENTIFIER LCURLY bitfield-member-def+ RCURLY
         """
@@ -161,7 +161,7 @@ class Parser:
         self.advance()
         if self.current_token.type == TT_LPAREN:
             self.advance()
-            res_bitfield_def_node.set_explicit_size(self.expr())
+            res_bitfield_def_node.set_explicit_size(self.expr_simple())
             if self.current_token.type != TT_RPAREN:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
             self.advance()
@@ -239,6 +239,30 @@ class Parser:
 
         return StructMemberNode(member_type, member_name, is_list, list_length_node)
 
+    def factor_simple(self) -> Any:
+        token: Token = self.current_token
+
+        if token.type in [TT_PLUS, TT_MINUS]:
+            self.advance()
+            return UnaryOpNode(token, self.factor_simple())
+        elif token.type == TT_LPAREN:
+            self.advance()
+            expr = self.expr_simple()
+            if self.current_token.type != TT_RPAREN:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
+            self.advance()
+            return expr
+        elif token.type in [TT_NUM_INT, TT_NUM_FLOAT]:
+            self.advance()
+            return NumberNode(token)
+        raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected value")
+
+    def expr_simple(self) -> Any:
+        return self.binary_op(self.term_simple, [TT_PLUS, TT_MINUS])
+
+    def term_simple(self) -> Any:
+        return self.binary_op(self.factor_simple, [TT_MULT, TT_DIV])
+
     def factor(self) -> Any:
         token: Token = self.current_token
 
@@ -255,7 +279,7 @@ class Parser:
         elif token.type in [TT_NUM_INT, TT_NUM_FLOAT]:
             self.advance()
             return NumberNode(token)
-        raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected value")
+        raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier or value")
 
     def expr(self) -> Any:
         return self.binary_op(self.term, [TT_PLUS, TT_MINUS])
