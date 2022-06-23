@@ -30,3 +30,4 @@ term: factor ((MUL|DIV) factor)*
 factor:     NUM_INT|NUM_FLOAT
             (PLUS|MINUS) factor
             LPAREN expr RPAREN
+            IDENTIFIER
