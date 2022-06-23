@@ -148,7 +148,7 @@ class Lexer:
             raise ExpectedMoreCharError(pos_start, self.pos, ["="])
 
         self._next_token()
-        return Token(TT_COMP_NE)
+        return Token(TT_COMP_NE, pos_start=pos_start, pos_end=self.pos)
 
     def _make_equal(self) -> Token:
         pos_start: Position = self.pos.get_copy()
@@ -158,7 +158,7 @@ class Lexer:
             raise ExpectedMoreCharError(pos_start, self.pos, ["="])
 
         self._next_token()
-        return Token(TT_COMP_EQ)
+        return Token(TT_COMP_EQ, pos_start=pos_start, pos_end=self.pos)
 
     def _make_less_than(self) -> Token:
         pos_start: Position = self.pos.get_copy()
