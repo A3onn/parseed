@@ -5,13 +5,19 @@ from utils import *
 
 
 # NODES
-class NumberNode:
+class FloatNumberNode:
     def __init__(self, token: Token):
-        self.token: Token = token
+        self.value: float = float(token.value)
 
     def to_str(self, depth: int = 0) -> str:
-        return "\t" * depth + "NumberNode(" + str(self.token) + ")\n"
+        return "\t" * depth + "FloatNumberNode(" + str(self.value) + ")\n"
 
+class IntNumberNode:
+    def __init__(self, token: Token):
+        self.value: int = int(token.value)
+
+    def to_str(self, depth: int = 0) -> str:
+        return "\t" * depth + "IntNumberNode(" + str(self.value) + ")\n"
 
 # operators
 class BinOpNode:
@@ -276,9 +282,12 @@ class Parser:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
             self.advance()
             return expr
-        elif token.type in [TT_NUM_INT, TT_NUM_FLOAT]:
+        elif token.type == TT_NUM_INT:
             self.advance()
-            return NumberNode(token)
+            return IntNumberNode(token)
+        elif token.type == TT_NUM_FLOAT:
+            self.advance()
+            return FloatNumberNode(token)
         raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected value")
 
     def no_identifier_expr(self) -> Any:
@@ -300,9 +309,12 @@ class Parser:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
             self.advance()
             return expr
-        elif token.type in [TT_NUM_INT, TT_NUM_FLOAT]:
+        elif token.type == TT_NUM_INT:
             self.advance()
-            return NumberNode(token)
+            return IntNumberNode(token)
+        elif token.type == TT_NUM_FLOAT:
+            self.advance()
+            return FloatNumberNode(token)
         elif token.type == TT_IDENTIFIER:
             self.advance()
             return StructMemberAccessNode(token)
