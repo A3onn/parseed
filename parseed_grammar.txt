@@ -5,20 +5,20 @@ statement:  bitfield-stmt
             struct-stmt
 
 bitfield-stmt:    KEYWORD:bitfield IDENTIFIER LCURLY bitfield-member-def+ RCURLY // bitfield without size (in bytes)
-                  KEYWORD:bitfield IDENTIFIER LPAREN expr-simple RPAREN LCURLY bitfield-member-def+ RCURLY // bitfield with size specified between parenthesis (in bytes)
+                  KEYWORD:bitfield IDENTIFIER LPAREN no-identifier-expr RPAREN LCURLY bitfield-member-def+ RCURLY // bitfield with size specified between parenthesis (in bytes)
 
 struct-stmt:      KEYWORD:struct IDENTIFIER LCURLY (struct-member-def)+ RCURLY
 
-bitfield-member-def:    IDENTIFIER (RPAREN expr-simple LPAREN)? COMMA
+bitfield-member-def:    IDENTIFIER (RPAREN no-identifier-expr LPAREN)? COMMA
 
 struct-member-def:      (DATA-TYPE | IDENTIFIER) IDENTIFIER COMMA
                         (DATA-TYPE | IDENTIFIER) LBRACK expr RBRACK IDENTIFIER COMMA
 
-expr-simple: term ((PLUS|MINUS) term)*
+no-identifier-expr: term ((PLUS|MINUS) term)*
 
-term-simple: factor ((MUL|DIV) factor)*
+no-identifier-term: factor ((MUL|DIV) factor)*
 
-factor-simple:  NUM_INT|NUM_FLOAT
+no-identifier-factor:  NUM_INT|NUM_FLOAT
                 (PLUS|MINUS) factor
                 LPAREN expr RPAREN
 
