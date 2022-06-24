@@ -5,13 +5,19 @@ from utils import *
 
 
 # NODES
-class NumberNode:
+class FloatNumberNode:
     def __init__(self, token: Token):
-        self.token: Token = token
+        self.value: float = float(token.value)
 
     def to_str(self, depth: int = 0) -> str:
-        return "\t" * depth + "NumberNode(" + str(self.token) + ")\n"
+        return "\t" * depth + "FloatNumberNode(" + str(self.value) + ")\n"
 
+class IntNumberNode:
+    def __init__(self, token: Token):
+        self.value: int = int(token.value)
+
+    def to_str(self, depth: int = 0) -> str:
+        return "\t" * depth + "IntNumberNode(" + str(self.value) + ")\n"
 
 # operators
 class BinOpNode:
@@ -149,7 +155,7 @@ class Parser:
 
     def bitfield_member_def(self) -> BitfieldMemberNode:
         """
-        IDENTIFIER (RPAREN expr-simple LPAREN)? COMMA
+        IDENTIFIER (RPAREN no-identifier-expr LPAREN)? COMMA
         """
         if self.current_token.type != TT_IDENTIFIER:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier")
@@ -161,7 +167,7 @@ class Parser:
 
         if self.current_token.type == TT_LPAREN:
             self.advance()
-            res_bitfield_member_node.set_explicit_size(self.expr_simple())
+            res_bitfield_member_node.set_explicit_size(self.no_identifier_expr())
             if self.current_token.type != TT_RPAREN:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
             self.advance()
@@ -175,7 +181,7 @@ class Parser:
     def bitfield_stmt(self) -> BitfieldDefNode:
         """
         Explicit size:
-        KEYWORD:bitfield IDENTIFIER LPAREN expr-simple RPAREN LCURLY bitfield-member-def+ RCURLY // bitfield with size specified between parenthesis (in bytes)
+        KEYWORD:bitfield IDENTIFIER LPAREN no-identifier-expr RPAREN LCURLY bitfield-member-def+ RCURLY // bitfield with size specified between parenthesis (in bytes)
         Implicit size:
         KEYWORD:bitfield IDENTIFIER LCURLY bitfield-member-def+ RCURLY
         """
@@ -185,7 +191,7 @@ class Parser:
         self.advance()
         if self.current_token.type == TT_LPAREN:
             self.advance()
-            res_bitfield_def_node.set_explicit_size(self.expr_simple())
+            res_bitfield_def_node.set_explicit_size(self.no_identifier_expr())
             if self.current_token.type != TT_RPAREN:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
             self.advance()
@@ -263,29 +269,32 @@ class Parser:
 
         return StructMemberDeclareNode(member_type, member_name, is_list, list_length_node)
 
-    def factor_simple(self) -> Any:
+    def no_identifier_factor(self) -> Any:
         token: Token = self.current_token
 
         if token.type in [TT_PLUS, TT_MINUS]:
             self.advance()
-            return UnaryOpNode(token, self.factor_simple())
+            return UnaryOpNode(token, self.no_identifier_factor())
         elif token.type == TT_LPAREN:
             self.advance()
-            expr = self.expr_simple()
+            expr = self.no_identifier_expr()
             if self.current_token.type != TT_RPAREN:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
             self.advance()
             return expr
-        elif token.type in [TT_NUM_INT, TT_NUM_FLOAT]:
+        elif token.type == TT_NUM_INT:
             self.advance()
-            return NumberNode(token)
+            return IntNumberNode(token)
+        elif token.type == TT_NUM_FLOAT:
+            self.advance()
+            return FloatNumberNode(token)
         raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected value")
 
-    def expr_simple(self) -> Any:
-        return self.binary_op(self.term_simple, [TT_PLUS, TT_MINUS])
+    def no_identifier_expr(self) -> Any:
+        return self.binary_op(self.no_identifier_term, [TT_PLUS, TT_MINUS])
 
-    def term_simple(self) -> Any:
-        return self.binary_op(self.factor_simple, [TT_MULT, TT_DIV])
+    def no_identifier_term(self) -> Any:
+        return self.binary_op(self.no_identifier_factor, [TT_MULT, TT_DIV])
 
     def factor(self) -> Any:
         token: Token = self.current_token
@@ -300,9 +309,12 @@ class Parser:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
             self.advance()
             return expr
-        elif token.type in [TT_NUM_INT, TT_NUM_FLOAT]:
+        elif token.type == TT_NUM_INT:
             self.advance()
-            return NumberNode(token)
+            return IntNumberNode(token)
+        elif token.type == TT_NUM_FLOAT:
+            self.advance()
+            return FloatNumberNode(token)
         elif token.type == TT_IDENTIFIER:
             self.advance()
             return StructMemberAccessNode(token)
