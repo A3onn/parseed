@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from typing import List
+from typing import List, Optional
 
 KEYWORDS = ["struct", "bitfield", "stop"]
 DATA_TYPES = [
@@ -82,7 +82,7 @@ class Position:
 
 
 class Token:
-    def __init__(self, type_: str, value: object = None, pos_start: Position = None, pos_end: Position = None) -> None:
+    def __init__(self, type_: str, value: Optional[str] = None, pos_start: Position = None, pos_end: Position = None) -> None:
         self.type = type_
         self.value = value
 

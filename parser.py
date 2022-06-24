@@ -7,17 +7,23 @@ from utils import *
 # NODES
 class FloatNumberNode:
     def __init__(self, token: Token):
+        if token.value is None:
+            return
         self.value: float = float(token.value)
 
     def to_str(self, depth: int = 0) -> str:
         return "\t" * depth + "FloatNumberNode(" + str(self.value) + ")\n"
 
+
 class IntNumberNode:
     def __init__(self, token: Token):
+        if token.value is None:
+            return
         self.value: int = int(token.value)
 
     def to_str(self, depth: int = 0) -> str:
         return "\t" * depth + "IntNumberNode(" + str(self.value) + ")\n"
+
 
 # operators
 class BinOpNode:
