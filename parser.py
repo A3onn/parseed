@@ -6,23 +6,19 @@ from utils import *
 
 # NODES
 class FloatNumberNode:
-    def __init__(self, token: Token):
-        if token.value is None:  # useless but remove mypy warning
-            return
-        self.value: float = float(token.value)
+    def __init__(self, value_token: Token):
+        self.value_token: Token = value_token
 
     def to_str(self, depth: int = 0) -> str:
-        return "\t" * depth + "FloatNumberNode(" + str(self.value) + ")\n"
+        return "\t" * depth + "FloatNumberNode(" + str(self.value_token.value) + ")\n"
 
 
 class IntNumberNode:
-    def __init__(self, token: Token):
-        if token.value is None:  # useless but remove mypy warning
-            return
-        self.value: int = int(token.value)
+    def __init__(self, value_token: Token):
+        self.value_token: Token = value_token
 
     def to_str(self, depth: int = 0) -> str:
-        return "\t" * depth + "IntNumberNode(" + str(self.value) + ")\n"
+        return "\t" * depth + "IntNumberNode(" + str(self.value_token.value) + ")\n"
 
 
 # operators
@@ -72,15 +68,15 @@ class StructMemberDeclareNode:
 
 
 class StructDefNode:
-    def __init__(self, struct_name_token):
-        self.struct_name_token: Token = struct_name_token
+    def __init__(self, name_token: Token):
+        self.name_token: Token = name_token
         self.struct_members: List[StructMemberDeclareNode] = []
 
     def add_member_node(self, member_node: StructMemberDeclareNode) -> None:
         self.struct_members.append(member_node)
 
     def to_str(self, depth: int = 0) -> str:
-        res: str = ("\t" * depth) + "struct " + str(self.struct_name_token) + "(\n"
+        res: str = ("\t" * depth) + "struct " + str(self.name_token) + "(\n"
         for node in self.struct_members:
             res += node.to_str(depth + 1)
         return res + ")\n"
@@ -103,8 +99,8 @@ class BitfieldMemberNode:
 
 
 class BitfieldDefNode:
-    def __init__(self, bitfield_name_token: Token, bitfield_bytes_count_token: Optional[Token] = None):
-        self.bitfield_name_token: Token = bitfield_name_token
+    def __init__(self, name_token: Token, bitfield_bytes_count_token: Optional[Token] = None):
+        self.name_token: Token = name_token
         self.bitfield_bytes_count_token: Optional[Token] = bitfield_bytes_count_token
         self.bitfield_members: List[BitfieldMemberNode] = []
 
@@ -115,7 +111,7 @@ class BitfieldDefNode:
         self.bitfield_members.append(member_node)
 
     def to_str(self, depth: int = 0) -> str:
-        res: str = ("\t" * depth) + str(self.bitfield_name_token) + "\n"
+        res: str = ("\t" * depth) + str(self.name_token) + "\n"
         for node in self.bitfield_members:
             res += node.to_str(depth + 1)
         return res + "\n"
