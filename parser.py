@@ -7,7 +7,7 @@ from utils import *
 # NODES
 class FloatNumberNode:
     def __init__(self, token: Token):
-        if token.value is None:
+        if token.value is None:  # useless but remove mypy warning
             return
         self.value: float = float(token.value)
 
@@ -17,7 +17,7 @@ class FloatNumberNode:
 
 class IntNumberNode:
     def __init__(self, token: Token):
-        if token.value is None:
+        if token.value is None:  # useless but remove mypy warning
             return
         self.value: int = int(token.value)
 
@@ -27,10 +27,10 @@ class IntNumberNode:
 
 # operators
 class BinOpNode:
-    def __init__(self, left_node, op_token, right_node):
-        self.left_node = left_node
-        self.op_token = op_token
-        self.right_node = right_node
+    def __init__(self, left_node: Any, op_token: Token, right_node: Any):
+        self.left_node: Any = left_node
+        self.op_token: Token = op_token
+        self.right_node: Any = right_node
 
     def to_str(self, depth: int = 0) -> str:
         return ("\t" * depth) + "BinOpNode(\n" + self.left_node.to_str(depth + 1) \
@@ -40,9 +40,9 @@ class BinOpNode:
 
 
 class UnaryOpNode:
-    def __init__(self, op_token, node):
-        self.op_token = op_token
-        self.node = node
+    def __init__(self, op_token: Token, node: Any):
+        self.op_token: Token = op_token
+        self.node: Any = node
 
     def to_str(self, depth: int = 0) -> str:
         return ("\t" * depth) + "UnaryOpNode(\n" + ("\t" * (depth + 1)) + str(self.op_token) + "\n" + self.node.to_str(depth + 1) + ")\n"
@@ -61,7 +61,7 @@ class StructMemberDeclareNode:
     def __init__(self, type_token: Token, name_token: Token, is_list: bool, list_length_node: Optional[Any] = None):
         self.type_token: Token = type_token
         self.name_token: Token = name_token
-        self.is_list = is_list
+        self.is_list: bool = is_list
         self.list_length_node: Optional[Any] = list_length_node
 
     def to_str(self, depth: int = 0) -> str:
