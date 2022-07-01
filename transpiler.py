@@ -33,9 +33,11 @@ class BinaryOp:
 
 
 class Expression:
-    # TODO
-    def __init__(self, node):
-        pass
+    def __init__(self, node: Any):
+        if isinstance(node, BinOpNode):
+            self.root_node = BinaryOp(node)
+        elif isinstance(node, UnaryOpNode):
+            self.root_node = UnaryOp(node)
 
 
 class StructMember:

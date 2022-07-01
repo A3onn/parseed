@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 from lexer import Lexer
 from parser import Parser
+from transpiler import ParseedOutputGenerator
 from errors import ParseedError
+from generators import *
 from utils import AST_pprint, lexer_pprint
 import argparse
 
@@ -11,8 +13,13 @@ def main():
     argparser.add_argument("file", help="File to parse", nargs="?", default="")
     argparser.add_argument("-L", "--lexer", action="store_true", help="Print the lexer's list of tokens", dest="show_lexer")
     argparser.add_argument("-A", "--ast", action="store_true", help="Print the abstract syntax tree", dest="show_ast")
+    argparser.add_argument("-g", "--generator", help="What generator to use", dest="generator",
+                            choices=[c.__name__ for c in ParseedOutputGenerator.__subclasses__()], default=ParseedOutputGenerator.__subclasses__()[0].__name__)
 
     arguments = argparser.parse_args()
+
+    # reference of the generator's class
+    generator_class = next(filter(lambda cls: cls.__name__ == arguments.generator, ParseedOutputGenerator.__subclasses__()))
 
     if arguments.file == "":
         while True:
@@ -24,14 +31,14 @@ def main():
             except KeyboardInterrupt:
                 print("Quitting...")
                 break
-            run(lexer, arguments)
+            run(lexer, arguments, generator_class)
     else:
         with open(arguments.file, "r") as f:
             lexer = Lexer(f.read(), arguments.file)
-            run(lexer, arguments)
+            run(lexer, arguments, generator_class)
 
 
-def run(lexer, arguments):
+def run(lexer, arguments, generator_class):
     try:
         tokens = lexer.run()
     except ParseedError as e:
@@ -49,6 +56,8 @@ def run(lexer, arguments):
         return
     if arguments.show_ast:
         print("[i] AST:\n", AST_pprint(ast), sep="")
+    
+    print(generator_class(ast).generate())
 
 
 if __name__ == "__main__":
