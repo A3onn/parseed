@@ -42,6 +42,18 @@ class BinOpNode:
             + self.right_node.to_str(depth + 1) \
             + ("\t" * depth) + ")\n"
 
+    @property
+    def op(self) -> str:
+        return str(self.op_token.value)
+
+    @property
+    def left(self) -> Any:
+        return self.left_node
+
+    @property
+    def right(self) -> Any:
+        return self.right_node
+
 
 class UnaryOpNode:
     def __init__(self, op_token: Token, node: Any):
@@ -50,6 +62,14 @@ class UnaryOpNode:
 
     def to_str(self, depth: int = 0) -> str:
         return ("\t" * depth) + "UnaryOpNode(\n" + ("\t" * (depth + 1)) + str(self.op_token) + "\n" + self.node.to_str(depth + 1) + ")\n"
+
+    @property
+    def op(self) -> str:
+        return str(self.op_token.value)
+
+    @property
+    def value(self) -> Any:
+        return self.node
 
 
 # struct
