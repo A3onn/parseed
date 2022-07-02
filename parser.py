@@ -12,6 +12,10 @@ class FloatNumberNode:
     def to_str(self, depth: int = 0) -> str:
         return "\t" * depth + "FloatNumberNode(" + str(self.value_token.value) + ")\n"
 
+    @property
+    def value(self) -> float:
+        return float(self.value_token.value)
+
 
 class IntNumberNode:
     def __init__(self, value_token: Token):
@@ -19,6 +23,10 @@ class IntNumberNode:
 
     def to_str(self, depth: int = 0) -> str:
         return "\t" * depth + "IntNumberNode(" + str(self.value_token.value) + ")\n"
+
+    @property
+    def value(self) -> int:
+        return int(self.value_token.value)
 
 
 # operators
@@ -52,6 +60,10 @@ class StructMemberAccessNode:
     def to_str(self, depth: int = 0) -> str:
         return ("\t" * depth) + "StructMemberAccessNode(" + str(self.name_token) + ")\n"
 
+    @property
+    def name(self) -> str:
+        return str(self.name_token.value)
+
 
 class StructMemberDeclareNode:
     def __init__(self, type_token: Token, name_token: Token, is_list: bool, list_length_node: Optional[Any] = None):
@@ -65,6 +77,14 @@ class StructMemberDeclareNode:
         if self.is_list and self.list_length_node:
             res += " [\n" + self.list_length_node.to_str(depth + 1) + ("\t" * depth) + "]"
         return res + ")\n"
+
+    @property
+    def name(self) -> str:
+        return str(self.name_token.value)
+
+    @property
+    def type(self) -> str:
+        return str(self.type_token.value)
 
 
 class StructDefNode:
@@ -80,6 +100,14 @@ class StructDefNode:
         for node in self.struct_members:
             res += node.to_str(depth + 1)
         return res + ")\n"
+
+    @property
+    def name(self) -> str:
+        return str(self.name_token.value)
+
+    @property
+    def members(self) -> List[StructMemberDeclareNode]:
+        return self.struct_members
 
 
 # bitfield
@@ -97,11 +125,19 @@ class BitfieldMemberNode:
             res += "(\n" + self.bits_count_node.to_str(depth + 1) + ("\t" * depth) + ")"
         return res + "\n"
 
+    @property
+    def size(self) -> Any:
+        return self.bits_count_node
+
+    @property
+    def name(self) -> str:
+        return str(self.name_token.value)
+
 
 class BitfieldDefNode:
-    def __init__(self, name_token: Token, bitfield_bytes_count_token: Optional[Token] = None):
+    def __init__(self, name_token: Token, bitfield_bytes_count_token: Optional[Any] = None):
         self.name_token: Token = name_token
-        self.bitfield_bytes_count_token: Optional[Token] = bitfield_bytes_count_token
+        self.bitfield_bytes_count_token: Optional[Any] = bitfield_bytes_count_token
         self.bitfield_members: List[BitfieldMemberNode] = []
 
     def set_explicit_size(self, bitfield_bytes_count_token: Token):
@@ -115,6 +151,18 @@ class BitfieldDefNode:
         for node in self.bitfield_members:
             res += node.to_str(depth + 1)
         return res + "\n"
+
+    @property
+    def name(self) -> str:
+        return str(self.name_token.value)
+
+    @property
+    def size(self) -> Any:
+        return self.bitfield_bytes_count_token
+
+    @property
+    def members(self) -> List[BitfieldMemberNode]:
+        return self.bitfield_members
 
 
 class Parser:

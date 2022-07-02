@@ -2,6 +2,7 @@
 from lexer import Lexer
 from parser import Parser
 from transpiler import ParseedOutputGenerator
+from generators import *
 from errors import ParseedError
 from utils import AST_pprint, lexer_pprint
 import argparse
