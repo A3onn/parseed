@@ -8,16 +8,15 @@ from errors import ParseedError
 
 class _Block:
     def __init__(self, depth: int, parent):
-        self.text: str = ""
+        self.text: List = []
         self.depth: int = depth
         self.parent: _Block = parent
-        self.child_blocks: List[_Block] = []
 
     def add_line(self, line: str) -> None:
         """
         Add a line in this block of code. The line will be automatically indented.
         """
-        self.text += ("\t" * self.depth) + line + "\n"
+        self.text.append(("\t" * self.depth) + line + "\n")
 
     def add_empty_line(self) -> None:
         """
@@ -31,7 +30,7 @@ class _Block:
         Add a new code block that is a sub-block of the current block.
         """
         res = _Block(self.depth + 1, self)
-        self.child_blocks.append(res)
+        self.text.append(res)
         return res
 
     def end_block(self):
@@ -41,7 +40,7 @@ class _Block:
         return self.parent
 
     def __str__(self) -> str:
-        return self.text + "\n".join([str(block) for block in self.child_blocks])
+        return "".join([str(block) for block in self.text])
 
 
 class Writer:
