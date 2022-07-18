@@ -79,73 +79,66 @@ class ParseedOutputGenerator(ABC):
 
 
 class DataType:
-    ENDIAN_LITTLE: str = "LITTLE"
-    ENDIAN_BIG: str = "BIG"
-
     def __init__(self, name: str):
         self.name = name
-        self.endian = -1
         self.size = -1
         if name == "uint8":
             self.size = 1
-            self.endian = DataType.ENDIAN_LITTLE
+            self.signed = False
         elif name == "int8":
             self.size = 1
-            self.endian = DataType.ENDIAN_BIG
+            self.signed = True
         elif name == "uint16":
             self.size = 2
-            self.endian = DataType.ENDIAN_LITTLE
+            self.signed = False
         elif name == "int16":
             self.size = 2
-            self.endian = DataType.ENDIAN_BIG
+            self.signed = True
         elif name == "uint24":
             self.size = 3
-            self.endian = DataType.ENDIAN_LITTLE
+            self.signed = False
         elif name == "int24":
             self.size = 3
-            self.endian = DataType.ENDIAN_BIG
+            self.signed = True
         elif name == "uint32":
             self.size = 4
-            self.endian = DataType.ENDIAN_LITTLE
+            self.signed = False
         elif name == "int32":
             self.size = 4
-            self.endian = DataType.ENDIAN_BIG
+            self.signed = True
         elif name == "uint40":
             self.size = 5
-            self.endian = DataType.ENDIAN_LITTLE
+            self.signed = False
         elif name == "int40":
             self.size = 5
-            self.endian = DataType.ENDIAN_BIG
+            self.signed = True
         elif name == "uint48":
             self.size = 6
-            self.endian = DataType.ENDIAN_LITTLE
+            self.signed = False
         elif name == "int48":
             self.size = 6
-            self.endian = DataType.ENDIAN_BIG
+            self.signed = True
         elif name == "uint64":
             self.size = 8
-            self.endian = DataType.ENDIAN_LITTLE
+            self.signed = False
         elif name == "int64":
             self.size = 8
-            self.endian = DataType.ENDIAN_BIG
+            self.signed = True
         elif name == "uint128":
             self.size = 16
-            self.endian = DataType.ENDIAN_LITTLE
+            self.signed = False
         elif name == "int128":
             self.size = 16
-            self.endian = DataType.ENDIAN_BIG
+            self.signed = False
         elif name == "float":
             self.size = 4
-            self.endian = ""
         elif name == "double":
             self.size = 8
-            self.endian = ""
         elif name == "byte":
             self.size = 1
-            self.endian = DataType.ENDIAN_BIG
+            self.signed = False
         elif name == "string":
             self.size = -1
-            self.endian = ""
         else:
             raise Exception("Unknown data-type: " + name)
 
