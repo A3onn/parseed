@@ -8,7 +8,7 @@ def get_AST(text):
     return Parser(tokens).run()
 
 class TranspilerTest(ParseedOutputGenerator):
-    def generate():
+    def generate(writer):
         return ""
 
 def test_structs():

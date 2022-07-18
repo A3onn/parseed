@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from lexer import Lexer
 from parser import Parser
-from transpiler import ParseedOutputGenerator
+from transpiler import ParseedOutputGenerator, Writer
 from generators import *
 from errors import ParseedError
 from utils import AST_pprint, lexer_pprint
@@ -57,7 +57,11 @@ def run(lexer, arguments, generator_class):
     if arguments.show_ast:
         print("[i] AST:\n", AST_pprint(ast), sep="")
 
-    print(generator_class(ast).generate())
+    writer: Writer = Writer()
+    generator_class(ast).generate(writer)
+
+    print(writer.generate_code())
+
 
 
 if __name__ == "__main__":

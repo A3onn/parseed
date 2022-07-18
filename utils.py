@@ -13,7 +13,6 @@ DATA_TYPES = [
     "uint128", "int128",
     "float", "double"
     "string",
-    "byte",
 ]
 
 # LIST OF TOKENS
