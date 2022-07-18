@@ -17,11 +17,20 @@ class Python_Class(ParseedOutputGenerator):
             current_block = current_block.add_block()
             current_block.add_line("curr_index = 0")
             for member in struct.members:
-                current_block.add_line(f"self.{member.name} = struct.unpack_from(\"{self.get_data_type_as_struct_format(member)}\", buf, curr_index)[0]")
-                current_block.add_line(f"curr_index += {DataType(member.type).size}")
+                if member.is_list():
+                    current_block.add_line(f"self.{member.name} = []")
+                    current_block.add_line(f"for i in range(0, {member.list_length}):")
+                    current_block = current_block.add_block()
+                    current_block.add_line(f"self.{member.name}.append(struct.unpack_from(\"{self.get_data_type_as_struct_format(member)}\", buf, curr_index)[0])")
+                    current_block.add_line(f"curr_index += {DataType(member.type).size}")
+                    current_block = current_block.end_block()
+                else:
+                    current_block.add_line(f"self.{member.name} = struct.unpack_from(\"{self.get_data_type_as_struct_format(member)}\", buf, curr_index)[0]")
+                    current_block.add_line(f"curr_index += {DataType(member.type).size}")
             current_block = current_block.end_block()
             current_block.add_empty_line()
 
+            # generate __str__ function
             current_block.add_line("def __str__(self):")
             current_block = current_block.add_block()
 
@@ -34,6 +43,7 @@ class Python_Class(ParseedOutputGenerator):
             current_block.add_line(f"return res")
 
     def get_data_type_as_struct_format(self, member):
+        # see: https://docs.python.org/3/library/struct.html#format-characters
         dt = DataType(member.type)
         if dt.is_byte():
             return "c"
@@ -45,11 +55,6 @@ class Python_Class(ParseedOutputGenerator):
             return "d"
         else:
             res = ""
-            if dt.endian == DataType.ENDIAN_BIG:
-                res += ">"
-            elif dt.endian == DataType.ENDIAN_LITTLE:
-                res += "<"
-            
             if dt.size == 1:
                 res += "b"
             elif dt.size == 2:
@@ -66,4 +71,7 @@ class Python_Class(ParseedOutputGenerator):
                 res += "q"
             elif dt.size == 16:
                 raise NotImplementedError("String is not yet implemented in Python_Class.")
+
+            if not dt.signed:
+                res = res.upper()
             return res
