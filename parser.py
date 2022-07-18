@@ -89,7 +89,7 @@ class StructMemberDeclareNode:
     def __init__(self, type_token: Token, name_token: Token, is_list: bool, list_length_node: Optional[Any] = None):
         self.type_token: Token = type_token
         self.name_token: Token = name_token
-        self.is_list: bool = is_list
+        self._is_list: bool = is_list
         self.list_length_node: Optional[Any] = list_length_node
 
     def to_str(self, depth: int = 0) -> str:
@@ -106,6 +106,12 @@ class StructMemberDeclareNode:
     def type(self) -> str:
         return str(self.type_token.value)
 
+    @property
+    def list_length(self) -> int:
+        return str(self.list_length_node.value)
+
+    def is_list(self) -> bool:
+        return self._is_list
 
 class StructDefNode:
     def __init__(self, name_token: Token):
