@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 from typing import Any, List
 from abc import ABC, abstractmethod
-from parser import *
-
-from errors import ParseedError
+from parser import BitfieldDefNode, StructDefNode
 
 
 class _Block:
