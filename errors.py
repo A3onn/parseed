@@ -3,7 +3,8 @@ from utils import Position
 from typing import List
 
 
-class ParseedError(BaseException):
+# LEXER AND PARSER ERRORS
+class ParseedLexerParserError(BaseException):
     def __init__(self, pos_start: Position, pos_end: Position, error_name: str, details: str):
         self.pos_start: Position = pos_start
         self.pos_end: Position = pos_end
@@ -23,17 +24,30 @@ class ParseedError(BaseException):
         return res
 
 
-class IllegalCharacterError(ParseedError):
+class IllegalCharacterError(ParseedLexerParserError):
     def __init__(self, pos_start: Position, pos_end: Position, details: str):
         super().__init__(pos_start, pos_end, "Illegal character error", f"{details}, col {pos_start.col}")
 
 
-class InvalidSyntaxError(ParseedError):
+class InvalidSyntaxError(ParseedLexerParserError):
     def __init__(self, pos_start: Position, pos_end: Position, details: str):
         super().__init__(pos_start, pos_end, "Invalid syntax error", details)
 
 
-class ExpectedMoreCharError(ParseedError):
+class ExpectedMoreCharError(ParseedLexerParserError):
     def __init__(self, pos_start: Position, pos_end: Position, expected_chars: List[str]):
         list_chars: str = ", ".join([f"'{c}'" for c in expected_chars])
         super().__init__(pos_start, pos_end, "Expected more chars", list_chars)
+
+
+# TRANSPILER ERRORS
+class ParseedTranspilerError(BaseException):
+    pass
+
+class RecursiveNestedStructError(ParseedTranspilerError):
+    def __init__(self, first_struct_name: str, second_struct_name: str):
+        self.first_struct_name = first_struct_name
+        self.second_struct_name = second_struct_name
+
+    def __str__(self) -> str:
+        return f"Recusive nested structs in {self.first_struct_name} and {self.second_struct_name}."
