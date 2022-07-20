@@ -2,7 +2,7 @@
 from typing import Any, List
 from abc import ABC, abstractmethod
 from parser import BitfieldDefNode, StructDefNode
-from errors import UnknownTypeError
+from errors import UnknownTypeError, RecursiveStructError
 from utils import DATA_TYPES
 
 
@@ -84,7 +84,7 @@ class ParseedOutputGenerator(ABC):
                 self.bitfields.append(node)
             elif isinstance(node, StructDefNode):
                 self.structs.append(node)
-        
+
         # verify that everything is correct
         for struct in self.structs:
             for member in struct.members:
@@ -94,14 +94,24 @@ class ParseedOutputGenerator(ABC):
                         member.type not in [bitfield.name for bitfield in self.bitfields]:
                         raise UnknownTypeError(member.type, struct.name)
                     
-                    self._verify_recursive_struct_member(member)
+                    self._verify_recursive_struct_member(member, [])
 
-    def _verify_recursive_struct_member(self, member):
+    def _verify_recursive_struct_member(self, visited_member, structs_stack):
         """
-        The 'member' parameter should be a valid data type, meaning it should be in the self.structs list.
+        Verify if a struct is using itself in one of its members.
+        A stack containing the visited structs is used.
+        If the same struct appears twice in the stack, it means there is a recursion. 
         """
-        # TODO
-        pass
+        if visited_member.type in DATA_TYPES: # base case, cannot visit native data types as they are not structs
+            return
+        elif visited_member.type in structs_stack:
+            raise RecursiveStructError(structs_stack)
+
+        structs_stack.append(visited_member.type)
+        for member in self._get_struct_by_name(visited_member.type).members:
+            self._verify_recursive_struct_member(member, structs_stack)
+        structs_stack.pop()
+
 
     def _get_struct_by_name(self, name):
         struct_res = [struct for struct in self.structs if struct.name == name]

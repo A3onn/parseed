@@ -44,13 +44,14 @@ class ExpectedMoreCharError(ParseedLexerParserError):
 class ParseedTranspilerError(BaseException):
     pass
 
-class RecursiveNestedStructError(ParseedTranspilerError):
-    def __init__(self, first_struct_name: str, second_struct_name: str):
-        self.first_struct_name = first_struct_name
-        self.second_struct_name = second_struct_name
+
+class RecursiveStructError(ParseedTranspilerError):
+    def __init__(self, structs):
+        self.structs = structs
 
     def __str__(self) -> str:
-        return f"Recusive nested structs in {self.first_struct_name} and {self.second_struct_name}."
+        return f"Recursive nested structs found: {' -> '.join(self.structs)}"
+
 
 class UnknownTypeError(ParseedTranspilerError):
     def __init__(self, type_name: str, struct_name: Optional[str]):
