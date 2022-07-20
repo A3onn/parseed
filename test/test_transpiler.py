@@ -63,4 +63,4 @@ def test_nested_structs():
         TranspilerTest(get_AST("struct root_struct { nested_struct test, } struct nested_struct { root_struct should_not_work, }"))
 
     with pytest.raises(RecursiveNestedStructError):
-        TranspilerTest(get_AST("struct root_struct { nested_struct test, } struct nested_struct_1 { nested_struct_2 should_not_work, } struct nested_struct_2 { root_struct should_not_work , }"))
+        TranspilerTest(get_AST("struct root_struct { nested_struct_1 test, } struct nested_struct_1 { nested_struct_2 should_not_work, } struct nested_struct_2 { root_struct should_not_work , }"))
