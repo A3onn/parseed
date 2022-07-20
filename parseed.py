@@ -51,7 +51,7 @@ def run(lexer, arguments, generator_class):
     parser = Parser(tokens)
     try:
         ast = parser.run()
-    except ParseedError as e:
+    except ParseedLexerParserError as e:
         print(e)  # just print the error
         return
     if arguments.show_ast:
@@ -61,7 +61,6 @@ def run(lexer, arguments, generator_class):
     generator_class(ast).generate(writer)
 
     print(writer.generate_code())
-
 
 
 if __name__ == "__main__":
