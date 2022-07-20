@@ -3,7 +3,7 @@ from lexer import Lexer
 from parser import Parser
 from transpiler import ParseedOutputGenerator, Writer
 from generators import *
-from errors import ParseedLexerParserError
+from errors import ParseedLexerParserError, ParseedTranspilerError
 from utils import AST_pprint, lexer_pprint
 import argparse
 
@@ -58,7 +58,11 @@ def run(lexer, arguments, generator_class):
         print("[i] AST:\n", AST_pprint(ast), sep="")
 
     writer: Writer = Writer()
-    generator_class(ast).generate(writer)
+    try:
+        generator_class(ast).generate(writer)
+    except ParseedTranspilerError as e:
+        print(e)  # just print the error
+        return
 
     print(writer.generate_code())
 

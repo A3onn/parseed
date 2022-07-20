@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from utils import Position
-from typing import List
+from typing import List, Optional
 
 
 # LEXER AND PARSER ERRORS
@@ -51,3 +51,13 @@ class RecursiveNestedStructError(ParseedTranspilerError):
 
     def __str__(self) -> str:
         return f"Recusive nested structs in {self.first_struct_name} and {self.second_struct_name}."
+
+class UnknownTypeError(ParseedTranspilerError):
+    def __init__(self, type_name: str, struct_name: Optional[str]):
+        self.type_name = type_name
+        self.struct_name = struct_name
+
+    def __str__(self) -> str:
+        if self.struct_name is None:
+            return f"Unknown data type '{self.type_name}'."
+        return f"Unknown data type '{self.type_name}' in {self.struct_name}."

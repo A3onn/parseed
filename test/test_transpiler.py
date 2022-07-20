@@ -2,7 +2,7 @@
 from transpiler import ParseedOutputGenerator
 from lexer import Lexer
 from parser import Parser
-from errors import RecursiveNestedStructError
+from errors import RecursiveNestedStructError, UnknownTypeError
 import pytest
 
 def get_AST(text):
@@ -56,5 +56,11 @@ def test_nested_structs():
     # just to check if there is an error thrown when using nested structs
     TranspilerTest(get_AST("struct root_struct { nested_struct test, } struct nested_struct {uint8 data, }"))
 
+    with pytest.raises(UnknownTypeError):
+        TranspilerTest(get_AST("struct test { some_type test, }"))
+
     with pytest.raises(RecursiveNestedStructError):
         TranspilerTest(get_AST("struct root_struct { nested_struct test, } struct nested_struct { root_struct should_not_work, }"))
+
+    with pytest.raises(RecursiveNestedStructError):
+        TranspilerTest(get_AST("struct root_struct { nested_struct test, } struct nested_struct_1 { nested_struct_2 should_not_work, } struct nested_struct_2 { root_struct should_not_work , }"))

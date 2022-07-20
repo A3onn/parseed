@@ -2,9 +2,16 @@
 from typing import Any, List
 from abc import ABC, abstractmethod
 from parser import BitfieldDefNode, StructDefNode
+from errors import UnknownTypeError
+from utils import DATA_TYPES
 
 
 class _Block:
+    """
+    Represents a block of code.
+    This class can be viewed as a stack, you can push with add_block and pop with end_block.
+    It helps with the formatting of the generated code.
+    """
     def __init__(self, depth: int, parent):
         self.text: List = []
         self.depth: int = depth
@@ -25,7 +32,7 @@ class _Block:
 
     def add_block(self):
         """
-        Add a new code block that is a sub-block of the current block.
+        Add a new code block that is on top of this instance block.
         """
         res = _Block(self.depth + 1, self)
         self.text.append(res)
@@ -33,11 +40,14 @@ class _Block:
 
     def end_block(self):
         """
-        End the current code block and return the parent block.
+        Pop this block and return the new block at the top of the block stack.
         """
         return self.parent
 
     def __str__(self) -> str:
+        """
+        Generate and return this block's code and blocks' code above.
+        """
         return "".join([str(block) for block in self.text])
 
 
@@ -48,7 +58,7 @@ class Writer:
 
     def add_block(self) -> _Block:
         """
-        Create a new code block and returns it.
+        Create a new root code block and returns it.
         """
         res: _Block = _Block(0, None)
         self.blocks.append(res)
@@ -70,10 +80,34 @@ class ParseedOutputGenerator(ABC):
 
     def _init_intermediate_ast(self, ast: List[Any]):
         for node in ast:
-            if isinstance(node, StructDefNode):
-                self.structs.append(node)
-            elif isinstance(node, BitfieldDefNode):
+            if isinstance(node, BitfieldDefNode):
                 self.bitfields.append(node)
+            elif isinstance(node, StructDefNode):
+                self.structs.append(node)
+        
+        # verify that everything is correct
+        for struct in self.structs:
+            for member in struct.members:
+                if member.type not in DATA_TYPES:
+                    # check for unknown types
+                    if member.type not in [struct.name for struct in self.structs] and \
+                        member.type not in [bitfield.name for bitfield in self.bitfields]:
+                        raise UnknownTypeError(member.type, struct.name)
+                    
+                    self._verify_recursive_struct_member(member)
+
+    def _verify_recursive_struct_member(self, member):
+        """
+        The 'member' parameter should be a valid data type, meaning it should be in the self.structs list.
+        """
+        # TODO
+        pass
+
+    def _get_struct_by_name(self, name):
+        struct_res = [struct for struct in self.structs if struct.name == name]
+        if len(struct_res) == 0:
+            return None
+        return struct_res[0]
 
 
 class DataType:
@@ -137,8 +171,7 @@ class DataType:
             self.signed = False
         elif name == "string":
             self.size = -1
-        else:
-            raise Exception("Unknown data-type: " + name)
+        # other type have been checked by the ParseedOutputGenerator class
 
     def is_string(self) -> bool:
         return self.name == "string"
