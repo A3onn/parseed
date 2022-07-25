@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from typing import List, Optional
 
-KEYWORDS = ["struct", "bitfield", "stop"]
+KEYWORDS = ["struct", "bitfield"]
 DATA_TYPES = [
     "uint8", "int8",
     "uint16", "int16",

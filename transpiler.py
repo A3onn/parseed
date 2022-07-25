@@ -52,6 +52,12 @@ class _Block:
 
 
 class Writer:
+    """
+    This helper class represents the generated code from the generator.
+    It can be seen as a stack of _Block.
+    Each _Block represents a part of code with a certain depth (=indentation).
+    This class keeps a list of _Block that are root block (depth=0).
+    """
     def __init__(self):
         self.text = ""
         self.blocks: List[_Block] = []
@@ -65,10 +71,17 @@ class Writer:
         return res
 
     def generate_code(self) -> str:
+        """
+        Return the full generated code from root blocks.
+        """
         return "\n".join([str(block) for block in self.blocks])
 
 
 class ParseedOutputGenerator(ABC):
+    """
+    Abstract class that must be used as a base class for generators.
+    This class contains one abstract method that is 'generate'.
+    """
     def __init__(self, ast: List[Any]):
         self.structs: List[StructDefNode] = []
         self.bitfields: List[BitfieldDefNode] = []
@@ -76,9 +89,19 @@ class ParseedOutputGenerator(ABC):
 
     @abstractmethod
     def generate(self, writer: Writer):
+        """
+        This method is where the code will be generated.
+        An instance of the Writer class is given in parameter and should be filled with the generated code.
+        You can access the list of struct and bitfields from the 'self.structs' and 'self.bitfields' attributes.
+        This abstract method must be defined in the child class, and it will be called automatically.
+        """
         pass
 
     def _init_intermediate_ast(self, ast: List[Any]):
+        """
+        Initialize some variables and perform some checks one the AST.
+        This function MUST NOT be called in the 'generate' method, as it only used in the constructor.
+        """
         for node in ast:
             if isinstance(node, BitfieldDefNode):
                 self.bitfields.append(node)
@@ -101,6 +124,7 @@ class ParseedOutputGenerator(ABC):
         Verify if a struct is using itself in one of its members.
         A stack containing the visited structs is used.
         If the same struct appears twice in the stack, it means there is a recursion. 
+        This function MUST NOT be called in the 'generate' method, as it only used in the _init_intermediate_ast method.
         """
         if visited_member.type in DATA_TYPES: # base case, cannot visit native data types as they are not structs
             return
@@ -114,6 +138,9 @@ class ParseedOutputGenerator(ABC):
 
 
     def _get_struct_by_name(self, name):
+        """
+        Returns a struct instance present in the self.struct attribute from it name.
+        """
         struct_res = [struct for struct in self.structs if struct.name == name]
         if len(struct_res) == 0:
             return None
@@ -121,6 +148,10 @@ class ParseedOutputGenerator(ABC):
 
 
 class DataType:
+    """
+    This helper class gives informations about a data-type from its name.
+    It is especially useful for knowing a data-type's size and if it is signed.
+    """
     def __init__(self, name: str):
         self.name = name
         self.size = -1
@@ -184,13 +215,27 @@ class DataType:
         # other type have been checked by the ParseedOutputGenerator class
 
     def is_string(self) -> bool:
+        """
+        Returns if the data-type is a string.
+        """
         return self.name == "string"
 
     def is_byte(self) -> bool:
+        """
+        Returns if the data-type is a byte.
+        """
         return self.name == "byte"
 
     def is_float(self) -> bool:
+        """
+        Returns if the data-type is a float.
+        Use the 'is_double' method to check if it a double.
+        """
         return self.name == "float"
 
     def is_double(self) -> bool:
+        """
+        Returns if the data-type is a double.
+        Use the 'is_float' method to check if it a float.
+        """
         return self.name == "double"

@@ -19,10 +19,17 @@ class Lexer:
         return self._make_tokens()
 
     def _next_token(self) -> None:
+        """
+        Returns the next character in the text if there is one.
+        It also updates the current position.
+        """
         self.pos.advance(self.current_char)
         self.current_char = self.text[self.pos.idx] if self.pos.idx < len(self.text) else None
 
     def _make_tokens(self) -> List[Token]:
+        """
+        Returns a list of Tokens gathered in self.text.
+        """
         tokens: List[Token] = []
 
         while self.current_char is not None:
@@ -90,6 +97,8 @@ class Lexer:
         res_identifier: str = ""
         pos_start: Position = self.pos.get_copy()
 
+        # identifiers can have numbers and '_' in their name, but as this function is called
+        # when a letter is founc, they cannot start with a number nor a '_'
         while self.current_char is not None and self.current_char in LETTERS_DIGITS + "_":
             res_identifier += self.current_char
             self._next_token()
@@ -140,6 +149,7 @@ class Lexer:
         else:
             return Token(TT_COMMENT, self._read_until("\n\r"), pos_start, self.pos)
 
+    # comparisons
     def _make_not_equal(self) -> Token:
         pos_start: Position = self.pos.get_copy()
         self._next_token()
@@ -179,6 +189,11 @@ class Lexer:
         return Token(TT_COMP_GT, pos_start=pos_start, pos_end=self.pos)
 
     def _read_until(self, stop_chars: str) -> str:
+        """
+        Calls self._next_token() until a character from the stop_chars parameter is reached.
+        This functions returns all characters read until the stop character is reached.
+        This function is useful for comments for example.
+        """
         res: str = ""
         while self.current_char is not None and self.current_char not in stop_chars:
             res += self.current_char
