@@ -1,33 +1,40 @@
-# this file will be updated through the developpement of parseed
-statements: statement+
+; this file will be updated through the developpement of parseed
+<statements> ::= <statement>+
 
-statement:  bitfield-stmt
-            struct-stmt
+<statement> ::=  <bitfield_stmt> | <struct_stmt>
 
-bitfield-stmt:    KEYWORD:bitfield IDENTIFIER LCURLY bitfield-member-def+ RCURLY // bitfield without size (in bytes)
-                  KEYWORD:bitfield IDENTIFIER LPAREN no-identifier-expr RPAREN LCURLY bitfield-member-def+ RCURLY // bitfield with size specified between parenthesis (in bytes)
+<bitfield_stmt> ::= "bitfield" <identifier> "{" <bitfield_member_def>+ "}"
+                    | "bitfield" <identifier> "(" <no_identifier_expr> ")" "{" <bitfield_member_def>+ "}"
 
-struct-stmt:      KEYWORD:struct IDENTIFIER LCURLY (struct-member-def)+ RCURLY
+<struct_stmt> ::= "struct" <identifier> "{" <struct_member_def>+ "}"
 
-bitfield-member-def:    IDENTIFIER (RPAREN no-identifier-expr LPAREN)? COMMA
+<bitfield_member_def> ::= <identifier> "(" <no_identifier_expr> ")"? ","
 
-struct-member-def:      (DATA-TYPE | IDENTIFIER) IDENTIFIER COMMA
-                        (DATA-TYPE | IDENTIFIER) LBRACK expr RBRACK IDENTIFIER COMMA
+<struct_member_def> ::= (<data_type> | <identifier>) <identifier> ","
+                        | (<data_type> | <identifier>) "[" <expr> "]" <identifier> ","
 
-no-identifier-expr: term ((PLUS|MINUS) term)*
+<no_identifier_expr> ::= <no_identifier_term> (("+" | "-") <no_identifier_term>)*
 
-no-identifier-term: factor ((MUL|DIV) factor)*
+<no_identifier_term> ::= <no_identifier_factor> (("*" | "/") <no_identifier_factor>)*
 
-no-identifier-factor:  NUM_INT|NUM_FLOAT
-                (PLUS|MINUS) factor
-                LPAREN expr RPAREN
+<no_identifier_factor> ::=  <num_int> | <num_float>
+                            | ("+" | "-") <no_identifier_factor>
+                            | "(" <expr> ")"
 
 
-expr: term ((PLUS|MINUS) term)*
+<expr> ::= <term> (("+" | "-") <term>)*
 
-term: factor ((MUL|DIV) factor)*
+<term> ::= <factor> (("*" | "/") <factor>)*
 
-factor:     NUM_INT|NUM_FLOAT
-            (PLUS|MINUS) factor
-            LPAREN expr RPAREN
-            IDENTIFIER
+<factor> ::= <num_int> | <num_float>
+             | ("+" | "-") <factor>
+             | "(" <expr> ")"
+             | <identifier>
+
+<identifier> ::= (("_" | [a-z] | [A-Z])+)+ (("_" | "-" | [0-9] | [a-z] | [A-Z])+)+
+
+<data_type> ::= "uint8" | "int8" | "uint16" | "int16" | "uint24" | "int24" | "uint32" | "int32" | "uint40" | "int40" | "uint48" | "int48" | "uint64" | "int64" | "uint128" | "int128" | "float" | "doublestring"
+
+<num_float> ::= <num_int> "." <num_int>
+
+<num_int> ::= ([0-9])+
