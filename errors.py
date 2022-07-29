@@ -53,6 +53,15 @@ class RecursiveStructError(ParseedTranspilerError):
         return f"Recursive nested structs found: {' -> '.join(self.structs)}"
 
 
+class DuplicateMemberError(ParseedTranspilerError):
+    def __init__(self, member_name, struct_name):
+        self.member_name = member_name
+        self.struct_name = struct_name
+
+    def __str__(self) -> str:
+        return f"'{self.member_name}' found multiple time in struct '{self.struct_name}'"
+
+
 class UnknownTypeError(ParseedTranspilerError):
     def __init__(self, type_name: str, struct_name: Optional[str]):
         self.type_name = type_name

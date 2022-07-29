@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 from typing import Any, List
+from operator import attrgetter
 from abc import ABC, abstractmethod
 from parser import BitfieldDefNode, StructDefNode
-from errors import UnknownTypeError, RecursiveStructError
+from errors import UnknownTypeError, RecursiveStructError, DuplicateMemberError
 from utils import DATA_TYPES
 
 
@@ -110,6 +111,7 @@ class ParseedOutputGenerator(ABC):
 
         # verify that everything is correct
         for struct in self.structs:
+            self._check_duplicate_members(struct)
             for member in struct.members:
                 if member.type not in DATA_TYPES:
                     # check for unknown types
@@ -119,6 +121,16 @@ class ParseedOutputGenerator(ABC):
                     
                     self._verify_recursive_struct_member(member, [])
 
+    def _check_duplicate_members(self, struct):
+        """
+        Check if a struct contains multiple members with the same name.
+        """
+        tmp = []
+        for member in struct.members:
+            if member.name in tmp:
+                raise DuplicateMemberError(member.name, struct.name)
+            tmp.append(member.name)
+        
     def _verify_recursive_struct_member(self, visited_member, structs_stack):
         """
         Verify if a struct is using itself in one of its members.
