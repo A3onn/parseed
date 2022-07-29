@@ -6,12 +6,12 @@
 <bitfield_stmt> ::= "bitfield" <identifier> "{" <bitfield_member_def>+ "}"
                     | "bitfield" <identifier> "(" <no_identifier_expr> ")" "{" <bitfield_member_def>+ "}"
 
-<struct_stmt> ::= "struct" <identifier> "{" <struct_member_def>+ "}"
+<struct_stmt> ::= ["LE | "BE"] "struct" <identifier> "{" <struct_member_def>+ "}"
 
 <bitfield_member_def> ::= <identifier> "(" <no_identifier_expr> ")"? ","
 
-<struct_member_def> ::= (<data_type> | <identifier>) <identifier> ","
-                        | (<data_type> | <identifier>) "[" <expr> "]" <identifier> ","
+<struct_member_def> ::= ["LE | "BE"] (<data_type> | <identifier>) <identifier> ","
+                        | ["LE | "BE"] (<data_type> | <identifier>) "[" <expr> "]" <identifier> ","
 
 <no_identifier_expr> ::= <no_identifier_term> (("+" | "-") <no_identifier_term>)*
 

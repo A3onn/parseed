@@ -86,10 +86,11 @@ class StructMemberAccessNode:
 
 
 class StructMemberDeclareNode:
-    def __init__(self, type_token: Token, name_token: Token, is_list: bool, list_length_node: Optional[Any] = None):
+    def __init__(self, type_token: Token, name_token: Token, is_list: bool, list_length_node: Optional[Any] = None, endian: str = BIG_ENDIAN):
         self.type_token: Token = type_token
         self.name_token: Token = name_token
         self._is_list: bool = is_list
+        self._endian: str = endian
         self.list_length_node: Optional[Any] = list_length_node
 
     def to_str(self, depth: int = 0) -> str:
@@ -113,10 +114,16 @@ class StructMemberDeclareNode:
     def is_list(self) -> bool:
         return self._is_list
 
+    @property
+    def endian(self) -> str:
+        return self._endian
+
+
 class StructDefNode:
-    def __init__(self, name_token: Token):
+    def __init__(self, name_token: Token, endian: str = BIG_ENDIAN):
         self.name_token: Token = name_token
         self.struct_members: List[StructMemberDeclareNode] = []
+        self._endian: str = endian
 
     def add_member_node(self, member_node: StructMemberDeclareNode) -> None:
         self.struct_members.append(member_node)
@@ -134,6 +141,10 @@ class StructDefNode:
     @property
     def members(self) -> List[StructMemberDeclareNode]:
         return self.struct_members
+
+    @property
+    def endian(self) -> str:
+        return self._endian
 
 
 # bitfield
@@ -201,6 +212,9 @@ class Parser:
         self.advance()
 
     def run(self) -> list:
+        """
+        Returns a list of nodes (AST).
+        """
         return self.statements()
 
     def advance(self) -> Token:
@@ -222,7 +236,7 @@ class Parser:
         token: Token = self.current_token
 
         if token.type == TT_KEYWORD:
-            if token.value == "struct":
+            if token.value == "struct" or token.value in (BIG_ENDIAN, LITTLE_ENDIAN):
                 return self.struct_stmt()
             elif token.value == "bitfield":
                 return self.bitfield_stmt()
@@ -231,7 +245,7 @@ class Parser:
 
     def bitfield_member_def(self) -> BitfieldMemberNode:
         """
-        IDENTIFIER (RPAREN no-identifier-expr LPAREN)? COMMA
+        <bitfield_member_def> ::= <identifier> "(" <no_identifier_expr> ")"? ","
         """
         if self.current_token.type != TT_IDENTIFIER:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier")
@@ -256,10 +270,8 @@ class Parser:
 
     def bitfield_stmt(self) -> BitfieldDefNode:
         """
-        Explicit size:
-        KEYWORD:bitfield IDENTIFIER LPAREN no-identifier-expr RPAREN LCURLY bitfield-member-def+ RCURLY // bitfield with size specified between parenthesis (in bytes)
-        Implicit size:
-        KEYWORD:bitfield IDENTIFIER LCURLY bitfield-member-def+ RCURLY
+        <bitfield_stmt> ::= "bitfield" <identifier> "{" <bitfield_member_def>+ "}"
+                            | "bitfield" <identifier> "(" <no_identifier_expr> ")" "{" <bitfield_member_def>+ "}"
         """
         self.advance()
         res_bitfield_def_node: BitfieldDefNode = BitfieldDefNode(self.current_token)
@@ -287,33 +299,45 @@ class Parser:
 
     def struct_stmt(self) -> StructDefNode:
         """
-        KEYWORD:struct IDENTIFIER LCURLY struct-member-def RCURLY
+        <struct_stmt> ::= ["LE | "BE"] "struct" <identifier> "{" <struct_member_def>+ "}"
         """
+        endian = BIG_ENDIAN
+        if self.current_token.value in (BIG_ENDIAN, LITTLE_ENDIAN):
+            if self.current_token.value == LITTLE_ENDIAN:
+                endian = LITTLE_ENDIAN
+            self.advance()
+
         self.advance()
         if self.current_token.type != TT_IDENTIFIER:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier")
 
-        res_struct_def_node: StructDefNode = StructDefNode(self.current_token)
+        res_struct_def_node: StructDefNode = StructDefNode(self.current_token, endian=endian)
 
         self.advance()
-        if self.current_token.type != TT_LCURLY:
+        if self.current_token.type != TT_LCURLY: # '{', start of struct
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '{'")
         self.advance()
 
         while self.current_token.type not in [TT_RCURLY, TT_EOF]:
-            res_struct_def_node.add_member_node(self.struct_member_def())
+            res_struct_def_node.add_member_node(self.struct_member_def(endian))
 
-        if self.current_token.type == TT_EOF:
+        if self.current_token.type == TT_EOF: # '}', end of struct
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '}'")
         self.advance()
 
         return res_struct_def_node
 
-    def struct_member_def(self) -> StructMemberDeclareNode:
+    def struct_member_def(self, struct_endian) -> StructMemberDeclareNode:
         """
-        (DATA-TYPE | IDENTIFIER) IDENTIFIER COMMA
-        (DATA-TYPE | IDENTIFIER) LBRACK expr RBRACK IDENTIFIER COMMA
+        <struct_member_def> ::= ["LE | "BE"] (<data_type> | <identifier>) <identifier> ","
+                                | ["LE | "BE"] (<data_type> | <identifier>) "[" <expr> "]" <identifier> ","
         """
+        endian = struct_endian
+        if self.current_token.value in (BIG_ENDIAN, LITTLE_ENDIAN):
+            if self.current_token.value == LITTLE_ENDIAN:
+                endian = LITTLE_ENDIAN
+            self.advance()
+
         if self.current_token.type not in [TT_DATA_TYPE, TT_IDENTIFIER]:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected data-type or identifier")
 
@@ -343,7 +367,7 @@ class Parser:
         else:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ','")
 
-        return StructMemberDeclareNode(member_type, member_name, is_list, list_length_node)
+        return StructMemberDeclareNode(member_type, member_name, is_list, list_length_node, endian)
 
     def no_identifier_factor(self) -> Any:
         token: Token = self.current_token

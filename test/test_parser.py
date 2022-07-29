@@ -2,6 +2,7 @@
 from parser import Parser
 from lexer import Lexer
 from errors import InvalidSyntaxError
+from utils import *
 import pytest
 
 
@@ -33,6 +34,54 @@ def test_struct_members_with_expressions():
     Parser(get_tokens("struct test { uint8[1+1] member1, int16 member2, uint8[-3+24] member2, }")).run()
     Parser(get_tokens("struct test { uint8[3*(2+3)] member1, int16 member2, uint8[-(-3*12)] member2, }")).run()
     Parser(get_tokens("struct test { uint8 member1, int16 member2, uint8[2*3-(3)] member2, }")).run()
+
+def test_struct_endian():
+    stmts = Parser(get_tokens("struct test { } BE struct test2 { }")).run()
+    assert stmts[0].endian == BIG_ENDIAN
+    assert stmts[1].endian == BIG_ENDIAN
+
+    stmts = Parser(get_tokens("LE struct test { }")).run()
+    assert stmts[0].endian == LITTLE_ENDIAN
+
+    stmts = Parser(get_tokens("struct test { uint8 member, } BE struct test2 { uint8 member, }")).run()
+    assert stmts[0].endian == BIG_ENDIAN
+    assert stmts[1].endian == BIG_ENDIAN
+
+    stmts = Parser(get_tokens("LE struct test { uint8 member, }")).run()
+    assert stmts[0].endian == LITTLE_ENDIAN
+
+def test_struct_member_endian():
+    stmts = Parser(get_tokens("struct test { uint8 member, } BE struct test2 { BE uint8 member, }")).run()
+    assert stmts[0].members[0].endian == BIG_ENDIAN
+    assert stmts[1].members[0].endian == BIG_ENDIAN
+
+    stmts = Parser(get_tokens("struct test { LE uint8 member, } BE struct test2 { LE uint8 member, }")).run()
+    assert stmts[0].members[0].endian == LITTLE_ENDIAN
+    assert stmts[1].members[0].endian == LITTLE_ENDIAN
+
+    stmts = Parser(get_tokens("struct test { BE uint8 member, LE uint8 member2, }")).run()
+    assert stmts[0].members[0].endian == BIG_ENDIAN
+    assert stmts[0].members[1].endian == LITTLE_ENDIAN
+
+    stmts = Parser(get_tokens("struct test { uint8 member, LE uint8 member2, }")).run()
+    assert stmts[0].members[0].endian == BIG_ENDIAN
+    assert stmts[0].members[1].endian == LITTLE_ENDIAN
+
+    stmts = Parser(get_tokens("LE struct test { uint8 member, uint8 member2, }")).run()
+    assert stmts[0].members[0].endian == LITTLE_ENDIAN
+    assert stmts[0].members[1].endian == LITTLE_ENDIAN
+
+    stmts = Parser(get_tokens("LE struct test { uint8 member, LE uint8 member2, }")).run()
+    assert stmts[0].members[0].endian == LITTLE_ENDIAN
+    assert stmts[0].members[1].endian == LITTLE_ENDIAN
+
+    stmts = Parser(get_tokens("LE struct test { LE uint8 member, LE uint8 member2, }")).run()
+    assert stmts[0].members[0].endian == LITTLE_ENDIAN
+    assert stmts[0].members[1].endian == LITTLE_ENDIAN
+
+    stmts = Parser(get_tokens("BE struct test { uint8 member, LE uint8 member2, }")).run()
+    assert stmts[0].members[0].endian == BIG_ENDIAN
+    assert stmts[0].members[1].endian == LITTLE_ENDIAN
 
 def test_struct_members_errors():
     with pytest.raises(InvalidSyntaxError):

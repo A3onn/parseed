@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 from typing import List, Optional
 
-KEYWORDS = ["struct", "bitfield"]
+# endian
+LITTLE_ENDIAN = "LE"
+BIG_ENDIAN = "BE"
+
+KEYWORDS = ["struct", "bitfield", LITTLE_ENDIAN, BIG_ENDIAN]
 DATA_TYPES = [
     "uint8", "int8",
     "uint16", "int16",
