@@ -109,7 +109,7 @@ class StructMemberDeclareNode:
 
     @property
     def list_length(self) -> int:
-        return str(self.list_length_node.value)
+        return int(self.list_length_node.value)
 
     def is_list(self) -> bool:
         return self._is_list
@@ -314,14 +314,14 @@ class Parser:
         res_struct_def_node: StructDefNode = StructDefNode(self.current_token, endian=endian)
 
         self.advance()
-        if self.current_token.type != TT_LCURLY: # '{', start of struct
+        if self.current_token.type != TT_LCURLY:  # '{', start of struct
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '{'")
         self.advance()
 
         while self.current_token.type not in [TT_RCURLY, TT_EOF]:
             res_struct_def_node.add_member_node(self.struct_member_def(endian))
 
-        if self.current_token.type == TT_EOF: # '}', end of struct
+        if self.current_token.type == TT_EOF:  # '}', end of struct
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '}'")
         self.advance()
 

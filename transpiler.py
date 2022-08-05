@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 from typing import Any, List
-from operator import attrgetter
 from abc import ABC, abstractmethod
 from parser import BitfieldDefNode, StructDefNode
 from errors import UnknownTypeError, RecursiveStructError, DuplicateMemberError
@@ -86,7 +85,7 @@ class ParseedOutputGenerator(ABC):
     def __init__(self, ast: List[Any]):
         self.structs: List[StructDefNode] = []
         self.bitfields: List[BitfieldDefNode] = []
-        self._init_intermediate_ast(ast)
+        self.__init_intermediate_ast(ast)
 
     @abstractmethod
     def generate(self, writer: Writer):
@@ -98,7 +97,7 @@ class ParseedOutputGenerator(ABC):
         """
         pass
 
-    def _init_intermediate_ast(self, ast: List[Any]):
+    def __init_intermediate_ast(self, ast: List[Any]):
         """
         Initialize some variables and perform some checks one the AST.
         This function MUST NOT be called in the 'generate' method, as it only used in the constructor.
@@ -111,17 +110,17 @@ class ParseedOutputGenerator(ABC):
 
         # verify that everything is correct
         for struct in self.structs:
-            self._check_duplicate_members(struct)
+            self.__check_duplicate_members(struct)
             for member in struct.members:
                 if member.type not in DATA_TYPES:
                     # check for unknown types
                     if member.type not in [struct.name for struct in self.structs] and \
-                        member.type not in [bitfield.name for bitfield in self.bitfields]:
+                            member.type not in [bitfield.name for bitfield in self.bitfields]:
                         raise UnknownTypeError(member.type, struct.name)
-                    
-                    self._verify_recursive_struct_member(member, [])
 
-    def _check_duplicate_members(self, struct):
+                    self.__verify_recursive_struct_member(member, [])
+
+    def __check_duplicate_members(self, struct):
         """
         Check if a struct contains multiple members with the same name.
         """
@@ -130,26 +129,25 @@ class ParseedOutputGenerator(ABC):
             if member.name in tmp:
                 raise DuplicateMemberError(member.name, struct.name)
             tmp.append(member.name)
-        
-    def _verify_recursive_struct_member(self, visited_member, structs_stack):
+
+    def __verify_recursive_struct_member(self, visited_member, structs_stack):
         """
         Verify if a struct is using itself in one of its members.
         A stack containing the visited structs is used.
-        If the same struct appears twice in the stack, it means there is a recursion. 
+        If the same struct appears twice in the stack, it means there is a recursion.
         This function MUST NOT be called in the 'generate' method, as it only used in the _init_intermediate_ast method.
         """
-        if visited_member.type in DATA_TYPES: # base case, cannot visit native data types as they are not structs
+        if visited_member.type in DATA_TYPES:  # base case, cannot visit native data types as they are not structs
             return
         elif visited_member.type in structs_stack:
             raise RecursiveStructError(structs_stack)
 
         structs_stack.append(visited_member.type)
-        for member in self._get_struct_by_name(visited_member.type).members:
-            self._verify_recursive_struct_member(member, structs_stack)
+        for member in self.get_struct_by_name(visited_member.type).members:
+            self.__verify_recursive_struct_member(member, structs_stack)
         structs_stack.pop()
 
-
-    def _get_struct_by_name(self, name):
+    def get_struct_by_name(self, name):
         """
         Returns a struct instance present in the self.struct attribute from it name.
         """
