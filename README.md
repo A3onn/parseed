@@ -4,9 +4,13 @@ A simple language simplifying the creation of parsers
 
 # TODO
 
-- Access struct's own members and members's members
-- Add more checks in '_init_intermediate_ast' like correct members access
-- Add ternary operators in parser
 - Finish the Python generator
 - Add a C generator
-- Add more examples
+- Add more examples:
+    - PCAP
+    - ELF
+    - GIF
+- Add some features for the language:
+    - choose a member type based on some condition
+    - ternary operator for data-type
+    - member list without size to indicate to read until the end of the buffer
