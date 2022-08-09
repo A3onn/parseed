@@ -109,8 +109,8 @@ def test_parenthesis():
     assert tokens[4].type == TT_RPAREN
     assert tokens[5].type == TT_RPAREN
 
-def test_comma_semicolon_dot():
-    lexer = Lexer(",, ; ; .. .", "")
+def test_comma_colon_semicolon_dot_question_mark():
+    lexer = Lexer(",, ; ; .. . :: : ? ??", "")
     tokens = lexer.run()
     assert tokens[0].type == TT_COMMA
     assert tokens[1].type == TT_COMMA
@@ -119,6 +119,12 @@ def test_comma_semicolon_dot():
     assert tokens[4].type == TT_DOT
     assert tokens[5].type == TT_DOT
     assert tokens[6].type == TT_DOT
+    assert tokens[7].type == TT_COLON
+    assert tokens[8].type == TT_COLON
+    assert tokens[9].type == TT_COLON
+    assert tokens[10].type == TT_QUESTION_MARK
+    assert tokens[11].type == TT_QUESTION_MARK
+    assert tokens[12].type == TT_QUESTION_MARK
 
 def test_comparator():
     lexer = Lexer("==  <= <   >= > !=", "")

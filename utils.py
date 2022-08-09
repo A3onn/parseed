@@ -5,7 +5,7 @@ from typing import List, Optional
 LITTLE_ENDIAN = "LE"
 BIG_ENDIAN = "BE"
 
-KEYWORDS = ["struct", "bitfield", LITTLE_ENDIAN, BIG_ENDIAN]
+KEYWORDS = ["struct", "bitfield", LITTLE_ENDIAN, BIG_ENDIAN, "match"]
 DATA_TYPES = [
     "uint8", "int8",
     "uint16", "int16",
@@ -49,6 +49,10 @@ TT_COMMENT = "COMMENT"
 TT_COMMA = "COMMA"
 TT_DOT = "DOT"
 TT_SEMICOL = "SEMICOL"
+
+# for ternary operator
+TT_COLON = "COLON"
+TT_QUESTION_MARK = "QUESTION_MARK"
 
 TT_IDENTIFIER = "IDENTIFIER"
 TT_KEYWORD = "KEYWORD"

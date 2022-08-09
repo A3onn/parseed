@@ -37,6 +37,9 @@ class Lexer:
                 self._next_token()
             elif self.current_char in DIGITS:
                 tokens.append(self._make_number_or_dot())
+            elif self.current_char == "?":
+                tokens.append(Token(TT_QUESTION_MARK, pos_start=self.pos))
+                self._next_token()
             elif self.current_char == "+":
                 tokens.append(Token(TT_PLUS, pos_start=self.pos))
                 self._next_token()
@@ -73,6 +76,9 @@ class Lexer:
                 tokens.append(self._make_number_or_dot())
             elif self.current_char == ";":
                 tokens.append(Token(TT_SEMICOL, pos_start=self.pos))
+                self._next_token()
+            elif self.current_char == ":":
+                tokens.append(Token(TT_COLON, pos_start=self.pos))
                 self._next_token()
             elif self.current_char == "!":
                 tokens.append(self._make_not_equal())
