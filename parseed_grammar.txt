@@ -1,27 +1,28 @@
-; this file will be updated through the developpement of parseed
+; this file will be updated throughout the developpement of parseed
 <statements> ::= <statement>+
 
 <statement> ::=  <bitfield_stmt> | <struct_stmt>
 
+
+; bitfield
 <bitfield_stmt> ::= "bitfield" <identifier> "{" <bitfield_member_def>+ "}"
                     | "bitfield" <identifier> "(" <no_identifier_expr> ")" "{" <bitfield_member_def>+ "}"
 
-<struct_stmt> ::= ["LE | "BE"] "struct" <identifier> "{" <struct_member_def>+ "}"
-
 <bitfield_member_def> ::= <identifier> "(" <no_identifier_expr> ")"? ","
 
-<struct_member_def> ::= ["LE | "BE"] (<data_type> | <identifier>) <identifier> ","
-                        | ["LE | "BE"] (<data_type> | <identifier>) "[" <expr> "]" <identifier> ","
 
-<no_identifier_expr> ::= <no_identifier_term> (("+" | "-") <no_identifier_term>)*
+; struct
+<struct_stmt> ::= ["LE" | "BE"] "struct" <identifier> "{" <struct_member_def>+ "}"
 
-<no_identifier_term> ::= <no_identifier_factor> (("*" | "/") <no_identifier_factor>)*
+<struct_member_def> ::= ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>) <identifier> ","
+                        | ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>) "[" <expr> "]" <identifier> ","
+                        | ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>) "[]" <identifier> ","  ;; repeat this member until the end of the buffer
+                        | <match_stmt> ","
 
-<no_identifier_factor> ::=  <num_int> | <num_float>
-                            | ("+" | "-") <no_identifier_factor>
-                            | "(" <expr> ")"
+<match_stmt> ::= "match (" <expr> ") {" (<expr> ":" <struct_member_def> ",")+ "}"
 
 
+; expressions
 <expr> ::= <term> (("+" | "-") <term>)*
 
 <term> ::= <factor> (("*" | "/") <factor>)*
@@ -30,10 +31,35 @@
              | ("+" | "-") <factor>
              | "(" <expr> ")"
              | <identifier>
+             | <struct_member_access>
+
+<no_identifier_expr> ::= <no_identifier_term> (("+" | "-") <no_identifier_term>)*
+
+<no_identifier_term> ::= <no_identifier_factor> (("*" | "/") <no_identifier_factor>)*
+
+<no_identifier_factor> ::=  <num_int> | <num_float>
+                            | ("+" | "-") <no_identifier_factor>
+                            | "(" <no_identifier_expr> ")"
+
+
+; comparisons
+<comparison> ::= (<identifier> | <num_int> | <num_float>) <comparator> (<identifier> | <num_int> | <num_float>)
+
+<comparator> ::= "<=" | "<" | "==" | ">" | ">=" | "!="
+
+<logical_operator> ::= "&&" | "||"
+
+
+; data-types
+<data_type> ::= "uint8" | "int8" | "uint16" | "int16" | "uint24" | "int24" | "uint32" | "int32" | "uint40" | "int40" | "uint48" | "int48" | "uint64" | "int64" | "uint128" | "int128" | "float" | "doublestring"
+
+<ternary_data_type> ::= "(" <comparison> "?" <data_type> ":" <data_type> ")"
+
+
+; identifier and numbers
+<struct_member_access> ::= <identifier> "." <identifier> ("." <identifier>)*
 
 <identifier> ::= (("_" | [a-z] | [A-Z])+)+ (("_" | "-" | [0-9] | [a-z] | [A-Z])+)+
-
-<data_type> ::= "uint8" | "int8" | "uint16" | "int16" | "uint24" | "int24" | "uint32" | "int32" | "uint40" | "int40" | "uint48" | "int48" | "uint64" | "int64" | "uint128" | "int128" | "float" | "doublestring"
 
 <num_float> ::= <num_int> "." <num_int>
 
