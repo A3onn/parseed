@@ -2,7 +2,7 @@
 from typing import Any, List
 from abc import ABC, abstractmethod
 from parser import BitfieldDefNode, StructDefNode
-from errors import UnknownTypeError, RecursiveStructError, DuplicateMemberError
+from errors import *
 from utils import DATA_TYPES
 
 
@@ -108,7 +108,10 @@ class ParseedOutputGenerator(ABC):
             elif isinstance(node, StructDefNode):
                 self.structs.append(node)
 
+        self.__check_duplicate_structs_and_bitfields()
+
         # verify that everything is correct
+        # structs
         for struct in self.structs:
             self.__check_duplicate_members(struct)
             for member in struct.members:
@@ -129,6 +132,22 @@ class ParseedOutputGenerator(ABC):
             if member.name in tmp:
                 raise DuplicateMemberError(member.name, struct.name)
             tmp.append(member.name)
+
+    def __check_duplicate_structs_and_bitfields(self):
+        """
+        Check if some structs or bitfields share the same name.
+        """
+        tmp = []
+        # check in structs
+        for struct in self.structs:
+            if struct.name in tmp:
+                raise DuplicateStructOrBitfieldError(struct.name)
+            tmp.append(struct.name)
+        # check in bitfields
+        for bitfield in self.bitfields:
+            if bitfield.name in tmp:
+                raise DuplicateStructOrBitfieldError(bitfield.name)
+            tmp.append(bitfield.name)
 
     def __verify_recursive_struct_member(self, visited_member, structs_stack):
         """

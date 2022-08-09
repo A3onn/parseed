@@ -2,7 +2,7 @@
 from transpiler import ParseedOutputGenerator
 from lexer import Lexer
 from parser import Parser
-from errors import RecursiveStructError, UnknownTypeError, DuplicateMemberError
+from errors import *
 import pytest
 
 def get_AST(text):
@@ -69,6 +69,17 @@ def test_duplicate_members():
 
     # same name but in different structs
     TranspilerTest(get_AST("struct my_struct { uint8 test,} struct another_struct{ uint8 test, }"))
+
+def test_duplicate_structs_and_bitfields():
+    with pytest.raises(DuplicateStructOrBitfieldError):
+        TranspilerTest(get_AST("struct my_struct { } struct my_struct { }"))
+
+    with pytest.raises(DuplicateStructOrBitfieldError):
+        TranspilerTest(get_AST("struct my_struct { } struct my_struct { uint8 member, }"))
+
+    with pytest.raises(DuplicateStructOrBitfieldError):
+        TranspilerTest(get_AST("struct some_name { } bitfield some_name { }"))
+
 
 def test_nested_structs():
     # just to check if there is an error thrown when using nested structs

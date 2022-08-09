@@ -62,6 +62,14 @@ class DuplicateMemberError(ParseedTranspilerError):
         return f"'{self.member_name}' found multiple time in struct '{self.struct_name}'"
 
 
+class DuplicateStructOrBitfieldError(ParseedTranspilerError):
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self) -> str:
+        return f"Found multiple structs or bitfields with the same name: '{self.name}'"
+
+
 class UnknownTypeError(ParseedTranspilerError):
     def __init__(self, type_name: str, struct_name: Optional[str]):
         self.type_name = type_name
