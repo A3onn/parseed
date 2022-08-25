@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 from typing import Any, List
 from abc import ABC, abstractmethod
-from parser import BitfieldDefNode, StructDefNode
+from ast_nodes import BitfieldDefNode, StructDefNode
 from errors import *
 from utils import DATA_TYPES
-
 
 class _Block:
     """
@@ -119,7 +118,7 @@ class ParseedOutputGenerator(ABC):
                     # check for unknown types
                     if member.type not in [struct.name for struct in self.structs] and \
                             member.type not in [bitfield.name for bitfield in self.bitfields]:
-                        raise UnknownTypeError(member.type, struct.name)
+                        raise UnknownTypeError(member.type_token.pos_start, member.type_token.pos_end, member.type, struct.name)
 
                     self.__verify_recursive_struct_member(member, [])
 
@@ -130,7 +129,8 @@ class ParseedOutputGenerator(ABC):
         tmp = []
         for member in struct.members:
             if member.name in tmp:
-                raise DuplicateMemberError(member.name, struct.name)
+                members = [m for m in struct.members if m.name == member.name]
+                raise DuplicateMemberError(members, struct.name)
             tmp.append(member.name)
 
     def __check_duplicate_structs_and_bitfields(self):
@@ -141,12 +141,16 @@ class ParseedOutputGenerator(ABC):
         # check in structs
         for struct in self.structs:
             if struct.name in tmp:
-                raise DuplicateStructOrBitfieldError(struct.name)
+                nodes = [s for s in self.structs if s.name == struct.name] + \
+                        [b for b in self.bitfields if b.name == struct.name]
+                raise DuplicateStructOrBitfieldError(nodes)
             tmp.append(struct.name)
         # check in bitfields
         for bitfield in self.bitfields:
             if bitfield.name in tmp:
-                raise DuplicateStructOrBitfieldError(bitfield.name)
+                nodes = [s for s in self.structs if s.name == bitfield.name] + \
+                        [b for b in self.bitfields if b.name == bitfield.name]
+                raise DuplicateStructOrBitfieldError(nodes)
             tmp.append(bitfield.name)
 
     def __verify_recursive_struct_member(self, visited_member, structs_stack):
@@ -159,7 +163,7 @@ class ParseedOutputGenerator(ABC):
         if visited_member.type in DATA_TYPES:  # base case, cannot visit native data types as they are not structs
             return
         elif visited_member.type in structs_stack:
-            raise RecursiveStructError(structs_stack)
+            raise RecursiveStructError([self.get_struct_by_name(s) for s in structs_stack])
 
         structs_stack.append(visited_member.type)
         for member in self.get_struct_by_name(visited_member.type).members:

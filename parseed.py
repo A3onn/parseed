@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 from lexer import Lexer
+from utils import Token
 from parser import Parser
 from transpiler import ParseedOutputGenerator, Writer
 from generators import *
-from errors import ParseedLexerParserError, ParseedTranspilerError
-from utils import AST_pprint, lexer_pprint
+from errors import ParseedBaseError
+from typing import List
 import argparse
 
 
@@ -41,7 +42,7 @@ def main():
 def run(lexer, arguments, generator_class):
     try:
         tokens = lexer.run()
-    except ParseedLexerParserError as e:
+    except ParseedBaseError as e:
         print(e)  # just print the error
         return
 
@@ -51,7 +52,7 @@ def run(lexer, arguments, generator_class):
     parser = Parser(tokens)
     try:
         ast = parser.run()
-    except ParseedLexerParserError as e:
+    except ParseedBaseError as e:
         print(e)  # just print the error
         return
     if arguments.show_ast:
@@ -60,12 +61,35 @@ def run(lexer, arguments, generator_class):
     writer: Writer = Writer()
     try:
         generator_class(ast).generate(writer)
-    except ParseedTranspilerError as e:
+    except ParseedBaseError as e:
         print(e)  # just print the error
         return
 
     print(writer.generate_code())
 
+
+def AST_pprint(ast: List) -> str:
+    if ast is None:
+        return "<Empty>"
+    return "\n".join([node.to_str() for node in ast])
+
+
+def lexer_pprint(tokens: List[Token]):
+    if tokens is None:
+        return "<Empty>"
+
+    last_token: Token = tokens[0]
+    res: str = f"({last_token.type}:{last_token.value} "
+    for token in tokens[1:]:
+        if last_token.pos_start.ln != token.pos_start.ln:
+            res += "\n" + (" " * token.pos_start.col)
+
+        if token.value is not None:
+            res += f"({token.type}:{token.value}) "
+        else:
+            res += f"{token.type} "
+        last_token = token
+    return res
 
 if __name__ == "__main__":
     main()

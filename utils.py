@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-from typing import List, Optional
+from typing import List, Optional, Any
 
-# endian
+# ENDIANNESS
 LITTLE_ENDIAN = "LE"
 BIG_ENDIAN = "BE"
 
@@ -19,7 +19,37 @@ DATA_TYPES = [
     "string",
 ]
 
-# LIST OF TOKENS
+class Position:
+    def __init__(self, idx: int, ln: int, col: int, filename: str, file_text: str):
+        self.idx = idx
+        self.ln = ln
+        self.col = col
+        self.filename = filename
+        self.file_text = file_text
+
+    def advance(self, current_char: str = None):
+        self.idx += 1
+        self.col += 1
+
+        if current_char == "\n":
+            self.ln += 1
+            self.col = 0
+
+    def get_line_text(self) -> str:
+        lines: List[str] = self.file_text.split("\n")
+        return lines[self.ln]
+
+    def get_copy(self):
+        return Position(self.idx, self.ln, self.col, self.filename, self.file_text)
+
+    def __repr__(self) -> str:
+        return f"Position(idx={self.idx}, ln={self.ln}, col={self.col}, filename={self.filename}, file_text=\"{self.file_text}\")"
+
+
+## LEXER
+
+# List of tokens
+
 # Numerical values
 TT_NUM_INT = "NUM_INT"
 TT_NUM_FLOAT = "NUM_FLOAT"
@@ -62,34 +92,6 @@ TT_DATA_TYPE = "DATA_TYPE"
 
 TT_EOF = "EOF"
 
-
-class Position:
-    def __init__(self, idx: int, ln: int, col: int, filename: str, file_text: str):
-        self.idx = idx
-        self.ln = ln
-        self.col = col
-        self.filename = filename
-        self.file_text = file_text
-
-    def advance(self, current_char: str = None):
-        self.idx += 1
-        self.col += 1
-
-        if current_char == "\n":
-            self.ln += 1
-            self.col = 0
-
-    def get_line_text(self) -> str:
-        lines: List[str] = self.file_text.split("\n")
-        return lines[self.ln]
-
-    def get_copy(self):
-        return Position(self.idx, self.ln, self.col, self.filename, self.file_text)
-
-    def __repr__(self) -> str:
-        return f"Position(idx={self.idx}, ln={self.ln}, col={self.col}, filename={self.filename}, file_text=\"{self.file_text}\")"
-
-
 class Token:
     def __init__(self, type_: str, value: Optional[str] = None, pos_start: Position = None, pos_end: Position = None) -> None:
         self.type = type_
@@ -106,27 +108,3 @@ class Token:
         if self.value:
             return f"{self.type}:{self.value}"
         return f"{self.type}"
-
-
-def AST_pprint(ast: List) -> str:
-    if ast is None:
-        return "<Empty>"
-    return "\n".join([node.to_str() for node in ast])
-
-
-def lexer_pprint(tokens: List[Token]):
-    if tokens is None:
-        return "<Empty>"
-
-    last_token: Token = tokens[0]
-    res: str = f"({last_token.type}:{last_token.value} "
-    for token in tokens[1:]:
-        if last_token.pos_start.ln != token.pos_start.ln:
-            res += "\n" + (" " * token.pos_start.col)
-
-        if token.value is not None:
-            res += f"({token.type}:{token.value}) "
-        else:
-            res += f"{token.type} "
-        last_token = token
-    return res
