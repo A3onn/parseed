@@ -91,5 +91,6 @@ def lexer_pprint(tokens: List[Token]):
         last_token = token
     return res
 
+
 if __name__ == "__main__":
     main()

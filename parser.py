@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-from typing import List, Any, Optional
+from typing import List, Any
 from utils import *
 from errors import InvalidSyntaxError
 from ast_nodes import *
+
 
 class Parser:
     def __init__(self, tokens: List[Token]):

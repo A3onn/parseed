@@ -5,6 +5,7 @@ from ast_nodes import BitfieldDefNode, StructDefNode
 from errors import *
 from utils import DATA_TYPES
 
+
 class _Block:
     """
     Represents a block of code.

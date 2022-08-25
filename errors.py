@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 from utils import *
-from typing import List, Optional, Union
+from typing import List, Union
 from ast_nodes import StructDefNode, BitfieldDefNode, StructMemberDeclareNode
+
 
 class ParseedBaseError(BaseException):
     def _underline_error(self, pos_start: Position, pos_end: Position, error_line_text: str) -> str:

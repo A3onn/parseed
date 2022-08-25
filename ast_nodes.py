@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 from utils import *
+from typing import Any
+
 
 class FloatNumberNode:
     def __init__(self, value_token: Token):
@@ -212,4 +214,3 @@ class BitfieldDefNode:
     @property
     def members(self) -> List[BitfieldMemberNode]:
         return self.bitfield_members
-

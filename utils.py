@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-from typing import List, Optional, Any
+from typing import List, Optional
+
 
 # ENDIANNESS
 LITTLE_ENDIAN = "LE"
@@ -18,6 +19,7 @@ DATA_TYPES = [
     "float", "double"
     "string",
 ]
+
 
 class Position:
     def __init__(self, idx: int, ln: int, col: int, filename: str, file_text: str):
@@ -79,7 +81,7 @@ TT_COMMENT = "COMMENT"
 TT_COMMA = "COMMA"
 TT_DOT = "DOT"
 TT_SEMICOL = "SEMICOL"
-TT_APOST = "APOST" # apostrophe
+TT_APOST = "APOST"  # apostrophe
 TT_QUOTAT_MARK = "QUOTAT_MARK"
 
 # for ternary operator
@@ -91,6 +93,7 @@ TT_KEYWORD = "KEYWORD"
 TT_DATA_TYPE = "DATA_TYPE"
 
 TT_EOF = "EOF"
+
 
 class Token:
     def __init__(self, type_: str, value: Optional[str] = None, pos_start: Position = None, pos_end: Position = None) -> None:
