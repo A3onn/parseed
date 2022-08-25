@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 from utils import *
-from typing import List, Union
-from ast_nodes import StructDefNode, BitfieldDefNode, StructMemberDeclareNode
 
 
 class ParseedBaseError(BaseException):
@@ -67,21 +65,21 @@ class UnknownTypeError(ParseedSimpleUnderlinedError):
 
 
 class RecursiveStructError(ParseedMultipleUnderlinedError):
-    def __init__(self, structs: List[StructDefNode]):
+    def __init__(self, structs):
         pos_start: List[Position] = [s.token_name.pos_start for s in structs]
         pos_end: List[Position] = [s.token_name.pos_end for s in structs]
         super().__init__(pos_start, pos_end, "Found recursive nested structs", structs[0].name)
 
 
 class DuplicateMemberError(ParseedMultipleUnderlinedError):
-    def __init__(self, members: List[StructMemberDeclareNode], struct_name: str):
+    def __init__(self, members, struct_name: str):
         pos_start: List[Position] = [m.token_name.pos_start for m in members]
         pos_end: List[Position] = [m.token_name.pos_end for m in members]
         super().__init__(pos_start, pos_end, f"Found multiple members of the struct {struct_name} sharing the same name", members[0].name)
 
 
 class DuplicateStructOrBitfieldError(ParseedMultipleUnderlinedError):
-    def __init__(self, nodes: List[Union[StructDefNode, BitfieldDefNode]]):
+    def __init__(self, nodes):
         pos_start: List[Position] = [n.token_name.pos_start for n in nodes]
         pos_end: List[Position] = [n.token_name.pos_end for n in nodes]
         super().__init__(pos_start, pos_end, "Found multiple structs or bitfields sharing the same name", nodes[0].name)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-from utils import *
-from typing import Any
+from typing import Any, List, Optional
+from lexer import Token
+from utils import BIG_ENDIAN
 
 
 class FloatNumberNode:

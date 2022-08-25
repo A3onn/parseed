@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-from lexer import Lexer
-from utils import Token
+from lexer import Lexer, Token
 from parser import Parser
 from transpiler import ParseedOutputGenerator, Writer
 from generators import *

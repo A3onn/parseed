@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 from typing import List, Any
-from utils import *
-from errors import InvalidSyntaxError
+from lexer import *
 from ast_nodes import *
+from errors import InvalidSyntaxError
 
 
 class Parser:
