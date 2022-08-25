@@ -121,6 +121,10 @@ def test_struct_members_errors():
         Parser(get_tokens("struct MyStruct { SomeIndentifier, }")).run()
 
     with pytest.raises(InvalidSyntaxError):
+        # invalid element after
+        Parser(get_tokens("struct test { } uint8 member, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
         # missing comma at the end of member
         Parser(get_tokens("struct test { uint8 member }")).run()
 

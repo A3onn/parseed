@@ -43,6 +43,8 @@ class Parser:
                 return self.struct_stmt()
             elif token.value == "bitfield":
                 return self.bitfield_stmt()
+        else:
+            raise InvalidSyntaxError(token.pos_start, token.pos_end, "expected struct or bitfield statement")
 
         self.advance()
 
@@ -124,7 +126,7 @@ class Parser:
         while self.current_token.type not in [TT_RCURLY, TT_EOF]:
             res_struct_def_node.add_member_node(self.struct_member_def(endian))
 
-        if self.current_token.type == TT_EOF:  # '}', end of struct
+        if self.current_token.type == TT_EOF:  # if missing '}'
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '}'")
         self.advance()
 
