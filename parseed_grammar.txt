@@ -57,7 +57,7 @@
 
 
 ; identifier and numbers
-<struct_member_access> ::= <identifier> "." <identifier> ("." <identifier>)*
+<struct_member_access> ::= <identifier> ("." <identifier>)*
 
 <identifier> ::= (("_" | [a-z] | [A-Z])+)+ (("_" | "-" | [0-9] | [a-z] | [A-Z])+)+
 
