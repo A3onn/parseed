@@ -35,6 +35,12 @@ class Lexer:
         while self.current_char is not None:
             if self.current_char in [" ", "\t", "\n"]:
                 self._next_token()
+            elif self.current_char == "'":
+                tokens.append(Token(TT_APOST, pos_start=self.pos))
+                self._next_token()
+            elif self.current_char == "\"":
+                tokens.append(Token(TT_QUOTAT_MARK, pos_start=self.pos))
+                self._next_token()
             elif self.current_char in DIGITS:
                 tokens.append(self._make_number_or_dot())
             elif self.current_char == "?":

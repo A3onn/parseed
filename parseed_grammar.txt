@@ -51,9 +51,11 @@
 
 
 ; data-types
-<data_type> ::= "uint8" | "int8" | "uint16" | "int16" | "uint24" | "int24" | "uint32" | "int32" | "uint40" | "int40" | "uint48" | "int48" | "uint64" | "int64" | "uint128" | "int128" | "float" | "doublestring"
+<data_type> ::= "uint8" | "int8" | "uint16" | "int16" | "uint24" | "int24" | "uint32" | "int32" | "uint40" | "int40" | "uint48" | "int48" | "uint64" | "int64" | "uint128" | "int128" | "float" | "double" | <string_data_type>
 
 <ternary_data_type> ::= "(" <comparison> "?" <data_type> ":" <data_type> ")"
+
+<string_data_type> ::= "string" ( '(' (<expr> | <string> | <char>) ')' )? ;; "string" or "string(delimitor)"
 
 
 ; identifier and numbers
@@ -64,3 +66,7 @@
 <num_float> ::= <num_int> "." <num_int>
 
 <num_int> ::= ([0-9])+
+
+<char> ::= "'" [:print:] "'"
+
+<string> ::= """ [:print:]+ """

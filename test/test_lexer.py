@@ -99,8 +99,8 @@ def test_brack():
     assert tokens[4].type == TT_RBRACK
     assert tokens[5].type == TT_RBRACK
 
-def test_parenthesis():
-    lexer = Lexer("(( )())", "")
+def test_parenthesis_apostrophe_quotation_mark():
+    lexer = Lexer("(( )()) \"\" \" ' ''", "")
     tokens = lexer.run()
     assert tokens[0].type == TT_LPAREN
     assert tokens[1].type == TT_LPAREN
@@ -108,6 +108,12 @@ def test_parenthesis():
     assert tokens[3].type == TT_LPAREN
     assert tokens[4].type == TT_RPAREN
     assert tokens[5].type == TT_RPAREN
+    assert tokens[6].type == TT_QUOTAT_MARK
+    assert tokens[7].type == TT_QUOTAT_MARK
+    assert tokens[8].type == TT_QUOTAT_MARK
+    assert tokens[9].type == TT_APOST
+    assert tokens[10].type == TT_APOST
+    assert tokens[11].type == TT_APOST
 
 def test_comma_colon_semicolon_dot_question_mark():
     lexer = Lexer(",, ; ; .. . :: : ? ??", "")

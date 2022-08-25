@@ -49,6 +49,8 @@ TT_COMMENT = "COMMENT"
 TT_COMMA = "COMMA"
 TT_DOT = "DOT"
 TT_SEMICOL = "SEMICOL"
+TT_APOST = "APOST" # apostrophe
+TT_QUOTAT_MARK = "QUOTAT_MARK"
 
 # for ternary operator
 TT_COLON = "COLON"
