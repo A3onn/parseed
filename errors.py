@@ -20,8 +20,8 @@ class ParseedSimpleUnderlinedError(ParseedBaseError):
         self.details: str = details
 
     def __str__(self):
-        error_line_text: str = self.pos_end.get_line_text()
-        return f"\nFile {self.pos_start.filename}, on line {self.pos_start.ln + 1}\n{error_line_text}\n{self._underline_error(error_line_text)}\n{self.error_name}: {self.details}"
+        error_line_text: str = self.pos_start.get_line_text()
+        return f"\nFile {self.pos_start.filename}, on line {self.pos_start.ln + 1}\n{error_line_text}\n{self._underline_error(self.pos_start, self.pos_end, error_line_text)}\n{self.error_name}: {self.details}"
 
 
 class ParseedMultipleUnderlinedError(ParseedBaseError):
