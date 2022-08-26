@@ -170,10 +170,6 @@ class BitfieldMemberNode:
         return res + "\n"
 
     @property
-    def token_name(self) -> Token:
-        return self.name_token
-
-    @property
     def name(self) -> str:
         return str(self.name_token.value)
 
@@ -199,10 +195,6 @@ class BitfieldDefNode:
         for node in self.bitfield_members:
             res += node.to_str(depth + 1)
         return res + "\n"
-
-    @property
-    def token_name(self) -> Token:
-        return self.name_token
 
     @property
     def name(self) -> str:
