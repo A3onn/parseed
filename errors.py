@@ -56,30 +56,30 @@ class InvalidSyntaxError(ParseedSimpleUnderlinedError):
 class ExpectedMoreCharError(ParseedSimpleUnderlinedError):
     def __init__(self, pos_start: Position, pos_end: Position, expected_chars: List[str]):
         list_chars: str = ", ".join([f"'{c}'" for c in expected_chars])
-        super().__init__(pos_start, pos_end, "Expected more chars", list_chars)
+        super().__init__(pos_start, pos_end, "Expected more chars error", list_chars)
 
 
 class UnknownTypeError(ParseedSimpleUnderlinedError):
     def __init__(self, pos_start: Position, pos_end: Position, type_name: str, struct_name: str):
-        super().__init__(pos_start, pos_end, f"Unknown data type in struct \"{struct_name}\"", type_name)
+        super().__init__(pos_start, pos_end, f"Unknown data type error", f"\"{type_name}\" in struct {struct_name}")
 
 
 class RecursiveStructError(ParseedMultipleUnderlinedError):
     def __init__(self, structs):
         pos_start: List[Position] = [s.name_token.pos_start for s in structs]
         pos_end: List[Position] = [s.name_token.pos_end for s in structs]
-        super().__init__(pos_start, pos_end, "Found recursive nested structs", structs[0].name)
+        super().__init__(pos_start, pos_end, "Recursive nested structs error", " -> ".join([s.name for s in structs]))
 
 
 class DuplicateMemberError(ParseedMultipleUnderlinedError):
     def __init__(self, members, struct_name: str):
         pos_start: List[Position] = [m.name_token.pos_start for m in members]
         pos_end: List[Position] = [m.name_token.pos_end for m in members]
-        super().__init__(pos_start, pos_end, f"Found multiple members of the struct {struct_name} sharing the same name", members[0].name)
+        super().__init__(pos_start, pos_end, f"Duplicate member error", members[0].name)
 
 
 class DuplicateStructOrBitfieldError(ParseedMultipleUnderlinedError):
     def __init__(self, nodes):
         pos_start: List[Position] = [n.name_token.pos_start for n in nodes]
         pos_end: List[Position] = [n.name_token.pos_end for n in nodes]
-        super().__init__(pos_start, pos_end, "Found multiple structs or bitfields sharing the same name", nodes[0].name)
+        super().__init__(pos_start, pos_end, "Duplicate struct or bitfield error", nodes[0].name)
