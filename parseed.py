@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from lexer import Lexer, Token
 from parser import Parser
+from ast_nodes import ASTNode
 from transpiler import ParseedOutputGenerator, Writer
 from generators import *
 from errors import ParseedBaseError
@@ -67,7 +68,7 @@ def run(lexer, arguments, generator_class):
     print(writer.generate_code())
 
 
-def AST_pprint(ast: List) -> str:
+def AST_pprint(ast: List[ASTNode]) -> str:
     if ast is None:
         return "<Empty>"
     return "\n".join([node.to_str() for node in ast])
