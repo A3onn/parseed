@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from typing import List, Any
+from typing import List, Any, Union
 from lexer import *
 from ast_nodes import *
 from errors import InvalidSyntaxError
@@ -132,10 +132,12 @@ class Parser:
 
         return res_struct_def_node
 
-    def struct_member_def(self, struct_endian) -> StructMemberDeclareNode:
+    def struct_member_def(self, struct_endian) -> Union[StructMemberDeclareNode, StructMemberDeclareListNode]:
         """
-        <struct_member_def> ::= ["LE | "BE"] (<data_type> | <identifier>) <identifier> ","
-                                | ["LE | "BE"] (<data_type> | <identifier>) "[" <expr> "]" <identifier> ","
+        <struct_member_def> ::= ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>) <identifier> ","
+                                | ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>) "[" <expr> "]" <identifier> ","
+                                | ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>) "[]" <identifier> ","
+                                | <match_stmt> ","
         """
         endian = struct_endian
         if self.current_token.value in (BIG_ENDIAN, LITTLE_ENDIAN):
@@ -172,7 +174,9 @@ class Parser:
         else:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ','")
 
-        return StructMemberDeclareNode(member_type, member_name, is_list, list_length_node, endian)
+        if is_list:
+            return StructMemberDeclareListNode(member_type, member_name, list_length_node, endian)
+        return StructMemberDeclareNode(member_type, member_name, endian)
 
     def no_identifier_factor(self) -> Any:
         token: Token = self.current_token

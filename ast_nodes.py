@@ -85,18 +85,13 @@ class StructMemberAccessNode:
 
 
 class StructMemberDeclareNode:
-    def __init__(self, type_token: Token, name_token: Token, is_list: bool, list_length_node: Optional[Any] = None, endian: str = BIG_ENDIAN):
+    def __init__(self, type_token: Token, name_token: Token, endian: str = BIG_ENDIAN):
         self.type_token: Token = type_token
         self.name_token: Token = name_token
-        self._is_list: bool = is_list
-        self._endian: str = endian
-        self.list_length_node: Optional[Any] = list_length_node
+        self.endian: str = endian
 
     def to_str(self, depth: int = 0) -> str:
-        res: str = ("\t" * depth) + "StructMemberDeclareNode(" + str(self.type_token) + " " + str(self.name_token)
-        if self.is_list and self.list_length_node:
-            res += " [\n" + self.list_length_node.to_str(depth + 1) + ("\t" * depth) + "]"
-        return res + ")\n"
+        return ("\t" * depth) + "StructMemberDeclareNode(" + str(self.type_token) + " " + str(self.name_token) + ")\n"
 
     @property
     def name(self) -> str:
@@ -106,16 +101,33 @@ class StructMemberDeclareNode:
     def type(self) -> str:
         return str(self.type_token.value)
 
+
+class StructMemberDeclareListNode(StructMemberDeclareNode):
+    def __init__(self, type_token: Token, name_token: Token, list_length_node: Optional[Any] = None, endian: str = BIG_ENDIAN):
+        self.type_token: Token = type_token
+        self.name_token: Token = name_token
+        self.endian: str = endian
+        self.list_length_node: Optional[Any] = list_length_node
+
+    def to_str(self, depth: int = 0) -> str:
+        if self.list_length_node != None:
+            return ("\t" * depth) + "StructMemberDeclareListNode(" + str(self.type_token) + f"[\n{self.list_length_node.to_str(depth+1)}" + ("\t" * depth) + "] " + str(self.name_token) + ")\n"
+        return ("\t" * depth) + "StructMemberDeclareListNode(" + str(self.type_token) + f"[] " + str(self.name_token) + ")\n"
+
+    @property
+    def name(self) -> str:
+        return str(self.name_token.value)
+
+    @property
+    def type(self) -> str:
+        return str(self.type_token.value)
+
+    def has_length_defined(self) -> bool:
+        return self.list_length_node == None
+
     @property
     def list_length(self) -> int:
         return int(self.list_length_node.value)
-
-    def is_list(self) -> bool:
-        return self._is_list
-
-    @property
-    def endian(self) -> str:
-        return self._endian
 
 
 class StructDefNode:

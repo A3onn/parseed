@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from transpiler import *
+from ast_nodes import *
 
 class Python_Class(ParseedOutputGenerator):
     def generate(self, writer):
@@ -17,7 +18,7 @@ class Python_Class(ParseedOutputGenerator):
 
             current_block.add_line("curr_index = 0")
             for member in struct.members:
-                if member.is_list():
+                if isinstance(member, StructMemberDeclareListNode):
                     current_block.add_line(f"self.{member.name} = []")
                     current_block.add_line(f"for i in range(0, {member.list_length}):")
 
