@@ -159,9 +159,9 @@ class Parser:
         elif self.current_token.type == TT_LBRACK:
             is_list = True
             self.advance()
-            list_length_node = self.expr()
+            list_length_node = None
             if self.current_token.type != TT_RBRACK:
-                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ']'")
+                list_length_node = self.expr()
             self.advance()
         else:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier or '['")

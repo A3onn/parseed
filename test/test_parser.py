@@ -22,18 +22,21 @@ def test_struct_members():
     Parser(get_tokens("struct test { uint8 member, }")).run()
     Parser(get_tokens("struct test { uint8 member1, float member2, }")).run()
     Parser(get_tokens("struct test { uint8[1] member,}")).run()
+    Parser(get_tokens("struct test { uint8[] member,}")).run()
+    Parser(get_tokens("struct test { uint8[] member1, uint16[] member2,}")).run()
     Parser(get_tokens("struct test { uint8[4] member1, float member2, }")).run()
     Parser(get_tokens("struct test { uint8[4] member1, float member2, int24[15] member3, }")).run()
+    Parser(get_tokens("struct test { uint8[4] member1, float member2, int24[] member3, }")).run()
     Parser(get_tokens("struct test { SomeIndentifier member, }")).run()
     Parser(get_tokens("struct test { SomeIndentifier member1, float member2, AnotherIdentifier member3, }")).run()
-    Parser(get_tokens("struct test { SomeIndentifier member1, float member2, AnotherIdentifier[3] member3, }")).run()
+    Parser(get_tokens("struct test { SomeIndentifier member1, float member2, AnotherIdentifier[3] member3, AnotherOne[] member4,}")).run()
 
 def test_struct_members_with_expressions():
     Parser(get_tokens("struct test { uint8[1+1] member, }")).run()
     Parser(get_tokens("struct test { uint8[1+1] member1, uint8[15-3] member2, }")).run()
     Parser(get_tokens("struct test { uint8[1+1] member1, int16 member2, uint8[-3+24] member2, }")).run()
     Parser(get_tokens("struct test { uint8[3*(2+3)] member1, int16 member2, uint8[-(-3*12)] member2, }")).run()
-    Parser(get_tokens("struct test { uint8 member1, int16 member2, uint8[2*3-(3)] member2, }")).run()
+    Parser(get_tokens("struct test { uint8[] member1, int16 member2, uint8[2*3-(3)] member2, }")).run()
 
 def test_struct_endian():
     stmts = Parser(get_tokens("struct test { } BE struct test2 { }")).run()
@@ -141,10 +144,6 @@ def test_struct_members_errors():
         Parser(get_tokens("struct MyStruct { uint8] member }")).run()
 
 def test_struct_members_with_expressions_errors():
-    with pytest.raises(InvalidSyntaxError):
-        # missing count
-        Parser(get_tokens("struct MyStruct { uint8[] member, }")).run()
-
     with pytest.raises(InvalidSyntaxError):
         # missing right parenthesis
         Parser(get_tokens("struct MyStruct { uint8[(1+2] member, }")).run()
