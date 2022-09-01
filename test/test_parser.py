@@ -27,6 +27,16 @@ def test_struct_members():
     Parser(get_tokens("struct test { uint8[4] member1, float member2, }")).run()
     Parser(get_tokens("struct test { uint8[4] member1, float member2, int24[15] member3, }")).run()
     Parser(get_tokens("struct test { uint8[4] member1, float member2, int24[] member3, }")).run()
+    Parser(get_tokens("struct test { (1 == 1 ? uint8[] : uint8) member,}")).run()
+    Parser(get_tokens("struct test { (1 != 1 ? uint8[4] : uint8) member,}")).run()
+    Parser(get_tokens("struct test { (1 != 1 ? uint8 : uint8[4]) member,}")).run()
+    Parser(get_tokens("struct test { (1 != 1 ? uint8 : uint8[]) member,}")).run()
+    Parser(get_tokens("struct test { (1 != 1 ? uint8 : SomeIdentifier) member,}")).run()
+    Parser(get_tokens("struct test { (1 != 1 ? uint8 : SomeIdentifier[]) member,}")).run()
+    Parser(get_tokens("struct test { LE (1 != 1 ? uint8 : uint16) member,}")).run()
+    Parser(get_tokens("struct test { LE (1 != 1 ? uint8 : uint16) member1, (2 == 2 ? uint16 : int16) member2, }")).run()
+    Parser(get_tokens("struct test { (1 != 1 ? SomeIdentifier : SomeIdentifier) member,}")).run()
+    Parser(get_tokens("struct test { uint8 member1, LE (2 == 2 ? uint16 : int16) member2, }")).run()
     Parser(get_tokens("struct test { SomeIndentifier member, }")).run()
     Parser(get_tokens("struct test { SomeIndentifier member1, float member2, AnotherIdentifier member3, }")).run()
     Parser(get_tokens("struct test { SomeIndentifier member1, float member2, AnotherIdentifier[3] member3, AnotherOne[] member4,}")).run()
@@ -142,6 +152,46 @@ def test_struct_members_errors():
     with pytest.raises(InvalidSyntaxError):
         # missing left brack
         Parser(get_tokens("struct MyStruct { uint8] member }")).run()
+    
+    with pytest.raises(InvalidSyntaxError):
+        # missing left parenthesis
+        Parser(get_tokens("struct test { 1 != 1 ? uint8 : uint16) member,}")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing right parenthesis
+        Parser(get_tokens("struct test { (1 != 1 ? uint8 : uint16 member,}")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing comparison
+        Parser(get_tokens("struct test { (1  1 ? uint8 : uint16) member,}")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing left part of comparison 
+        Parser(get_tokens("struct test { ( != 1 ? uint8 : uint16) member,}")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing right part of comparison 
+        Parser(get_tokens("struct test { (1 !=  ? uint8 : uint16) member,}")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing question mark
+        Parser(get_tokens("struct test { (1 != 1  uint8 : uint16) member,}")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing colon
+        Parser(get_tokens("struct test { (1 != 1 ? uint8  uint16) member,}")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing if true part
+        Parser(get_tokens("struct test { (1 != 1 ?  : uint16) member,}")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing if false part
+        Parser(get_tokens("struct test { (1 != 1 ? uint8 : ) member,}")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing condition results
+        Parser(get_tokens("struct test { (1 != 1 ?  : ) member,}")).run()
 
 def test_struct_members_with_expressions_errors():
     with pytest.raises(InvalidSyntaxError):
