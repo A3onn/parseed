@@ -15,5 +15,5 @@ struct Packet {
     uint32 ts_usec,
     uint32 incl_len,
     uint32 orig_len,
-    byte[incl_len] data,
+    uint8[incl_len] data,
 }
