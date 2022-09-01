@@ -141,23 +141,16 @@ class ComparisonNode(ASTNode):
     """
     Represent a comparison between two AST nodes.
     """
-    def __init__(self, left_cond_op: Union[ASTNode,Token], condition_op: Token, right_cond_op: Union[ASTNode, Token]):
-        self.left_cond_op: Union[ASTNode,Token] = left_cond_op
+    def __init__(self, left_cond_op: Token, condition_op: Token, right_cond_op: Token):
+        self.left_cond_op: Token = left_cond_op
         self.condition_op: Token = condition_op
-        self.right_cond_op: Union[ASTNode,Token] = right_cond_op
+        self.right_cond_op: Token = right_cond_op
 
     def to_str(self, depth: int = 0):
-        res: str = ""
-        if isinstance(self.left_cond_op, ASTNode):
-            res += self.left_cond_op.to_str(depth+1) + "\n"
-        else:
-            res += ("\t" * depth) + str(self.left_cond_op) + "\n"
-        res += ("\t" * depth) + str(self.condition_op) + "\n"
-        if isinstance(self.right_cond_op, ASTNode):
-            res += self.right_cond_op.to_str(depth+1) + "\n"
-        else:
-            res += ("\t" * depth) + str(self.right_cond_op)
-        return res
+        res: str = ("\t" * depth) + str(self.left_cond_op) + " "
+        res += str(self.condition_op) + " "
+        res += str(self.right_cond_op)
+        return res + "\n"
 
 
 class TernaryDataTypeNode(ASTNode):
@@ -171,7 +164,7 @@ class TernaryDataTypeNode(ASTNode):
 
     def to_str(self, depth: int = 0) -> str:
         res: str = ("\t" * depth) + "TernaryDataType(\n"
-        res += self.comparison.to_str(depth+1) + "\n"
+        res += self.comparison.to_str(depth+1)
         res += ("\t" * (depth+1)) + "?\n"
 
         if isinstance(self.if_true, StructMemberAccessNode):
