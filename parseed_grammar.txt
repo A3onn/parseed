@@ -52,7 +52,7 @@
 ; data-types
 <data_type> ::= "uint8" | "int8" | "uint16" | "int16" | "uint24" | "int24" | "uint32" | "int32" | "uint40" | "int40" | "uint48" | "int48" | "uint64" | "int64" | "uint128" | "int128" | "float" | "double" | <string_data_type>
 
-<ternary_data_type> ::= "(" <comparison> "?" (<data_type>|<identifier>) ("[" (<expr>)? "]")? ":" (<data_type>|<identifier>) ("[" (<expr>)? "]")? ")"
+<ternary_data_type> ::= "(" <comparison> "?" (<data_type>|<identifier>) ":" (<data_type>|<identifier>) ")"
 
 <string_data_type> ::= "string" ( '(' (<expr> | <string> | <char>) ')' )? ;; "string" or "string(delimitor)"
 
