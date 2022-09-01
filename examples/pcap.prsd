@@ -1,0 +1,19 @@
+// from https://wiki.wireshark.org/Development/LibpcapFileFormat#global-header
+struct PCAP {
+    uint32 magic_number,
+    uint16 version_major,
+    uint16 version_minor,
+    int32 thiszone,
+    uint32 sigfigs,
+    uint32 snaplen,
+    uint32 network,
+    Packet[] packets,
+}
+
+struct Packet {
+    uint32 ts_sec,
+    uint32 ts_usec,
+    uint32 incl_len,
+    uint32 orig_len,
+    byte[incl_len] data,
+}
