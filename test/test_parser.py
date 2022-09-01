@@ -25,6 +25,7 @@ def test_struct_members():
     Parser(get_tokens("struct test { uint8[] member,}")).run()
     Parser(get_tokens("struct test { uint8[] member1, uint16[] member2,}")).run()
     Parser(get_tokens("struct test { uint8[4] member1, float member2, }")).run()
+    Parser(get_tokens("struct test { uint8 member1, float[member1] member2, }")).run()
     Parser(get_tokens("struct test { uint8[4] member1, float member2, int24[15] member3, }")).run()
     Parser(get_tokens("struct test { uint8[4] member1, float member2, int24[] member3, }")).run()
     Parser(get_tokens("struct test { (1 == 1 ? uint8 : uint16)[] member,}")).run()

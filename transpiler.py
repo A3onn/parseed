@@ -111,7 +111,7 @@ class ParseedOutputGenerator(ABC):
         self.__check_duplicate_structs_and_bitfields()
 
         # verify that everything is correct
-        # structs
+        # unknown types
         for struct in self.structs:
             self.__check_duplicate_members(struct)
             for member in struct.members:
@@ -121,7 +121,10 @@ class ParseedOutputGenerator(ABC):
                             member.type not in [bitfield.name for bitfield in self.bitfields]:
                         raise UnknownTypeError(member._type.pos_start, member._type.pos_end, member.type, struct.name)
 
-                    self.__verify_recursive_struct_member(member, [])
+        # if there is no unknown types, now we can check for recursive structs
+        for struct in self.structs:
+            for member in struct.members:
+                self.__verify_recursive_struct_member(member, [])
 
     def __check_duplicate_members(self, struct):
         """

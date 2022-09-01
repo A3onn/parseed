@@ -285,13 +285,19 @@ class Parser:
             self.advance()
             return FloatNumberNode(token)
         elif token.type == TT_IDENTIFIER:
-            name: str = self.current_token.value
+            identifier_name: str = self.current_token.value
+            pos_start: Position = self.current_token.pos_start.get_copy()  # for errors
             self.advance()
-            while self.current_token.type == TT_DOT:
-                self.advance()
-                name += "." + self.current_token.value
-            self.advance()
-            return IdentifierAccessNode(name)
+            if self.current_token.type == TT_DOT:  # handle identifiers with '.' in them
+                while True:  # consume tokens until there is another thing than a valid identifier
+                    self.advance()
+                    if self.current_token.type != TT_IDENTIFIER:  # check if it is a valid identifier (avoid having numbers in the middle of the whole identifier for exemple)
+                        raise InvalidSyntaxError(pos_start, self.current_token.pos_end, "invalid identifier")
+                    identifier_name += "." + self.current_token.value
+                    self.advance()
+                    if self.current_token.type != TT_DOT:
+                        break
+            return IdentifierAccessNode(identifier_name)
         raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier or value")
 
     def expr(self) -> Any:
