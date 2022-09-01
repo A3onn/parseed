@@ -30,8 +30,7 @@
 <factor> ::= <num_int> | <num_float>
              | ("+" | "-") <factor>
              | "(" <expr> ")"
-             | <identifier>
-             | <struct_member_access>
+             | <identifier> ("." <identifier>)*
 
 <no_identifier_expr> ::= <no_identifier_term> (("+" | "-") <no_identifier_term>)*
 
@@ -59,8 +58,6 @@
 
 
 ; identifier and numbers
-<struct_member_access> ::= <identifier> ("." <identifier>)*
-
 <identifier> ::= (("_" | [a-z] | [A-Z])+)+ (("_" | "-" | [0-9] | [a-z] | [A-Z])+)+
 
 <num_float> ::= <num_int> "." <num_int>

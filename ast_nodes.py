@@ -119,22 +119,15 @@ class UnaryOpNode(ASTNode):
 
 
 # struct
-class StructMemberAccessNode(ASTNode):
+class IdentifierAccessNode(ASTNode):
     """
-    This class contains the name of a member accessed.
+    This class contains the name of an identifier accessed.
     """
-    def __init__(self, name_token: Token):
-        self.name_token: Token = name_token
+    def __init__(self, struct_name: str):
+        self.struct_name: str = struct_name
 
     def to_str(self, depth: int = 0) -> str:
-        return ("\t" * depth) + "StructMemberAccessNode(" + str(self.name_token) + ")\n"
-
-    @property
-    def name(self) -> str:
-        """
-        Name of the accessed member.
-        """
-        return str(self.name_token.value)
+        return ("\t" * depth) + "IdentifierAccessNode(" + str(self.struct_name) + ")\n"
 
 
 class ComparisonNode(ASTNode):
@@ -157,24 +150,24 @@ class TernaryDataTypeNode(ASTNode):
     """
     This class represents a ternary operator for data-types.
     """
-    def __init__(self, comparison_node: ComparisonNode, if_true: Union[StructMemberAccessNode, DataType], if_false: Union[StructMemberAccessNode, DataType]):
+    def __init__(self, comparison_node: ComparisonNode, if_true: Union[IdentifierAccessNode, DataType], if_false: Union[IdentifierAccessNode, DataType]):
         self.comparison: ComparisonNode = comparison_node
-        self.if_true: Union[StructMemberAccessNode, DataType] = if_true
-        self.if_false: Union[StructMemberAccessNode, DataType] = if_false
+        self.if_true: Union[IdentifierAccessNode, DataType] = if_true
+        self.if_false: Union[IdentifierAccessNode, DataType] = if_false
 
     def to_str(self, depth: int = 0) -> str:
         res: str = ("\t" * depth) + "TernaryDataType(\n"
         res += self.comparison.to_str(depth+1)
         res += ("\t" * (depth+1)) + "?\n"
 
-        if isinstance(self.if_true, StructMemberAccessNode):
+        if isinstance(self.if_true, IdentifierAccessNode):
             res += self.if_true.to_str(depth+2) + "\n"
         else:
             res += ("\t" * (depth+1)) + str(self.if_true) + "\n"
 
         res += ("\t" * (depth+1)) + ":\n"
 
-        if isinstance(self.if_false, StructMemberAccessNode):
+        if isinstance(self.if_false, IdentifierAccessNode):
             res += self.if_false.to_str(depth+2) + "\n)"
         else:
             res += ("\t" * (depth+1)) + str(self.if_false) + "\n"
@@ -223,7 +216,7 @@ class StructMemberDeclareListNode(ASTNode):
     It contains the name, the type, the length (if specified) and the endianness of the member.
     Note that if the member is not a list, ast_nodes.StructMemberDeclareNode must be used.
     """
-    def __init__(self, type_token: Union[Token,TernaryDataTypeNode], name_token: Token, list_length_node: Optional[ASTNode] = None, endian: str = BIG_ENDIAN):
+    def __init__(self, type_token: Union[Token,TernaryDataTypeNode], name_token: Token, list_length_node: Union[None,UnaryOpNode,BinOpNode] = None, endian: str = BIG_ENDIAN):
         self._type: Union[Token,TernaryDataTypeNode] = type_token
         self.name_token: Token = name_token
         self.endian: str = endian
@@ -231,8 +224,8 @@ class StructMemberDeclareListNode(ASTNode):
 
     def to_str(self, depth: int = 0) -> str:
         if self.list_length_node != None:
-            return ("\t" * depth) + "StructMemberDeclareListNode(" + str(self.type_token) + f"[\n{self.list_length_node.to_str(depth+1)}" + ("\t" * depth) + "] " + str(self.name_token) + ")\n"
-        return ("\t" * depth) + "StructMemberDeclareListNode(" + str(self.type_token) + f"[] " + str(self.name_token) + ")\n"
+            return ("\t" * depth) + "StructMemberDeclareListNode(" + str(self._type) + f"[\n{self.list_length_node.to_str(depth+1)}" + ("\t" * depth) + "] " + str(self.name_token) + ")\n"
+        return ("\t" * depth) + "StructMemberDeclareListNode(" + str(self._type) + f"[] " + str(self.name_token) + ")\n"
 
     @property
     def name(self) -> str:
@@ -257,13 +250,15 @@ class StructMemberDeclareListNode(ASTNode):
         return self.list_length_node == None
 
     @property
-    def list_length(self) -> Optional[int]:
+    def list_length(self) -> Union[None,int,UnaryOpNode,BinOpNode]:
         """
         Member's length if specified.
         """
         if self.list_length_node == None:
             return None
-        return int(self.list_length_node.value)
+        elif isinstance(self.list_length, int):
+            return int(self.list_length_node.value)
+        return self.list_length_node
 
 
 class StructDefNode(ASTNode):

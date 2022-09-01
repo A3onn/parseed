@@ -45,7 +45,8 @@ def test_struct_members_with_expressions():
     Parser(get_tokens("struct test { uint8[1+1] member, }")).run()
     Parser(get_tokens("struct test { uint8[1+1] member1, uint8[15-3] member2, }")).run()
     Parser(get_tokens("struct test { uint8[1+1] member1, int16 member2, uint8[-3+24] member2, }")).run()
-    Parser(get_tokens("struct test { uint8[3*(2+3)] member1, int16 member2, uint8[-(-3*12)] member2, }")).run()
+    Parser(get_tokens("struct test { uint8[3*(2+3)] member1, int16 member2, uint8[-(-3*12)] member3, }")).run()
+    Parser(get_tokens("struct test { uint8 member1, int16[some_struct.member_value*2] member2, }")).run()
     Parser(get_tokens("struct test { uint8[] member1, int16 member2, uint8[2*3-(3)] member2, }")).run()
 
 def test_struct_endian():
@@ -116,6 +117,10 @@ def test_struct_members_errors():
     with pytest.raises(InvalidSyntaxError):
         # missing right curly-brace
         Parser(get_tokens("struct MyStruct { ")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # member name with dot in it
+        Parser(get_tokens("struct MyStruct { uint8 mem.ber,")).run()
 
     with pytest.raises(InvalidSyntaxError):
         # missing right curly-brace

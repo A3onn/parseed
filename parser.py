@@ -205,11 +205,11 @@ class Parser:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
         self.advance()
 
-        if_true: StructMemberAccessNode = StructMemberAccessNode(if_true_token)
+        if_true: IdentifierAccessNode = IdentifierAccessNode(if_true_token.value)
         if if_true_token.value in DATA_TYPES:
             if_true = DataType(if_true_token.value)
 
-        if_false: StructMemberAccessNode = StructMemberAccessNode(if_false_token)
+        if_false: IdentifierAccessNode = IdentifierAccessNode(if_false_token.value)
         if if_false_token.value in DATA_TYPES:
             if_false = DataType(if_false_token.value)
 
@@ -260,6 +260,12 @@ class Parser:
         return self.binary_op(self.no_identifier_factor, [TT_MULT, TT_DIV])
 
     def factor(self) -> Any:
+        """
+        <factor> ::= <num_int> | <num_float>
+                    | ("+" | "-") <factor>
+                    | "(" <expr> ")"
+                    | <identifier> ("." <identifier>)*
+        """
         token: Token = self.current_token
 
         if token.type in [TT_PLUS, TT_MINUS]:
@@ -279,8 +285,13 @@ class Parser:
             self.advance()
             return FloatNumberNode(token)
         elif token.type == TT_IDENTIFIER:
+            name: str = self.current_token.value
             self.advance()
-            return StructMemberAccessNode(token)
+            while self.current_token.type == TT_DOT:
+                self.advance()
+                name += "." + self.current_token.value
+            self.advance()
+            return IdentifierAccessNode(name)
         raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier or value")
 
     def expr(self) -> Any:
