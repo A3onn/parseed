@@ -145,11 +145,14 @@ class Parser:
                 endian = LITTLE_ENDIAN
             self.advance()
 
-        if self.current_token.type not in [TT_DATA_TYPE, TT_IDENTIFIER]:
-            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected data-type or identifier")
+        if self.current_token.type not in [TT_DATA_TYPE, TT_IDENTIFIER, TT_LPAREN]:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected data-type, identifier or ternary operator")
 
-        member_type: Token = self.current_token
-        self.advance()
+        if self.current_token.type == TT_LPAREN:
+            member_type: TernaryDataTypeNode = self.ternary_data_type()
+        else:
+            member_type: Token = self.current_token
+            self.advance()
 
         is_list: bool = False
         list_length_node: Any = None
@@ -177,6 +180,57 @@ class Parser:
         if is_list:
             return StructMemberDeclareListNode(member_type, member_name, list_length_node, endian)
         return StructMemberDeclareNode(member_type, member_name, endian)
+
+    def ternary_data_type(self) -> TernaryDataTypeNode:
+        """
+        <ternary_data_type> ::= "(" <comparison> "?" <data_type> ":" <data_type> ")"
+        """
+        self.advance()
+        comparison_node: ComparisonNode = self.comparison()
+        if self.current_token.type != TT_QUESTION_MARK:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '?'")
+        self.advance()
+
+        if_true_token: Token = self.current_token
+
+        self.advance()
+        if self.current_token.type != TT_COLON:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ':'")
+        self.advance()
+
+        if_false_token: Token = self.current_token
+
+        self.advance()
+        if self.current_token.type != TT_RPAREN:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
+        self.advance()
+
+        if_true: StructMemberAccessNode = StructMemberAccessNode(if_true_token)
+        if if_true_token.value in DATA_TYPES:
+            if_true = DataType(if_true_token.value)
+
+        if_false: StructMemberAccessNode = StructMemberAccessNode(if_false_token)
+        if if_false_token.value in DATA_TYPES:
+            if_false = DataType(if_false_token.value)
+
+        return TernaryDataTypeNode(comparison_node, if_true, if_false)
+
+    def comparison(self) -> ComparisonNode:
+        """
+        <comparison> ::= (<identifier> | <num_int> | <num_float>) <comparator> (<identifier> | <num_int> | <num_float>)
+        """
+        left_cond_op: Token = self.current_token
+        self.advance()
+        comparator_token: Token = self.current_token
+        comparators_list: List = [TT_COMP_EQ, TT_COMP_NE, TT_COMP_GT, TT_COMP_LT, TT_COMP_GEQ, TT_COMP_LEQ]
+        if comparator_token.type not in comparators_list:
+            list_comp: str = ", ".join([f"'{c}'" for c in ["<", ">", "<=", ">=", "==", "!="]])
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, f"expected one of: " + list_comp)
+        self.advance()
+        right_cond_op: Token = self.current_token
+        self.advance()
+
+        return ComparisonNode(left_cond_op, comparator_token, right_cond_op)
 
     def no_identifier_factor(self) -> Any:
         token: Token = self.current_token

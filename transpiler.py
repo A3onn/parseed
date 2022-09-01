@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 from typing import Any, List
 from abc import ABC, abstractmethod
-from ast_nodes import BitfieldDefNode, StructDefNode
+from ast_nodes import BitfieldDefNode, StructDefNode, TernaryDataTypeNode
 from errors import *
-from utils import DATA_TYPES
+from utils import DATA_TYPES, DataType
 
 
 class _Block:
@@ -117,9 +117,9 @@ class ParseedOutputGenerator(ABC):
             for member in struct.members:
                 if member.type not in DATA_TYPES:
                     # check for unknown types
-                    if member.type not in [struct.name for struct in self.structs] and \
+                    if not isinstance(member.type, TernaryDataTypeNode) and member.type not in [struct.name for struct in self.structs] and \
                             member.type not in [bitfield.name for bitfield in self.bitfields]:
-                        raise UnknownTypeError(member.type_token.pos_start, member.type_token.pos_end, member.type, struct.name)
+                        raise UnknownTypeError(member._type.pos_start, member._type.pos_end, member.type, struct.name)
 
                     self.__verify_recursive_struct_member(member, [])
 
@@ -161,12 +161,17 @@ class ParseedOutputGenerator(ABC):
         If the same struct appears twice in the stack, it means there is a recursion.
         This function MUST NOT be called in the 'generate' method, as it only used in the _init_intermediate_ast method.
         """
+        if isinstance(visited_member.type, TernaryDataTypeNode):
+            # TODO
+            return 
+
         if visited_member.type in DATA_TYPES:  # base case, cannot visit native data types as they are not structs
             return
         elif visited_member.type in structs_stack:
             raise RecursiveStructError([self.get_struct_by_name(s) for s in structs_stack])
 
         structs_stack.append(visited_member.type)
+
         for member in self.get_struct_by_name(visited_member.type).members:
             self.__verify_recursive_struct_member(member, structs_stack)
         structs_stack.pop()
@@ -179,97 +184,3 @@ class ParseedOutputGenerator(ABC):
         if len(struct_res) == 0:
             return None
         return struct_res[0]
-
-
-class DataType:
-    """
-    This helper class gives informations about a data-type from its name.
-    It is especially useful for knowing a data-type's size and if it is signed.
-    """
-    def __init__(self, name: str):
-        self.name = name
-        self.size = -1
-        if name == "uint8":
-            self.size = 1
-            self.signed = False
-        elif name == "int8":
-            self.size = 1
-            self.signed = True
-        elif name == "uint16":
-            self.size = 2
-            self.signed = False
-        elif name == "int16":
-            self.size = 2
-            self.signed = True
-        elif name == "uint24":
-            self.size = 3
-            self.signed = False
-        elif name == "int24":
-            self.size = 3
-            self.signed = True
-        elif name == "uint32":
-            self.size = 4
-            self.signed = False
-        elif name == "int32":
-            self.size = 4
-            self.signed = True
-        elif name == "uint40":
-            self.size = 5
-            self.signed = False
-        elif name == "int40":
-            self.size = 5
-            self.signed = True
-        elif name == "uint48":
-            self.size = 6
-            self.signed = False
-        elif name == "int48":
-            self.size = 6
-            self.signed = True
-        elif name == "uint64":
-            self.size = 8
-            self.signed = False
-        elif name == "int64":
-            self.size = 8
-            self.signed = True
-        elif name == "uint128":
-            self.size = 16
-            self.signed = False
-        elif name == "int128":
-            self.size = 16
-            self.signed = False
-        elif name == "float":
-            self.size = 4
-        elif name == "double":
-            self.size = 8
-        elif name == "byte":
-            self.size = 1
-            self.signed = False
-        elif name == "string":
-            self.size = -1
-        # other type have been checked by the ParseedOutputGenerator class
-
-    def is_string(self) -> bool:
-        """
-        Returns if the data-type is a string.
-        """
-        return self.name == "string"
-
-    def is_byte(self) -> bool:
-        """
-        Returns if the data-type is a byte.
-        """
-        return self.name == "byte"
-
-    def is_float(self) -> bool:
-        """
-        Returns if the data-type is a float.
-        Use the 'is_double' method to check if it a double.
-        """
-        return self.name == "float"
-
-    def is_double(self) -> bool:
-        """
-        Returns if the data-type is a double.
-        Use the 'is_float' method to check if it a float.
-        """
-        return self.name == "double"

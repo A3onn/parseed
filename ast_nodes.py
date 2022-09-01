@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-from typing import List, Optional
+from typing import List, Optional, Union
 from lexer import Token
-from utils import BIG_ENDIAN
+from utils import BIG_ENDIAN, DataType
 from abc import ABC, abstractmethod
 
 class ASTNode(ABC):
@@ -137,19 +137,75 @@ class StructMemberAccessNode(ASTNode):
         return str(self.name_token.value)
 
 
+class ComparisonNode(ASTNode):
+    """
+    Represent a comparison between two AST nodes.
+    """
+    def __init__(self, left_cond_op: Union[ASTNode,Token], condition_op: Token, right_cond_op: Union[ASTNode, Token]):
+        self.left_cond_op: Union[ASTNode,Token] = left_cond_op
+        self.condition_op: Token = condition_op
+        self.right_cond_op: Union[ASTNode,Token] = right_cond_op
+
+    def to_str(self, depth: int = 0):
+        res: str = ""
+        if isinstance(self.left_cond_op, ASTNode):
+            res += self.left_cond_op.to_str(depth+1) + "\n"
+        else:
+            res += ("\t" * depth) + str(self.left_cond_op) + "\n"
+        res += ("\t" * depth) + str(self.condition_op) + "\n"
+        if isinstance(self.right_cond_op, ASTNode):
+            res += self.right_cond_op.to_str(depth+1) + "\n"
+        else:
+            res += ("\t" * depth) + str(self.right_cond_op)
+        return res
+
+
+class TernaryDataTypeNode(ASTNode):
+    """
+    This class represents a ternary operator for data-types.
+    """
+    def __init__(self, comparison_node: ComparisonNode, if_true: Union[StructMemberAccessNode, DataType], if_false: Union[StructMemberAccessNode, DataType]):
+        self.comparison: ComparisonNode = comparison_node
+        self.if_true: Union[StructMemberAccessNode, DataType] = if_true
+        self.if_false: Union[StructMemberAccessNode, DataType] = if_false
+
+    def to_str(self, depth: int = 0) -> str:
+        res: str = ("\t" * depth) + "TernaryDataType(\n"
+        res += self.comparison.to_str(depth+1) + "\n"
+        res += ("\t" * (depth+1)) + "?\n"
+
+        if isinstance(self.if_true, StructMemberAccessNode):
+            res += self.if_true.to_str(depth+2) + "\n"
+        else:
+            res += ("\t" * (depth+1)) + str(self.if_true) + "\n"
+
+        res += ("\t" * (depth+1)) + ":\n"
+
+        if isinstance(self.if_false, StructMemberAccessNode):
+            res += self.if_false.to_str(depth+2) + "\n)"
+        else:
+            res += ("\t" * (depth+1)) + str(self.if_false) + "\n"
+        return res + ("\t" * depth) + ")" + "\n"
+
+
 class StructMemberDeclareNode(ASTNode):
     """
     Represent a member of a struct.
     It contains the name, the type and the endianness of the member.
     Note that if the member is a list, ast_nodes.StructMemberDeclareListNode must be used.
     """
-    def __init__(self, type_token: Token, name_token: Token, endian: str = BIG_ENDIAN):
-        self.type_token: Token = type_token
+    def __init__(self, type_token: Union[Token,TernaryDataTypeNode], name_token: Token, endian: str = BIG_ENDIAN):
+        self._type: Union[Token,TernaryDataTypeNode] = type_token
         self.name_token: Token = name_token
         self.endian: str = endian
 
     def to_str(self, depth: int = 0) -> str:
-        return ("\t" * depth) + "StructMemberDeclareNode(" + str(self.type_token) + " " + str(self.name_token) + ")\n"
+        if isinstance(self._type, Token):
+            return ("\t" * depth) + "StructMemberDeclareNode(" + str(self._type) + " " + str(self.name_token) + ")\n"
+        res: str = ("\t" * depth) + "StructMemberDeclareNode(\n"
+        res += self._type.to_str(depth+1)
+        res += ("\t" * depth) + str(self.name_token) + ")\n"
+        return res
 
     @property
     def name(self) -> str:
@@ -159,11 +215,13 @@ class StructMemberDeclareNode(ASTNode):
         return str(self.name_token.value)
 
     @property
-    def type(self) -> str:
+    def type(self) -> Union[str,TernaryDataTypeNode]:
         """
         Member's type.
         """
-        return str(self.type_token.value)
+        if isinstance(self._type, Token):
+            return str(self._type.value)
+        return self._type
 
 
 class StructMemberDeclareListNode(ASTNode):
@@ -172,8 +230,8 @@ class StructMemberDeclareListNode(ASTNode):
     It contains the name, the type, the length (if specified) and the endianness of the member.
     Note that if the member is not a list, ast_nodes.StructMemberDeclareNode must be used.
     """
-    def __init__(self, type_token: Token, name_token: Token, list_length_node: Optional[ASTNode] = None, endian: str = BIG_ENDIAN):
-        self.type_token: Token = type_token
+    def __init__(self, type_token: Union[Token,TernaryDataTypeNode], name_token: Token, list_length_node: Optional[ASTNode] = None, endian: str = BIG_ENDIAN):
+        self._type: Union[Token,TernaryDataTypeNode] = type_token
         self.name_token: Token = name_token
         self.endian: str = endian
         self.list_length_node: Optional[ASTNode] = list_length_node
@@ -191,11 +249,13 @@ class StructMemberDeclareListNode(ASTNode):
         return str(self.name_token.value)
 
     @property
-    def type(self) -> str:
+    def type(self) -> Union[str,TernaryDataTypeNode]:
         """
         Member's type.
         """
-        return str(self.type_token.value)
+        if isinstance(self._type, Token):
+            return str(self._type.value)
+        return self._type
 
     def has_length_specified(self) -> bool:
         """

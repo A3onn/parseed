@@ -78,6 +78,6 @@ class Python_Class(ParseedOutputGenerator):
             elif dt.size == 16:
                 raise NotImplementedError("String is not yet implemented in Python_Class.")
 
-            if not dt.signed:
+            if hasattr(dt, "signed") and not dt.signed:
                 res = res.upper()
             return res
