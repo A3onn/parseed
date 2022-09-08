@@ -12,14 +12,17 @@
 
 
 ; struct
-<struct_stmt> ::= ["LE" | "BE"] "struct" <identifier> "{" <struct_member_def>+ "}"
+<struct_stmt> ::= ["LE" | "BE"] "struct" <identifier> "{" (<struct_member_def> | <match_stmt>)+ "}"
 
-<struct_member_def> ::= ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>) <identifier> ","
-                        | ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>) "[" <expr> "]" <identifier> ","
-                        | ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>) "[]" <identifier> ","  ;; repeat this member until the end of the buffer
-                        | <match_stmt> ","
+<struct_member_type> ::= ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>)
+                        | ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>) "[" <expr> "]"
+                        | ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>) "[]"  ;; repeat this member until the end of the buffer
 
-<match_stmt> ::= "match (" <expr> ") {" (<expr> ":" <struct_member_def> ",")+ "}"
+<struct_member_def> ::= <struct_member_type> <identifier> ","
+
+
+<match_stmt> ::= "match (" <expr> ") {" (<expr> ":" <struct_member_type> ",")+ <identifier> "}"
+                | "match (" <expr> ") {" (<expr> ": {" <struct_member_def>+ "},")+ "}"  ;; multiple members in the match case
 
 
 ; expressions
