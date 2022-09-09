@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 from typing import Any, List
+from lexer import Token
 from abc import ABC, abstractmethod
-from ast_nodes import BitfieldDefNode, StructDefNode, TernaryDataTypeNode
+from ast_nodes import BitfieldDefNode, StructDefNode, StructMemberDeclareNode, TernaryDataTypeNode
 from errors import *
 from utils import DATA_TYPES, DataType
 
@@ -115,11 +116,14 @@ class ParseedOutputGenerator(ABC):
         for struct in self.structs:
             self.__check_duplicate_members(struct)
             for member in struct.members:
-                if member.type not in DATA_TYPES:
+                if not isinstance(member, StructMemberDeclareNode):
+                    # TODO
+                    continue
+                if member.type.type_name.value not in DATA_TYPES:
                     # check for unknown types
-                    if not isinstance(member.type, TernaryDataTypeNode) and member.type not in [struct.name for struct in self.structs] and \
-                            member.type not in [bitfield.name for bitfield in self.bitfields]:
-                        raise UnknownTypeError(member._type.pos_start, member._type.pos_end, member.type, struct.name)
+                    if isinstance(member.type.type_name, Token) and member.type.type_name.value not in [struct.name for struct in self.structs] and \
+                            member.type.type_name.value not in [bitfield.name for bitfield in self.bitfields]:
+                        raise UnknownTypeError(member.type.type_name.pos_start, member.type.type_name.pos_end, member.type.type_name, struct.name)
 
         # if there is no unknown types, now we can check for recursive structs
         for struct in self.structs:
@@ -132,6 +136,9 @@ class ParseedOutputGenerator(ABC):
         """
         tmp = []
         for member in struct.members:
+            if not isinstance(member, StructMemberDeclareNode):
+                # TODO
+                continue
             if member.name in tmp:
                 members = [m for m in struct.members if m.name == member.name]
                 raise DuplicateMemberError(members, struct.name)
@@ -164,18 +171,21 @@ class ParseedOutputGenerator(ABC):
         If the same struct appears twice in the stack, it means there is a recursion.
         This function MUST NOT be called in the 'generate' method, as it only used in the _init_intermediate_ast method.
         """
-        if isinstance(visited_member.type, TernaryDataTypeNode):
+        if not isinstance(visited_member, StructMemberDeclareNode):
+            # TODO
+            return
+        elif isinstance(visited_member.type.type_name, TernaryDataTypeNode):
             # TODO
             return 
 
-        if visited_member.type in DATA_TYPES:  # base case, cannot visit native data types as they are not structs
+        if visited_member.type.type_name.value in DATA_TYPES:  # base case, cannot visit native data types as they are not structs
             return
-        elif visited_member.type in structs_stack:
+        elif visited_member.type.type_name.value in structs_stack:
             raise RecursiveStructError([self.get_struct_by_name(s) for s in structs_stack])
 
-        structs_stack.append(visited_member.type)
+        structs_stack.append(visited_member.type.type_name.value)
 
-        for member in self.get_struct_by_name(visited_member.type).members:
+        for member in self.get_struct_by_name(visited_member.type.type_name.value).members:
             self.__verify_recursive_struct_member(member, structs_stack)
         structs_stack.pop()
 

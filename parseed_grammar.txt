@@ -21,8 +21,8 @@
 <struct_member_def> ::= <struct_member_type> <identifier> ","
 
 
-<match_stmt> ::= "match (" <expr> ") {" (<expr> ":" <struct_member_type> ",")+ <identifier> "}"
-                | "match (" <expr> ") {" (<expr> ": {" <struct_member_def>+ "},")+ "}"  ;; multiple members in the match case
+<match_stmt> ::= "match (" <expr> ") {" (<expr> ":" <struct_member_type> ",")+ "}" <identifier> ","
+                | "match (" <expr> ") {" (<expr> ": {" <struct_member_def>+ "},")+ "},"  ;; multiple members in the match case
 
 
 ; expressions

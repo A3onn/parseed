@@ -24,8 +24,8 @@ def test_struct_members():
     member = ast[0].members[0]
     assert isinstance(member, StructMemberDeclareNode)
     assert member.name == "some_member"
-    assert member.type == "uint8"
-    assert member.endian == BIG_ENDIAN
+    assert member.type.type_name.value == "uint8"
+    assert member.type.endian == BIG_ENDIAN
 
 
     ast = get_AST("struct test { uint8 some_member, LE uint16 member2,}")
@@ -33,12 +33,12 @@ def test_struct_members():
 
     assert isinstance(ast[0].members[0], StructMemberDeclareNode)
     assert ast[0].members[0].name == "some_member"
-    assert ast[0].members[0].type == "uint8"
-    assert ast[0].members[0].endian == BIG_ENDIAN
+    assert ast[0].members[0].type.type_name.value == "uint8"
+    assert ast[0].members[0].type.endian == BIG_ENDIAN
     assert isinstance(ast[0].members[1], StructMemberDeclareNode)
     assert ast[0].members[1].name == "member2"
-    assert ast[0].members[1].type == "uint16"
-    assert ast[0].members[1].endian == LITTLE_ENDIAN
+    assert ast[0].members[1].type.type_name.value == "uint16"
+    assert ast[0].members[1].type.endian == LITTLE_ENDIAN
     
 def test_struct_member_ternary_type():
     ast = get_AST("struct test { (1 == 1 ? uint8 : uint16) member, }")
@@ -48,12 +48,12 @@ def test_struct_member_ternary_type():
     member = ast[0].members[0]
     assert isinstance(member, StructMemberDeclareNode)
     assert member.name == "member"
-    assert member.endian == BIG_ENDIAN
-    assert isinstance(member.type, TernaryDataTypeNode)
-    assert isinstance(member.type.if_true, DataType)
-    assert isinstance(member.type.if_false, DataType)
+    assert member.type.endian == BIG_ENDIAN
+    assert isinstance(member.type.type_name, TernaryDataTypeNode)
+    assert isinstance(member.type.type_name.if_true, DataType)
+    assert isinstance(member.type.type_name.if_false, DataType)
 
-    assert isinstance(member.type.comparison, ComparisonNode)
-    assert member.type.comparison.left_cond_op.value == "1"
-    assert member.type.comparison.right_cond_op.value == "1"
-    assert member.type.comparison.condition_op.type == TT_COMP_EQ
+    assert isinstance(member.type.type_name.comparison, ComparisonNode)
+    assert member.type.type_name.comparison.left_cond_op.value == "1"
+    assert member.type.type_name.comparison.right_cond_op.value == "1"
+    assert member.type.type_name.comparison.condition_op.type == TT_COMP_EQ

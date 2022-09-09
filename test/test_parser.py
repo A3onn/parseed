@@ -62,36 +62,97 @@ def test_struct_endian():
 
 def test_struct_member_endian():
     stmts = Parser(get_tokens("struct test { uint8 member, } BE struct test2 { BE uint8 member, }")).run()
-    assert stmts[0].members[0].endian == BIG_ENDIAN
-    assert stmts[1].members[0].endian == BIG_ENDIAN
+    assert stmts[0].members[0].type.endian == BIG_ENDIAN
+    assert stmts[1].members[0].type.endian == BIG_ENDIAN
 
     stmts = Parser(get_tokens("struct test { LE uint8 member, } BE struct test2 { LE uint8 member, }")).run()
-    assert stmts[0].members[0].endian == LITTLE_ENDIAN
-    assert stmts[1].members[0].endian == LITTLE_ENDIAN
+    assert stmts[0].members[0].type.endian == LITTLE_ENDIAN
+    assert stmts[1].members[0].type.endian == LITTLE_ENDIAN
 
     stmts = Parser(get_tokens("struct test { BE uint8 member, LE uint8 member2, }")).run()
-    assert stmts[0].members[0].endian == BIG_ENDIAN
-    assert stmts[0].members[1].endian == LITTLE_ENDIAN
+    assert stmts[0].members[0].type.endian == BIG_ENDIAN
+    assert stmts[0].members[1].type.endian == LITTLE_ENDIAN
 
     stmts = Parser(get_tokens("struct test { uint8 member, LE uint8 member2, }")).run()
-    assert stmts[0].members[0].endian == BIG_ENDIAN
-    assert stmts[0].members[1].endian == LITTLE_ENDIAN
+    assert stmts[0].members[0].type.endian == BIG_ENDIAN
+    assert stmts[0].members[1].type.endian == LITTLE_ENDIAN
 
     stmts = Parser(get_tokens("LE struct test { uint8 member, uint8 member2, }")).run()
-    assert stmts[0].members[0].endian == LITTLE_ENDIAN
-    assert stmts[0].members[1].endian == LITTLE_ENDIAN
+    assert stmts[0].members[0].type.endian == LITTLE_ENDIAN
+    assert stmts[0].members[1].type.endian == LITTLE_ENDIAN
 
     stmts = Parser(get_tokens("LE struct test { uint8 member, LE uint8 member2, }")).run()
-    assert stmts[0].members[0].endian == LITTLE_ENDIAN
-    assert stmts[0].members[1].endian == LITTLE_ENDIAN
+    assert stmts[0].members[0].type.endian == LITTLE_ENDIAN
+    assert stmts[0].members[1].type.endian == LITTLE_ENDIAN
 
     stmts = Parser(get_tokens("LE struct test { LE uint8 member, LE uint8 member2, }")).run()
-    assert stmts[0].members[0].endian == LITTLE_ENDIAN
-    assert stmts[0].members[1].endian == LITTLE_ENDIAN
+    assert stmts[0].members[0].type.endian == LITTLE_ENDIAN
+    assert stmts[0].members[1].type.endian == LITTLE_ENDIAN
 
     stmts = Parser(get_tokens("BE struct test { uint8 member, LE uint8 member2, }")).run()
-    assert stmts[0].members[0].endian == BIG_ENDIAN
-    assert stmts[0].members[1].endian == LITTLE_ENDIAN
+    assert stmts[0].members[0].type.endian == BIG_ENDIAN
+    assert stmts[0].members[1].type.endian == LITTLE_ENDIAN
+
+def test_struct_members_match():
+    stmts = Parser(get_tokens("struct test { match(1+1) {1: uint8,} member, }")).run()
+    stmts = Parser(get_tokens("struct test { match(1+1) {1: uint8, 2: uint16,} member, }")).run()
+    stmts = Parser(get_tokens("struct test { match(15+(-3)*2) {-15*2: uint8, (95): uint16,} member, }")).run()
+    stmts = Parser(get_tokens("struct test { uint16 first_member, match(first_member*2) {first_member+3: uint8, first_member*3: uint16,} second_member,}")).run()
+    stmts = Parser(get_tokens("struct test { match(1+1) {1: {uint8 member1, uint8 member2,}, 2: {uint16 member1, uint16 member2,},},}")).run()
+    stmts = Parser(get_tokens("struct test { match(1+1) {1: {uint8 some_member1, uint8 some_member2,}, 2: {uint16 member1, uint16 member2,},}, }")).run()
+
+def test_struct_members_match_errors():
+    with pytest.raises(InvalidSyntaxError):
+        # missing comma
+        Parser(get_tokens("struct test { match(1+1) {1: uint8} member, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing match expression
+        Parser(get_tokens("struct test { match() {: uint8,} member, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing left parenthesis
+        Parser(get_tokens("struct test { match 1+1) {1: uint8,} member, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing right parenthesis
+        Parser(get_tokens("struct test { match(1+1 {1: uint8,} member, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing opening curl-bracket
+        Parser(get_tokens("struct test { match(1+1) 1: uint8,} member, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing closing curl-bracket
+        Parser(get_tokens("struct test { match(1+1) {1: uint8, member, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing case expression
+        Parser(get_tokens("struct test { match(1+1) {: uint8,} member, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing colon
+        Parser(get_tokens("struct test { match(1+1) {1 uint8,} member, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing type
+        Parser(get_tokens("struct test { match(1+1) {1: ,} member, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # identifier not needed
+        Parser(get_tokens("struct test { match(1+1) {1: {uint8 member,}} not_here, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing member name
+        Parser(get_tokens("struct test { match(1+1) {1: uint8 }, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing closing curly-bracket
+        Parser(get_tokens("struct test { match(1+1) {1: {uint8 member}, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # identifier not supposed to be there
+        Parser(get_tokens("struct test { match(1+1) {1: uint8, invalid-identifier} member, }")).run()
 
 def test_struct_members_errors():
     with pytest.raises(InvalidSyntaxError):

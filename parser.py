@@ -104,7 +104,7 @@ class Parser:
 
     def struct_stmt(self) -> StructDefNode:
         """
-        <struct_stmt> ::= ["LE | "BE"] "struct" <identifier> "{" <struct_member_def>+ "}"
+        <struct_stmt> ::= ["LE" | "BE"] "struct" <identifier> "{" (<struct_member_def> | <match_stmt>)+ "}"
         """
         endian = BIG_ENDIAN
         if self.current_token.value in (BIG_ENDIAN, LITTLE_ENDIAN):
@@ -124,20 +124,22 @@ class Parser:
         self.advance()
 
         while self.current_token.type not in [TT_RCURLY, TT_EOF]:
-            res_struct_def_node.add_member_node(self.struct_member_def(endian))
+            if self.current_token.type == TT_KEYWORD and self.current_token.value == "match":
+                res_struct_def_node.add_member_node(self.match_stmt(endian))
+            else:
+                res_struct_def_node.add_member_node(self.struct_member_def(endian))
 
         if self.current_token.type == TT_EOF:  # if missing '}'
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '}'")
         self.advance()
 
         return res_struct_def_node
-
-    def struct_member_def(self, struct_endian) -> Union[StructMemberDeclareNode, StructMemberDeclareListNode]:
+    
+    def struct_member_type(self, struct_endian: str) -> StructMemberTypeNode:
         """
-        <struct_member_def> ::= ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>) <identifier> ","
-                                | ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>) "[" <expr> "]" <identifier> ","
-                                | ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>) "[]" <identifier> ","
-                                | <match_stmt> ","
+        <struct_member_type> ::= ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>)
+                                | ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>) "[" <expr> "]"
+                                | ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>) "[]"  ;; repeat this member until the end of the buffer
         """
         endian = struct_endian
         if self.current_token.value in (BIG_ENDIAN, LITTLE_ENDIAN):
@@ -158,17 +160,26 @@ class Parser:
         list_length_node: Any = None
 
         if self.current_token.type == TT_IDENTIFIER:  # nothing to do, just continue parsing
-            pass
+            return StructMemberTypeNode(member_type, endian)
         elif self.current_token.type == TT_LBRACK:
             is_list = True
             self.advance()
             list_length_node = None
             if self.current_token.type != TT_RBRACK:
                 list_length_node = self.expr()
+            if self.current_token.type != TT_RBRACK:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ']'")
             self.advance()
-        else:
-            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier or '['")
 
+        return StructMemberTypeNode(member_type, endian, is_list, list_length_node)
+
+    def struct_member_def(self, struct_endian: str) -> StructMemberDeclareNode:
+        """
+        <struct_member_def> ::= <struct_member_type> <identifier> ","
+        """
+        member_type: StructMemberTypeNode = self.struct_member_type(struct_endian)
+        if self.current_token.type != TT_IDENTIFIER:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier")
         member_name: Token = self.current_token
         self.advance()
 
@@ -177,9 +188,62 @@ class Parser:
         else:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ','")
 
-        if is_list:
-            return StructMemberDeclareListNode(member_type, member_name, list_length_node, endian)
-        return StructMemberDeclareNode(member_type, member_name, endian)
+        return StructMemberDeclareNode(member_type, member_name)
+
+    def match_stmt(self, struct_endian: str) -> MatchNode:
+        """
+        <match_stmt> ::= "match (" <expr> ") {" (<expr> ":" <struct_member_type> ",")+ "}" <identifier> ","
+                        | "match (" <expr> ") {" (<expr> ": {" <struct_member_def>+ "},")+ "},"  ;; multiple members in the match case
+        """
+        self.advance()
+        if self.current_token.type != TT_LPAREN:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '('")
+        self.advance()
+
+        match_node: MatchNode = MatchNode(self.expr())
+
+        if self.current_token.type != TT_RPAREN:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
+        self.advance()
+
+        if self.current_token.type != TT_LCURLY:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '{'")
+        self.advance()
+
+        # start of match cases
+        is_multiple_members: bool = False  # need to know to check after this while loop if an identifier is needed
+        while self.current_token.type != TT_RCURLY:
+            case_value: ASTNode = self.expr()
+            if self.current_token.type != TT_COLON:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ':'")
+            self.advance()
+
+            if self.current_token.type == TT_LCURLY:  # multiple members
+                is_multiple_members = True
+                self.advance()
+                while self.current_token.type != TT_RCURLY:
+                    match_node.cases.update({case_value: self.struct_member_def(struct_endian)})
+                self.advance()
+            else:
+                match_node.cases.update({case_value: self.struct_member_type(struct_endian)})
+
+            if self.current_token.type != TT_COMMA:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ','")
+            self.advance()
+
+        self.advance()
+
+        if not is_multiple_members:
+            if self.current_token.type != TT_IDENTIFIER:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier")
+            match_node.member_name = self.current_token.value
+            self.advance()
+
+        if self.current_token.type != TT_COMMA:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ','")
+        self.advance()
+
+        return match_node
 
     def ternary_data_type(self) -> TernaryDataTypeNode:
         """
