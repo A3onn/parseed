@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from typing import List, Any, Union
+from typing import List, Any, Union, Dict
 from lexer import *
 from ast_nodes import *
 from errors import InvalidSyntaxError
@@ -55,14 +55,13 @@ class Parser:
         if self.current_token.type != TT_IDENTIFIER:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier")
 
-        bitfield_name_token: Token = self.current_token
+        name_token: Token = self.current_token
         self.advance()
 
-        res_bitfield_member_node: BitfieldMemberNode = BitfieldMemberNode(bitfield_name_token)
-
+        bits_count: ASTNode = None  # size of the member
         if self.current_token.type == TT_LPAREN:
             self.advance()
-            res_bitfield_member_node.set_explicit_size(self.no_identifier_expr())
+            size = self.no_identifier_expr()
             if self.current_token.type != TT_RPAREN:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
             self.advance()
@@ -71,7 +70,7 @@ class Parser:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ','")
         self.advance()
 
-        return res_bitfield_member_node
+        return BitfieldMemberNode(name_token, bits_count)
 
     def bitfield_stmt(self) -> BitfieldDefNode:
         """
@@ -79,12 +78,13 @@ class Parser:
                             | "bitfield" <identifier> "(" <no_identifier_expr> ")" "{" <bitfield_member_def>+ "}"
         """
         self.advance()
-        res_bitfield_def_node: BitfieldDefNode = BitfieldDefNode(self.current_token)
+        name: str = self.current_token
 
         self.advance()
+        bytes_count: ASTNode = None  # size of the bitfield
         if self.current_token.type == TT_LPAREN:
             self.advance()
-            res_bitfield_def_node.set_explicit_size(self.no_identifier_expr())
+            size = self.no_identifier_expr()
             if self.current_token.type != TT_RPAREN:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
             self.advance()
@@ -93,14 +93,15 @@ class Parser:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '{'")
         self.advance()
 
+        members: List = []
         while self.current_token.type not in [TT_RCURLY, TT_EOF]:
-            res_bitfield_def_node.add_member_node(self.bitfield_member_def())
+            members.append(self.bitfield_member_def())
 
         if self.current_token.type == TT_EOF:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '}'")
 
         self.advance()
-        return res_bitfield_def_node
+        return BitfieldDefNode(name, members, bytes_count)
 
     def struct_stmt(self) -> StructDefNode:
         """
@@ -116,24 +117,25 @@ class Parser:
         if self.current_token.type != TT_IDENTIFIER:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier")
 
-        res_struct_def_node: StructDefNode = StructDefNode(self.current_token, endian=endian)
-
+        struct_name = self.current_token
         self.advance()
+
         if self.current_token.type != TT_LCURLY:  # '{', start of struct
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '{'")
         self.advance()
 
+        struct_members: List[StructMemberDeclareNode] = []
         while self.current_token.type not in [TT_RCURLY, TT_EOF]:
             if self.current_token.type == TT_KEYWORD and self.current_token.value == "match":
-                res_struct_def_node.add_member_node(self.match_stmt(endian))
+                struct_members.append(self.match_stmt(endian))
             else:
-                res_struct_def_node.add_member_node(self.struct_member_def(endian))
+                struct_members.append(self.struct_member_def(endian))
 
         if self.current_token.type == TT_EOF:  # if missing '}'
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '}'")
         self.advance()
 
-        return res_struct_def_node
+        return StructDefNode(struct_name, struct_members, endian)
     
     def struct_member_type(self, struct_endian: str) -> StructMemberTypeNode:
         """
@@ -200,7 +202,7 @@ class Parser:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '('")
         self.advance()
 
-        match_node: MatchNode = MatchNode(self.expr())
+        condition: ASTNode = self.expr()
 
         if self.current_token.type != TT_RPAREN:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
@@ -211,6 +213,7 @@ class Parser:
         self.advance()
 
         # start of match cases
+        cases: Dict = {}
         is_multiple_members: bool = False  # need to know to check after this while loop if an identifier is needed
         while self.current_token.type != TT_RCURLY:
             case_value: ASTNode = self.expr()
@@ -222,10 +225,10 @@ class Parser:
                 is_multiple_members = True
                 self.advance()
                 while self.current_token.type != TT_RCURLY:
-                    match_node.cases.update({case_value: self.struct_member_def(struct_endian)})
+                    cases.update({case_value: self.struct_member_def(struct_endian)})
                 self.advance()
             else:
-                match_node.cases.update({case_value: self.struct_member_type(struct_endian)})
+                cases.update({case_value: self.struct_member_type(struct_endian)})
 
             if self.current_token.type != TT_COMMA:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ','")
@@ -233,17 +236,18 @@ class Parser:
 
         self.advance()
 
+        member_name: str = None
         if not is_multiple_members:
             if self.current_token.type != TT_IDENTIFIER:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier")
-            match_node.member_name = self.current_token.value
+            member_name = self.current_token.value
             self.advance()
 
         if self.current_token.type != TT_COMMA:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ','")
         self.advance()
 
-        return match_node
+        return MatchNode(condition, cases, member_name)
 
     def ternary_data_type(self) -> TernaryDataTypeNode:
         """
@@ -281,20 +285,18 @@ class Parser:
 
     def comparison(self) -> ComparisonNode:
         """
-        <comparison> ::= (<identifier> | <num_int> | <num_float>) <comparator> (<identifier> | <num_int> | <num_float>)
+        <comparison> ::= <expr> <comparator> <expr>
         """
-        left_cond_op: Token = self.current_token
-        self.advance()
+        left_cond_op: Token = self.expr()
         comparator_token: Token = self.current_token
-        comparators_list: List = [TT_COMP_EQ, TT_COMP_NE, TT_COMP_GT, TT_COMP_LT, TT_COMP_GEQ, TT_COMP_LEQ]
-        if comparator_token.type not in comparators_list:
-            list_comp: str = ", ".join([f"'{c}'" for c in ["<", ">", "<=", ">=", "==", "!="]])
+        comparators_dict: Dict = {TT_COMP_EQ: "==", TT_COMP_NE: "!=", TT_COMP_GT: ">", TT_COMP_LT: "<", TT_COMP_GEQ: ">=", TT_COMP_LEQ: "<="}
+        if comparator_token.type not in comparators_dict.keys():
+            list_comp: str = ", ".join([f"'{c}'" for c in comparators_dict.values()])
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, f"expected one of: " + list_comp)
         self.advance()
-        right_cond_op: Token = self.current_token
-        self.advance()
+        right_cond_op: Token = self.expr()
 
-        return ComparisonNode(left_cond_op, comparator_token, right_cond_op)
+        return ComparisonNode(left_cond_op, comparators_dict[comparator_token.type], right_cond_op)
 
     def no_identifier_factor(self) -> Any:
         token: Token = self.current_token

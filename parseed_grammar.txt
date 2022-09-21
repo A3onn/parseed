@@ -45,7 +45,7 @@
 
 
 ; comparisons
-<comparison> ::= (<identifier> | <num_int> | <num_float>) <comparator> (<identifier> | <num_int> | <num_float>)
+<comparison> ::= <expr> <comparator> <expr>
 
 <comparator> ::= "<=" | "<" | "==" | ">" | ">=" | "!="
 

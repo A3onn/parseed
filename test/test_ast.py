@@ -24,7 +24,7 @@ def test_struct_members():
     member = ast[0].members[0]
     assert isinstance(member, StructMemberDeclareNode)
     assert member.name == "some_member"
-    assert member.type.type_name.value == "uint8"
+    assert member.type.type == "uint8"
     assert member.type.endian == BIG_ENDIAN
 
 
@@ -33,11 +33,11 @@ def test_struct_members():
 
     assert isinstance(ast[0].members[0], StructMemberDeclareNode)
     assert ast[0].members[0].name == "some_member"
-    assert ast[0].members[0].type.type_name.value == "uint8"
+    assert ast[0].members[0].type.type == "uint8"
     assert ast[0].members[0].type.endian == BIG_ENDIAN
     assert isinstance(ast[0].members[1], StructMemberDeclareNode)
     assert ast[0].members[1].name == "member2"
-    assert ast[0].members[1].type.type_name.value == "uint16"
+    assert ast[0].members[1].type.type == "uint16"
     assert ast[0].members[1].type.endian == LITTLE_ENDIAN
     
 def test_struct_member_ternary_type():
@@ -49,11 +49,11 @@ def test_struct_member_ternary_type():
     assert isinstance(member, StructMemberDeclareNode)
     assert member.name == "member"
     assert member.type.endian == BIG_ENDIAN
-    assert isinstance(member.type.type_name, TernaryDataTypeNode)
-    assert isinstance(member.type.type_name.if_true, DataType)
-    assert isinstance(member.type.type_name.if_false, DataType)
+    assert isinstance(member.type.type, TernaryDataTypeNode)
+    assert isinstance(member.type.type.if_true, DataType)
+    assert isinstance(member.type.type.if_false, DataType)
 
-    assert isinstance(member.type.type_name.comparison, ComparisonNode)
-    assert member.type.type_name.comparison.left_cond_op.value == "1"
-    assert member.type.type_name.comparison.right_cond_op.value == "1"
-    assert member.type.type_name.comparison.condition_op.type == TT_COMP_EQ
+    assert isinstance(member.type.type.comparison, ComparisonNode)
+    assert member.type.type.comparison.left_op.value == 1
+    assert member.type.type.comparison.right_op.value == 1
+    assert member.type.type.comparison.condition == "=="

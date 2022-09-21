@@ -119,11 +119,11 @@ class ParseedOutputGenerator(ABC):
                 if not isinstance(member, StructMemberDeclareNode):
                     # TODO
                     continue
-                if member.type.type_name.value not in DATA_TYPES:
+                if member.type.type not in DATA_TYPES:
                     # check for unknown types
-                    if isinstance(member.type.type_name, Token) and member.type.type_name.value not in [struct.name for struct in self.structs] and \
-                            member.type.type_name.value not in [bitfield.name for bitfield in self.bitfields]:
-                        raise UnknownTypeError(member.type.type_name.pos_start, member.type.type_name.pos_end, member.type.type_name, struct.name)
+                    if isinstance(member.type._type, Token) and member.type.type not in [struct.name for struct in self.structs] and \
+                            member.type.type not in [bitfield.name for bitfield in self.bitfields]:
+                        raise UnknownTypeError(member.type._type.pos_start, member.type._type.pos_end, member.type._type, struct.name)
 
         # if there is no unknown types, now we can check for recursive structs
         for struct in self.structs:
@@ -174,18 +174,18 @@ class ParseedOutputGenerator(ABC):
         if not isinstance(visited_member, StructMemberDeclareNode):
             # TODO
             return
-        elif isinstance(visited_member.type.type_name, TernaryDataTypeNode):
+        elif isinstance(visited_member.type.type, TernaryDataTypeNode):
             # TODO
             return 
 
-        if visited_member.type.type_name.value in DATA_TYPES:  # base case, cannot visit native data types as they are not structs
+        if visited_member.type.type in DATA_TYPES:  # base case, cannot visit native data types as they are not structs
             return
-        elif visited_member.type.type_name.value in structs_stack:
+        elif visited_member.type.type in structs_stack:
             raise RecursiveStructError([self.get_struct_by_name(s) for s in structs_stack])
 
-        structs_stack.append(visited_member.type.type_name.value)
+        structs_stack.append(visited_member.type.type)
 
-        for member in self.get_struct_by_name(visited_member.type.type_name.value).members:
+        for member in self.get_struct_by_name(visited_member.type.type).members:
             self.__verify_recursive_struct_member(member, structs_stack)
         structs_stack.pop()
 
