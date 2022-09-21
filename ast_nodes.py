@@ -185,7 +185,7 @@ class StructMemberTypeNode(ASTNode):
         if self.is_list:
             if self.list_length_node != None:
                 return ("\t" * depth) + "StructMemberTypeNode(" + str(self.type_name) + f"[\n{self.list_length_node.to_str(depth+1)}" + ("\t" * depth) + "])\n"
-            return ("\t" * depth) + "StructMemberTypeNode(" + str(self.type_name) + f"[] )\n"
+            return ("\t" * depth) + "StructMemberTypeNode(" + str(self.type_name) + f"[])\n"
         return ("\t" * depth) + "StructMemberTypeNode(" + str(self.type_name) + ")\n"
 
 
