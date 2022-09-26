@@ -40,6 +40,7 @@ TT_DOT = "DOT"
 TT_SEMICOL = "SEMICOL"
 TT_APOST = "APOST"  # apostrophe
 TT_QUOTAT_MARK = "QUOTAT_MARK"
+TT_BACKSLASH = "BACKSLASH"
 
 # for ternary operator
 TT_COLON = "COLON"
@@ -99,6 +100,9 @@ class Lexer:
                 self._next_token()
             elif self.current_char == "'":
                 tokens.append(Token(TT_APOST, pos_start=self.pos))
+                self._next_token()
+            elif self.current_char == "\\":
+                tokens.append(Token(TT_BACKSLASH, pos_start=self.pos))
                 self._next_token()
             elif self.current_char == "\"":
                 tokens.append(Token(TT_QUOTAT_MARK, pos_start=self.pos))

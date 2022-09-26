@@ -56,14 +56,16 @@ class DataType:
     name: str = ""
     size: int = -1
     signed = False
+    string_delimiter = ""
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, string_delimiter=r"\0"):
         """
         :param name: Name of the type, must not be an identifier.
         :type name: str
         """
         self.name = name
         self.size = -1
+        self.string_delimiter = string_delimiter
         if name == "uint8":
             self.size = 1
             self.signed = False

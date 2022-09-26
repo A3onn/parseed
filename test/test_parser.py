@@ -93,6 +93,25 @@ def test_struct_member_endian():
     assert stmts[0].members[0].type.endian == BIG_ENDIAN
     assert stmts[0].members[1].type.endian == LITTLE_ENDIAN
 
+def test_struct_members_string():
+    stmts = Parser(get_tokens(r"struct test { string test, }")).run()
+    assert stmts[0].members[0].type.type == "string"
+    assert stmts[0].members[0].type.string_delimiter == r"\0"
+    assert stmts[0].members[0].type.as_data_type().string_delimiter == r"\0"
+    stmts = Parser(get_tokens(r"struct test { string(\0) test, }")).run()
+    assert stmts[0].members[0].type.type == "string"
+    assert stmts[0].members[0].type.string_delimiter == r"\0"
+    assert stmts[0].members[0].type.as_data_type().string_delimiter == r"\0"
+    stmts = Parser(get_tokens(r"struct test { string(\x15) test, }")).run()
+    assert stmts[0].members[0].type.type == "string"
+    assert stmts[0].members[0].type.string_delimiter == r"\x15"
+    assert stmts[0].members[0].type.as_data_type().string_delimiter == r"\x15"
+    stmts = Parser(get_tokens(r"struct test { string(test) test, }")).run()
+    assert stmts[0].members[0].type.type == "string"
+    assert stmts[0].members[0].type.string_delimiter == "test"
+    assert stmts[0].members[0].type.as_data_type().string_delimiter == "test"
+
+
 def test_struct_members_match():
     stmts = Parser(get_tokens("struct test { match(1+1) {1: uint8,} member, }")).run()
     stmts = Parser(get_tokens("struct test { match(1+1) {1: uint8, 2: uint16,} member, }")).run()

@@ -163,6 +163,22 @@ class Parser:
 
         if self.current_token.type == TT_IDENTIFIER:  # nothing to do, just continue parsing
             return StructMemberTypeNode(member_type, endian)
+        elif self.current_token.type == TT_LPAREN and member_type.value == "string":
+            self.advance()
+
+            delimiter: str = ""
+            if self.current_token.type == TT_BACKSLASH:
+                delimiter += "\\"
+                self.advance()
+            delimiter += self.current_token.value
+            
+            if delimiter == "" or delimiter == "\\" or delimiter == None:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected character as delimiter")
+            self.advance()
+            if self.current_token.type != TT_RPAREN:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
+            self.advance()
+            return StructMemberTypeNode(member_type, endian, string_delimiter=delimiter)
         elif self.current_token.type == TT_LBRACK:
             is_list = True
             self.advance()
