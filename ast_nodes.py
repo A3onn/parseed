@@ -8,12 +8,16 @@ class ASTNode(ABC):
     """
     Abstract class for nodes forming the AST of the Parseed code.
     """
+
     @abstractmethod
     def to_str(self, depth: int = 0):
-        """
+        r"""
         Method used to print the AST in a pretty form.
         This function must be called from children nodes if the class has some (with depth=depth+1).
         The depth parameter must be used to add some padding ('\\t') before printing anything.
+
+        :param depth: Number of '\\t' to add before, defaults to 0
+        :type depth: int, optional
         """
         pass
 
@@ -22,7 +26,12 @@ class FloatNumberNode(ASTNode):
     """
     Represent a floating-point number.
     """
+
     def __init__(self, value_token: Token):
+        """
+        :param value_token: Token of the float number.
+        :type value_token: Token
+        """
         self._value_token: Token = value_token
 
     def to_str(self, depth: int = 0) -> str:
@@ -40,7 +49,12 @@ class IntNumberNode(ASTNode):
     """
     Represent an integer number.
     """
+
     def __init__(self, value_token: Token):
+        """
+        :param value_token: Token of the integer number.
+        :type value_token: Token
+        """
         self._value_token: Token = value_token
 
     def to_str(self, depth: int = 0) -> str:
@@ -60,6 +74,14 @@ class BinOpNode(ASTNode):
     Represent a binary operation between a two nodes (value or expression).
     """
     def __init__(self, left_node: ASTNode, op_token: Token, right_node: ASTNode):
+        """
+        :param left_node: Left node of the operation.
+        :type left_node: ASTNode
+        :param op_token: Token representing the operand.
+        :type op_token: Token
+        :param right_node: Right node of the operation.
+        :type right_node: ASTNode
+        """
         self._left_node: ASTNode = left_node
         self._op_token: Token = op_token
         self._right_node: ASTNode = right_node
@@ -97,6 +119,12 @@ class UnaryOpNode(ASTNode):
     Represent an unary operation between an operand (-, +, /, etc...) and a node (value or expression).
     """
     def __init__(self, op_token: Token, node: ASTNode):
+        """
+        :param op_token: Token representing the operand.
+        :type op_token: Token
+        :param node: Node representing the value of the operation.
+        :type node: ASTNode
+        """
         self._op_token: Token = op_token
         self._node: ASTNode = node
 
@@ -124,6 +152,10 @@ class IdentifierAccessNode(ASTNode):
     This class contains the name of an identifier accessed.
     """
     def __init__(self, identifier_name: str):
+        """
+        :param identifier_name: Identifier as a string.
+        :type identifier_name: str
+        """
         self._name: str = identifier_name
 
     def to_str(self, depth: int = 0) -> str:
@@ -142,6 +174,14 @@ class ComparisonNode(ASTNode):
     Represent a comparison between two AST nodes.
     """
     def __init__(self, left_cond_op: ASTNode, condition_op: str, right_cond_op: ASTNode):
+        """
+        :param left_cond_op: Left part of the comparison.
+        :type left_cond_op: ASTNode
+        :param condition_op: Comparison (eg. ==, !=, <) as a string.
+        :type condition_op: str
+        :param right_cond_op: Right part of the comparison.
+        :type right_cond_op: ASTNode
+        """
         self._left_cond_op: ASTNode = left_cond_op
         self._condition_op: str = condition_op
         self._right_cond_op: ASTNode = right_cond_op
@@ -179,6 +219,14 @@ class TernaryDataTypeNode(ASTNode):
     This class represents a ternary operator for data-types.
     """
     def __init__(self, comparison_node: ComparisonNode, if_true: Union[IdentifierAccessNode, DataType], if_false: Union[IdentifierAccessNode, DataType]):
+        """
+        :param comparison_node: Comparison of the ternary operator.
+        :type comparison_node: ComparisonNode
+        :param if_true: Type used if the comparison is true.
+        :type if_true: Union[IdentifierAccessNode, DataType]
+        :param if_false: Type used if the comparison if false.
+        :type if_false: Union[IdentifierAccessNode, DataType]
+        """
         self._comparison: ComparisonNode = comparison_node
         self._if_true: Union[IdentifierAccessNode, DataType] = if_true
         self._if_false: Union[IdentifierAccessNode, DataType] = if_false
@@ -229,6 +277,16 @@ class StructMemberTypeNode(ASTNode):
     This class contains the type, the endianness, if it is a list and it length (if it has one).
     """
     def __init__(self, type_token: Union[Token,TernaryDataTypeNode], endian: str = BIG_ENDIAN, is_list: bool = False, list_length_node: Union[None,UnaryOpNode,BinOpNode] = None):
+        """
+        :param type_token: Token or ternary operator for the type of the member.
+        :type type_token: Union[Token,TernaryDataTypeNode]
+        :param endian: Endianness of the member, defaults to big.
+        :type endian: str, optional
+        :param is_list: If the member is a list, defaults to False.
+        :type is_list: bool, optional
+        :param list_length_node: Length of the list if this member is a list, defaults to None
+        :type list_length_node: Union[None,UnaryOpNode,BinOpNode]
+        """
         self._type: Union[Token,TernaryDataTypeNode] = type_token
         self._endian: str = endian
         self._is_list: bool = is_list
@@ -278,6 +336,12 @@ class StructMemberDeclareNode(ASTNode):
     It contains the name and the type of the member.
     """
     def __init__(self, type_: StructMemberTypeNode, name_token: Token):
+        """
+        :param type_: Type of the member.
+        :type type_: StructMemberTypeNode
+        :param name_token: Token representing the name of the member.
+        :type name_token: Token
+        """
         self._type: StructMemberTypeNode = type_
         self._name_token: Token = name_token
 
@@ -307,6 +371,14 @@ class MatchNode(ASTNode):
     Represent a match expression inside structs.
     """
     def __init__(self, condition: ASTNode, cases: Dict[ASTNode,Union[StructMemberTypeNode,StructMemberDeclareNode]], member_name: str = None):
+        """
+        :param condition: The condition that one case must match.
+        :type condition: ASTNode
+        :param cases: Cases of the match expression.
+        :type cases: Dict[ASTNode,Union[StructMemberTypeNode,StructMemberDeclareNode]]
+        :param member_name: If this match is used to select the type of a member, this is its name, defaults to None.
+        :type member_name: str, optional
+        """
         self._condition: ASTNode = condition
         self._cases: Dict[ASTNode,Union[StructMemberTypeNode,StructMemberDeclareNode]] = cases
         self._member_name: str = member_name
@@ -348,9 +420,17 @@ class StructDefNode(ASTNode):
     """
     Represent a struct with its name, endianness and members.
     """
-    def __init__(self, name_token: Token, members: List[StructMemberDeclareNode], endian: str = BIG_ENDIAN):
+    def __init__(self, name_token: Token, members: List[Union[StructMemberDeclareNode, MatchNode]], endian: str = BIG_ENDIAN):
+        """
+        :param name_token: Token representing the name of the struct.
+        :type name_token: Token
+        :param members: List of members of this struct.
+        :type members: List[Union[StructMemberDeclareNode, MatchNode]]
+        :param endian: Endianness of the struct, defaults to big.
+        :type endian: str, optional
+        """
         self._name_token: Token = name_token
-        self._members: List[StructMemberDeclareNode] = members
+        self._members: List[Union[StructMemberDeclareNode, MatchNode]] = members
         self._endian: str = endian
 
     def to_str(self, depth: int = 0) -> str:
@@ -387,6 +467,12 @@ class BitfieldMemberNode(ASTNode):
     Represent a member of a bitfield.
     """
     def __init__(self, name_token: Token, bits_count_node: Optional[ASTNode] = None):
+        """
+        :param name_token: Token representing the name of the member.
+        :type name_token: Token
+        :param bits_count_node: How many bits this member takes (if declared), defaults to None
+        :type bits_count_node: Optional[ASTNode], optional
+        """
         self._name_token: Token = name_token
         self._bits_count_node: Optional[ASTNode] = bits_count_node
 
@@ -416,6 +502,14 @@ class BitfieldDefNode(ASTNode):
     Represent a bitfield with its members and its size (in bytes).
     """
     def __init__(self, name_token: Token, members: List[BitfieldMemberNode], bitfield_bytes_count_token: Optional[ASTNode] = None):
+        """
+        :param name_token: Token representing the name of the bitfield.
+        :type name_token: Token
+        :param members: List of members in the bitfield.
+        :type members: List[BitfieldMemberNode]
+        :param bitfield_bytes_count_token: How many bytes this bitfield takes (if declared), defaults to None
+        :type bitfield_bytes_count_token: Optional[ASTNode], optional
+        """
         self._name_token: Token = name_token
         self._bitfield_bytes_count_token: Optional[ASTNode] = bitfield_bytes_count_token
         self._bitfield_members: List[BitfieldMemberNode] = members
