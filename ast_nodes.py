@@ -329,6 +329,17 @@ class StructMemberTypeNode(ASTNode):
         """
         return self._list_length_node
 
+    def as_data_type(self) -> Optional[DataType]:
+        """
+        Return the type as a DataType if the type is not a ternary operator.
+
+        :return: The type as DataType.
+        :rtype: DataType, optional
+        """
+        if isinstance(self.type, TernaryDataTypeNode):
+            return None
+        return DataType(self.type)
+
 
 class StructMemberDeclareNode(ASTNode):
     """

@@ -52,7 +52,16 @@ class DataType:
     This helper class gives informations about a data-type from its name.
     It is especially useful for knowing a data-type's size and if it is signed.
     """
+
+    name: str = ""
+    size: int = -1
+    signed = False
+
     def __init__(self, name: str):
+        """
+        :param name: Name of the type, must not be an identifier.
+        :type name: str
+        """
         self.name = name
         self.size = -1
         if name == "uint8":
