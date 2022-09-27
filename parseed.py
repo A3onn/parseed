@@ -12,6 +12,7 @@ import argparse
 def main():
     argparser = argparse.ArgumentParser(description="A simple language simplifying the creation of parsers.")
     argparser.add_argument("file", help="File to parse", nargs="?", default="")
+    argparser.add_argument("-o", "--output", help="Output file of the generated code ('-' for STDOUT).", dest="output_file", default="-")
     argparser.add_argument("-L", "--lexer", action="store_true", help="Print the lexer's list of tokens", dest="show_lexer")
     argparser.add_argument("-A", "--ast", action="store_true", help="Print the abstract syntax tree", dest="show_ast")
     argparser.add_argument("-g", "--generator", help="The generator to use", dest="generator",
@@ -65,7 +66,14 @@ def run(lexer, arguments, generator_class):
         print(e)  # just print the error
         return
 
-    print(writer.generate_code())
+    if arguments.output_file == "-":
+        print(writer.generate_code())
+    else:
+        try:
+            with open(arguments.output_file, "w") as f:
+                f.write(writer.generate_code())
+        except OSError as e:
+            print(e)
 
 
 def AST_pprint(ast: List[ASTNode]) -> str:
