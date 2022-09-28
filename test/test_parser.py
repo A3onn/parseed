@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from parser import Parser
+from ast_nodes import BinOpNode, IntNumberNode, MatchNode, StructMemberDeclareNode
 from lexer import Lexer
 from errors import InvalidSyntaxError
 from utils import *
@@ -114,10 +115,45 @@ def test_struct_members_string():
 
 def test_struct_members_match():
     stmts = Parser(get_tokens("struct test { match(1+1) {1: uint8,} member, }")).run()
+    assert isinstance(stmts[0].members[0], MatchNode)
+    assert isinstance(stmts[0].members[0].condition, BinOpNode)
+    assert stmts[0].members[0].member_name == "member"
+    assert len(stmts[0].members[0].cases) == 1
+    cases = stmts[0].members[0].cases
+    assert isinstance(list(cases.keys())[0], IntNumberNode) # first case element
+    assert cases[list(cases.keys())[0]].type == "uint8" # first case element
+
     stmts = Parser(get_tokens("struct test { match(1+1) {1: uint8, 2: uint16,} member, }")).run()
+    assert len(stmts[0].members[0].cases) == 2
+    assert stmts[0].members[0].member_name == "member"
+    cases = stmts[0].members[0].cases
+    assert isinstance(list(cases.keys())[0], IntNumberNode) # first case element
+    assert cases[list(cases.keys())[0]].type == "uint8" # first case element
+    assert isinstance(list(cases.keys())[1], IntNumberNode) # second case element
+    assert cases[list(cases.keys())[1]].type == "uint16" # second case element
+
     stmts = Parser(get_tokens("struct test { match(15+(-3)*2) {-15*2: uint8, (95): uint16,} member, }")).run()
+    cases = stmts[0].members[0].cases
+    assert isinstance(list(cases.keys())[0], BinOpNode)
+    assert isinstance(stmts[0].members[0].condition, BinOpNode)
+    assert cases[list(cases.keys())[0]].type == "uint8"
+
     stmts = Parser(get_tokens("struct test { uint16 first_member, match(first_member*2) {first_member+3: uint8, first_member*3: uint16,} second_member,}")).run()
+    assert isinstance(stmts[0].members[1], MatchNode)
+    cases = stmts[0].members[1].cases
+    assert isinstance(list(cases.keys())[0], BinOpNode)
+    assert isinstance(list(cases.keys())[1], BinOpNode)
     stmts = Parser(get_tokens("struct test { match(1+1) {1: {uint8 member1, uint8 member2,}, 2: {uint16 member1, uint16 member2,},},}")).run()
+    cases = stmts[0].members[0].cases
+    # first case
+    assert len(cases[list(cases.keys())[0]]) == 2
+    assert isinstance(cases[list(cases.keys())[0]][0], StructMemberDeclareNode)
+    assert isinstance(cases[list(cases.keys())[0]][1], StructMemberDeclareNode)
+    # second case
+    assert len(cases[list(cases.keys())[1]]) == 2
+    assert isinstance(cases[list(cases.keys())[1]][0], StructMemberDeclareNode)
+    assert isinstance(cases[list(cases.keys())[1]][1], StructMemberDeclareNode)
+
     stmts = Parser(get_tokens("struct test { match(1+1) {1: {uint8 some_member1, uint8 some_member2,}, 2: {uint16 member1, uint16 member2,},}, }")).run()
 
 def test_struct_members_match_errors():

@@ -391,17 +391,17 @@ class MatchNode(ASTNode):
     """
     Represent a match expression inside structs.
     """
-    def __init__(self, condition: ASTNode, cases: Dict[ASTNode,Union[StructMemberTypeNode,StructMemberDeclareNode]], member_name: str = None):
+    def __init__(self, condition: ASTNode, cases: Dict[ASTNode,Union[StructMemberTypeNode,List[StructMemberDeclareNode]]], member_name: str = None):
         """
         :param condition: The condition that one case must match.
         :type condition: ASTNode
         :param cases: Cases of the match expression.
-        :type cases: Dict[ASTNode,Union[StructMemberTypeNode,StructMemberDeclareNode]]
+        :type cases: Dict[ASTNode,Union[StructMemberTypeNode,List[StructMemberDeclareNode]]]
         :param member_name: If this match is used to select the type of a member, this is its name, defaults to None.
         :type member_name: str, optional
         """
         self._condition: ASTNode = condition
-        self._cases: Dict[ASTNode,Union[StructMemberTypeNode,StructMemberDeclareNode]] = cases
+        self._cases: Dict[ASTNode,Union[StructMemberTypeNode,List[StructMemberDeclareNode]]] = cases
         self._member_name: str = member_name
 
     def to_str(self, depth: int = 0):
@@ -423,7 +423,7 @@ class MatchNode(ASTNode):
         return self._condition
 
     @property
-    def cases(self) -> Dict[ASTNode,Union[StructMemberTypeNode,StructMemberDeclareNode]]:
+    def cases(self) -> Dict[ASTNode,Union[StructMemberTypeNode,List[StructMemberDeclareNode]]]:
         """
         Cases of this match expression.
         """

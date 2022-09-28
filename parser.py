@@ -241,7 +241,10 @@ class Parser:
                 is_multiple_members = True
                 self.advance()
                 while self.current_token.type != TT_RCURLY:
-                    cases.update({case_value: self.struct_member_def(struct_endian)})
+                    if case_value in cases.keys():
+                        cases[case_value].append(self.struct_member_def(struct_endian))
+                    else:
+                        cases.update({case_value: [self.struct_member_def(struct_endian)]})
                 self.advance()
             else:
                 cases.update({case_value: self.struct_member_type(struct_endian)})
