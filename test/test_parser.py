@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from parser import Parser
-from ast_nodes import BinOpNode, IntNumberNode, MatchNode, StructMemberDeclareNode
+from ast_nodes import BinOpNode, IntNumberNode, MatchNode, StructMemberDeclareNode, UnaryOpNode
 from lexer import Lexer
 from errors import InvalidSyntaxError
 from utils import *
@@ -39,8 +39,23 @@ def test_struct_members():
     Parser(get_tokens("struct test { SomeIndentifier member1, float member2, AnotherIdentifier[3] member3, AnotherOne[] member4,}")).run()
 
 def test_struct_members_with_expressions():
-    Parser(get_tokens("struct test { uint8[1+1] member, }")).run()
-    Parser(get_tokens("struct test { uint8[1+1] member1, uint8[15-3] member2, }")).run()
+    stmts = Parser(get_tokens("struct test { uint8[1+1] member, }")).run()
+    assert isinstance(stmts[0].members[0].type.list_length, BinOpNode)
+    assert isinstance(stmts[0].members[0].type.list_length.left_node, IntNumberNode)
+    assert isinstance(stmts[0].members[0].type.list_length.right_node, IntNumberNode)
+    assert stmts[0].members[0].type.list_length.op == "+"
+
+    stmts = Parser(get_tokens("struct test { uint8[-1] member, }")).run()
+    assert isinstance(stmts[0].members[0].type.list_length, UnaryOpNode)
+    assert isinstance(stmts[0].members[0].type.list_length.value, IntNumberNode)
+    assert stmts[0].members[0].type.list_length.value.value == 1
+    assert stmts[0].members[0].type.list_length.op == "-"
+
+    stmts = Parser(get_tokens("struct test { uint8[1+1] member1, uint8[15-3] member2, }")).run()
+    assert isinstance(stmts[0].members[1].type.list_length, BinOpNode)
+    assert isinstance(stmts[0].members[1].type.list_length.left_node, IntNumberNode)
+    assert isinstance(stmts[0].members[1].type.list_length.right_node, IntNumberNode)
+    assert stmts[0].members[1].type.list_length.op == "-"
     Parser(get_tokens("struct test { uint8[1+1] member1, int16 member2, uint8[-3+24] member2, }")).run()
     Parser(get_tokens("struct test { uint8[3*(2+3)] member1, int16 member2, uint8[-(-3*12)] member3, }")).run()
     Parser(get_tokens("struct test { uint8 member1, int16[some_struct.member_value*2] member2, }")).run()

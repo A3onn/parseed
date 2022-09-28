@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 from typing import List, Optional, Union, Dict
-from lexer import Token
+from lexer import TT_MINUS, TT_MULT, TT_PLUS, TT_DIV, Token
 from utils import BIG_ENDIAN, DataType
 from abc import ABC, abstractmethod
+
 
 class ASTNode(ABC):
     """
@@ -97,7 +98,8 @@ class BinOpNode(ASTNode):
         """
         Operand token as a string.
         """
-        return str(self._op_token.value)
+        comparators_dict: Dict = {TT_PLUS: "+", TT_MINUS: "-", TT_MULT: "*", TT_DIV: "/"}
+        return comparators_dict[self._op_token.type]
 
     @property
     def left_node(self) -> ASTNode:
@@ -136,7 +138,8 @@ class UnaryOpNode(ASTNode):
         """
         Operand node as a string.
         """
-        return str(self._op_token.value)
+        comparators_dict: Dict = {TT_PLUS: "+", TT_MINUS: "-", TT_MULT: "*", TT_DIV: "/"}
+        return comparators_dict[self._op_token.type]
 
     @property
     def value(self) -> ASTNode:
