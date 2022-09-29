@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 from typing import List, Optional, Union, Dict
-from lexer import TT_MINUS, TT_MULT, TT_PLUS, TT_DIV, Token
-from utils import BIG_ENDIAN, DataType
+from lexer import TT_MINUS, TT_MULT, TT_NUM_INT, TT_PLUS, TT_DIV, Token
 from abc import ABC, abstractmethod
+from utils import DataType, BIG_ENDIAN
 
 
 class ASTNode(ABC):
@@ -501,7 +501,7 @@ class BitfieldMemberNode(ASTNode):
         self._bits_count_node: Optional[ASTNode] = bits_count_node
 
     def to_str(self, depth: int = 0) -> str:
-        res: str = ("\t" * depth) + str(self.name_token)
+        res: str = ("\t" * depth) + str(self.name)
         if self._bits_count_node is not None:
             res += "(\n" + self._bits_count_node.to_str(depth + 1) + ("\t" * depth) + ")"
         return res + "\n"
@@ -517,7 +517,10 @@ class BitfieldMemberNode(ASTNode):
     def size(self) -> ASTNode:
         """
         Member's size in bits as an expression.
+        If the size was not declare, returns IntNumberNode of 1
         """
+        if self._bits_count_node is None:
+            return IntNumberNode(Token(TT_NUM_INT, 1))
         return self._bits_count_node
 
 
@@ -531,18 +534,22 @@ class BitfieldDefNode(ASTNode):
         :type name_token: Token
         :param members: List of members in the bitfield.
         :type members: List[BitfieldMemberNode]
-        :param bitfield_bytes_count_token: How many bytes this bitfield takes (if declared), defaults to None
-        :type bitfield_bytes_count_token: Optional[ASTNode], optional
+        :param bitfield_bytes_count_token: How many bytes this bitfield takes, defaults to None.
+        :type bitfield_bytes_count_token: ASTNode, optional
         """
         self._name_token: Token = name_token
         self._bitfield_bytes_count_token: Optional[ASTNode] = bitfield_bytes_count_token
         self._bitfield_members: List[BitfieldMemberNode] = members
 
     def to_str(self, depth: int = 0) -> str:
-        res: str = ("\t" * depth) + str(self._name_token) + "\n"
+        res: str = ("\t" * depth) + "BitfieldDefNode(" + str(self._name_token) + "\n"
+        res += ("\t" * (depth+1)) + "(\n"
+        res += self.size.to_str(depth+1)
+        res += ("\t" * (depth+1)) + ")\n"
         for node in self._bitfield_members:
             res += node.to_str(depth + 1)
-        return res + "\n"
+        res += ("\t" * depth) + ")\n"
+        return res
 
     @property
     def name(self) -> str:
@@ -555,8 +562,34 @@ class BitfieldDefNode(ASTNode):
     def size(self) -> ASTNode:
         """
         Size of this bitfield in bytes as an expression.
+        If the size was not given, this size will be the sum of all members' size of this bitfield.
         """
-        return self._bitfield_bytes_count_token
+        if self._bitfield_bytes_count_token is not None:
+            return self._bitfield_bytes_count_token
+        
+        if len(self.members) == 0:
+            return IntNumberNode(Token(TT_NUM_INT, 0))
+        if len(self.members) == 1:
+            return self.members[0].size
+        elif len(self.members) == 2:
+            return BinOpNode(self.members[0].size, Token(TT_PLUS), self.members[1].size)
+
+        # generate the sum of sizes
+        res: BinOpNode = BinOpNode(self.members[0].size, Token(TT_PLUS), None)
+
+        tmp: BinOpNode = BinOpNode(None, Token(TT_PLUS), None)
+        res._right_node = tmp
+        for i in range(1, len(self.members)-2):
+            tmp._left_node = self.members[i].size
+            tmp._op_token = Token(TT_PLUS)
+            tmp._right_node = BinOpNode(None, Token(TT_PLUS), None)
+            tmp = tmp._right_node
+
+        tmp._left_node = self.members[-2].size
+        tmp._op_token = Token(TT_PLUS)
+        tmp._right_node = self.members[-1].size
+        print(self.members[-2].to_str())
+        return res
 
     @property
     def members(self) -> List[BitfieldMemberNode]:

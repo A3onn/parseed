@@ -61,7 +61,7 @@ class Parser:
         bits_count: ASTNode = None  # size of the member
         if self.current_token.type == TT_LPAREN:
             self.advance()
-            size = self.no_identifier_expr()
+            bits_count = self.no_identifier_expr()
             if self.current_token.type != TT_RPAREN:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
             self.advance()
