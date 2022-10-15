@@ -304,23 +304,31 @@ class Parser:
 
     def comparison(self) -> ComparisonNode:
         """
-        <comparison> ::= <expr> <comparator> <expr>
+        <comparison> ::= <expr> <comparison_operator> <expr>
+        <comparison_operator> ::= "<=" | "<" | "==" | ">" | ">=" | "!=" | "&&" | "||"
         """
-        left_cond_op: Token = self.expr()
-        comparator_token: Token = self.current_token
-        comparators_dict: Dict = {TT_COMP_EQ: "==", TT_COMP_NE: "!=", TT_COMP_GT: ">", TT_COMP_LT: "<", TT_COMP_GEQ: ">=", TT_COMP_LEQ: "<="}
-        if comparator_token.type not in comparators_dict.keys():
-            list_comp: str = ", ".join([f"'{c}'" for c in comparators_dict.values()])
+        left_node: Token = self.expr()
+        comparison_op_token: Token = self.current_token
+        comparison_op_dict: Dict = {TT_COMP_EQ: "==", TT_COMP_NE: "!=", TT_COMP_GT: ">", TT_COMP_LT: "<", TT_COMP_GEQ: ">=", TT_COMP_LEQ: "<=", TT_COMP_AND: "&&", TT_COMP_OR: "||"}
+        if comparison_op_token.type not in comparison_op_dict.keys():
+            list_comp: str = ", ".join([f"'{c}'" for c in comparison_op_dict.values()])
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, f"expected one of: " + list_comp)
         self.advance()
-        right_cond_op: Token = self.expr()
+        right_node: Token = self.expr()
 
-        return ComparisonNode(left_cond_op, comparators_dict[comparator_token.type], right_cond_op)
+        return ComparisonNode(left_node, ComparisonOperatorNode(comparison_op_token), right_node)
 
     def no_identifier_factor(self) -> Any:
+        """
+        <no_identifier_factor> ::=  <num_int> | <num_float>
+                                    | ("+" | "-" | <logical_operator>) <no_identifier_factor>
+                                    | "(" <no_identifier_expr> ")"
+
+        <logical_operator> ::= "&" | "|" | "^" | "<<" | ">>" | "~"
+        """
         token: Token = self.current_token
 
-        if token.type in [TT_PLUS, TT_MINUS]:
+        if token.type in [TT_PLUS, TT_MINUS, TT_BIN_OR, TT_BIN_AND, TT_BIN_NOT, TT_BIN_XOR, TT_BIN_LSHIFT, TT_BIN_RSHIFT]:
             self.advance()
             return UnaryOpNode(token, self.no_identifier_factor())
         elif token.type == TT_LPAREN:
@@ -339,7 +347,7 @@ class Parser:
         raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected value")
 
     def no_identifier_expr(self) -> Any:
-        return self.binary_op(self.no_identifier_term, [TT_PLUS, TT_MINUS])
+        return self.binary_op(self.no_identifier_term, [TT_PLUS, TT_MINUS, TT_BIN_OR, TT_BIN_AND, TT_BIN_NOT, TT_BIN_XOR, TT_BIN_LSHIFT, TT_BIN_RSHIFT])
 
     def no_identifier_term(self) -> Any:
         return self.binary_op(self.no_identifier_factor, [TT_MULT, TT_DIV])
@@ -347,13 +355,15 @@ class Parser:
     def factor(self) -> Any:
         """
         <factor> ::= <num_int> | <num_float>
-                    | ("+" | "-") <factor>
+                    | ("+" | "-" | <logical_operator>) <factor>
                     | "(" <expr> ")"
                     | <identifier> ("." <identifier>)*
+
+        <logical_operator> ::= "&" | "|" | "^" | "<<" | ">>" | "~"
         """
         token: Token = self.current_token
 
-        if token.type in [TT_PLUS, TT_MINUS]:
+        if token.type in [TT_PLUS, TT_MINUS, TT_BIN_OR, TT_BIN_AND, TT_BIN_NOT, TT_BIN_XOR, TT_BIN_LSHIFT, TT_BIN_RSHIFT]:
             self.advance()
             return UnaryOpNode(token, self.factor())
         elif token.type == TT_LPAREN:
@@ -386,7 +396,7 @@ class Parser:
         raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier or value")
 
     def expr(self) -> Any:
-        return self.binary_op(self.term, [TT_PLUS, TT_MINUS])
+        return self.binary_op(self.term, [TT_PLUS, TT_MINUS, TT_BIN_OR, TT_BIN_AND, TT_BIN_NOT, TT_BIN_XOR, TT_BIN_LSHIFT, TT_BIN_RSHIFT])
 
     def term(self) -> Any:
         return self.binary_op(self.factor, [TT_MULT, TT_DIV])

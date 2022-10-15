@@ -54,6 +54,6 @@ def test_struct_member_ternary_type():
     assert isinstance(member.type.type.if_false, DataType)
 
     assert isinstance(member.type.type.comparison, ComparisonNode)
-    assert member.type.type.comparison.left_op.value == 1
-    assert member.type.type.comparison.right_op.value == 1
-    assert member.type.type.comparison.condition == "=="
+    assert member.type.type.comparison.left_node.value == 1
+    assert member.type.type.comparison.right_node.value == 1
+    assert member.type.type.comparison.comparison_op.type == ComparisonOperatorNode.EQUAL

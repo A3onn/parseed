@@ -20,7 +20,6 @@ DATA_TYPES = [
     "string",
 ]
 
-
 class Position:
     def __init__(self, idx: int, ln: int, col: int, filename: str, file_text: str):
         self.idx = idx

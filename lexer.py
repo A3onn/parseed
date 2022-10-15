@@ -18,6 +18,12 @@ TT_PLUS = "PLUS"
 TT_MINUS = "MINUS"
 TT_MULT = "MULT"
 TT_DIV = "DIV"
+TT_BIN_AND = "BIN_AND"
+TT_BIN_OR = "BIN_OR"
+TT_BIN_XOR = "BIN_XOR"
+TT_BIN_NOT = "BIN_NOT"
+TT_BIN_LSHIFT = "BIN_LSHIFT"
+TT_BIN_RSHIFT = "BIN_RSHIFT"
 
 # Comparators
 TT_COMP_EQ = "COMP_EQ"
@@ -26,6 +32,8 @@ TT_COMP_GT = "COMP_GT"
 TT_COMP_LT = "COMP_LT"
 TT_COMP_GEQ = "COMP_GEQ"  # greater than
 TT_COMP_LEQ = "COMP_LEQ"  # less than
+TT_COMP_AND = "COMP_AND"
+TT_COMP_OR = "COMP_OR"
 
 # Others
 TT_LPAREN = "LPAREN"
@@ -123,6 +131,16 @@ class Lexer:
             elif self.current_char == "*":
                 tokens.append(Token(TT_MULT, pos_start=self.pos))
                 self._next_token()
+            elif self.current_char == "&":
+                tokens.append(self._make_bin_and_or_comp_and())
+            elif self.current_char == "|":
+                tokens.append(self._make_bin_or_or_comp_or())
+            elif self.current_char == "^":
+                tokens.append(Token(TT_BIN_XOR, pos_start=self.pos))
+                self._next_token()
+            elif self.current_char == "~":
+                tokens.append(Token(TT_BIN_NOT, pos_start=self.pos))
+                self._next_token()
             elif self.current_char == "(":
                 tokens.append(Token(TT_LPAREN, pos_start=self.pos))
                 self._next_token()
@@ -157,9 +175,9 @@ class Lexer:
             elif self.current_char == "=":
                 tokens.append(self._make_equal())
             elif self.current_char == "<":
-                tokens.append(self._make_less_than())
+                tokens.append(self._make_less_than_or_left_bitshift())
             elif self.current_char == ">":
-                tokens.append(self._make_greater_than())
+                tokens.append(self._make_greater_than_or_right_bitshift())
             elif self.current_char in LETTERS:
                 tokens.append(self._make_identifier())
             else:
@@ -248,23 +266,47 @@ class Lexer:
         self._next_token()
         return Token(TT_COMP_EQ, pos_start=pos_start, pos_end=self.pos)
 
-    def _make_less_than(self) -> Token:
+    def _make_less_than_or_left_bitshift(self) -> Token:
         pos_start: Position = self.pos.get_copy()
         self._next_token()
 
         if self.current_char == "=":
             self._next_token()
             return Token(TT_COMP_LEQ, pos_start=pos_start, pos_end=self.pos)
+        elif self.current_char == "<":
+            self._next_token()
+            return Token(TT_BIN_LSHIFT, pos_start=pos_start, pos_end=self.pos)
         return Token(TT_COMP_LT, pos_start=pos_start, pos_end=self.pos)
 
-    def _make_greater_than(self) -> Token:
+    def _make_greater_than_or_right_bitshift(self) -> Token:
         pos_start: Position = self.pos.get_copy()
         self._next_token()
 
         if self.current_char == "=":
             self._next_token()
             return Token(TT_COMP_GEQ, pos_start=pos_start, pos_end=self.pos)
+        elif self.current_char == ">":
+            self._next_token()
+            return Token(TT_BIN_RSHIFT, pos_start=pos_start, pos_end=self.pos)
         return Token(TT_COMP_GT, pos_start=pos_start, pos_end=self.pos)
+
+    def _make_bin_and_or_comp_and(self) -> Token:
+        pos_start: Position = self.pos.get_copy()
+        self._next_token()
+
+        if self.current_char == "&":
+            self._next_token()
+            return Token(TT_COMP_AND, pos_start=pos_start, pos_end=self.pos)
+        return Token(TT_BIN_AND, pos_start=pos_start, pos_end=self.pos)
+
+    def _make_bin_or_or_comp_or(self) -> Token:
+        pos_start: Position = self.pos.get_copy()
+        self._next_token()
+
+        if self.current_char == "|":
+            self._next_token()
+            return Token(TT_COMP_OR, pos_start=pos_start, pos_end=self.pos)
+        return Token(TT_BIN_OR, pos_start=pos_start, pos_end=self.pos)
 
     def _read_until(self, stop_chars: str) -> str:
         """

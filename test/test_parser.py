@@ -7,6 +7,10 @@ from utils import *
 import pytest
 
 
+"""
+Call to_str() method for each statement to be sure that no name or logic errors are present in this method.
+"""
+
 def get_tokens(text):
     return Lexer(text, "").run()
 
@@ -20,23 +24,23 @@ def test_empty_struct():
     parser.run()
 
 def test_struct_members():
-    Parser(get_tokens("struct test { uint8 member, }")).run()
-    Parser(get_tokens("struct test { uint8 member1, float member2, }")).run()
-    Parser(get_tokens("struct test { uint8[1] member,}")).run()
-    Parser(get_tokens("struct test { uint8[] member,}")).run()
-    Parser(get_tokens("struct test { uint8[] member1, uint16[] member2,}")).run()
-    Parser(get_tokens("struct test { uint8[4] member1, float member2, }")).run()
-    Parser(get_tokens("struct test { uint8 member1, float[member1] member2, }")).run()
-    Parser(get_tokens("struct test { uint8[4] member1, float member2, int24[15] member3, }")).run()
-    Parser(get_tokens("struct test { uint8[4] member1, float member2, int24[] member3, }")).run()
-    Parser(get_tokens("struct test { (1 == 1 ? uint8 : uint16)[] member,}")).run()
-    Parser(get_tokens("struct test { (1 != 1 ? uint8 : SomeIdentifier) member,}")).run()
-    Parser(get_tokens("struct test { LE (1 != 1 ? uint8 : uint16) member1, (2 == 2 ? uint16 : int16) member2, }")).run()
-    Parser(get_tokens("struct test { (1 != 1 ? SomeIdentifier : SomeIdentifier) member,}")).run()
-    Parser(get_tokens("struct test { uint8 member1, LE (2 == 2 ? uint16 : int16) member2, }")).run()
-    Parser(get_tokens("struct test { SomeIndentifier member, }")).run()
-    Parser(get_tokens("struct test { SomeIndentifier member1, float member2, AnotherIdentifier member3, }")).run()
-    Parser(get_tokens("struct test { SomeIndentifier member1, float member2, AnotherIdentifier[3] member3, AnotherOne[] member4,}")).run()
+    Parser(get_tokens("struct test { uint8 member, }")).run()[0].to_str()
+    Parser(get_tokens("struct test { uint8 member1, float member2, }")).run()[0].to_str()
+    Parser(get_tokens("struct test { uint8[1] member,}")).run()[0].to_str()
+    Parser(get_tokens("struct test { uint8[] member,}")).run()[0].to_str()
+    Parser(get_tokens("struct test { uint8[] member1, uint16[] member2,}")).run()[0].to_str()
+    Parser(get_tokens("struct test { uint8[4] member1, float member2, }")).run()[0].to_str()
+    Parser(get_tokens("struct test { uint8 member1, float[member1] member2, }")).run()[0].to_str()
+    Parser(get_tokens("struct test { uint8[4] member1, float member2, int24[15] member3, }")).run()[0].to_str()
+    Parser(get_tokens("struct test { uint8[4] member1, float member2, int24[] member3, }")).run()[0].to_str()
+    Parser(get_tokens("struct test { (1 == 1 ? uint8 : uint16)[] member,}")).run()[0].to_str()
+    Parser(get_tokens("struct test { (1 != 1 ? uint8 : SomeIdentifier) member,}")).run()[0].to_str()
+    Parser(get_tokens("struct test { LE (1 != 1 ? uint8 : uint16) member1, (2 == 2 ? uint16 : int16) member2, }")).run()[0].to_str()
+    Parser(get_tokens("struct test { (1 != 1 ? SomeIdentifier : SomeIdentifier) member,}")).run()[0].to_str()
+    Parser(get_tokens("struct test { uint8 member1, LE (2 == 2 ? uint16 : int16) member2, }")).run()[0].to_str()
+    Parser(get_tokens("struct test { SomeIndentifier member, }")).run()[0].to_str()
+    Parser(get_tokens("struct test { SomeIndentifier member1, float member2, AnotherIdentifier member3, }")).run()[0].to_str()
+    Parser(get_tokens("struct test { SomeIndentifier member1, float member2, AnotherIdentifier[3] member3, AnotherOne[] member4,}")).run()[0].to_str()
 
 def test_struct_members_with_expressions():
     stmts = Parser(get_tokens("struct test { uint8[1+1] member, }")).run()
@@ -44,89 +48,115 @@ def test_struct_members_with_expressions():
     assert isinstance(stmts[0].members[0].type.list_length.left_node, IntNumberNode)
     assert isinstance(stmts[0].members[0].type.list_length.right_node, IntNumberNode)
     assert stmts[0].members[0].type.list_length.op == "+"
+    stmts[0].to_str()
 
     stmts = Parser(get_tokens("struct test { uint8[-1] member, }")).run()
     assert isinstance(stmts[0].members[0].type.list_length, UnaryOpNode)
     assert isinstance(stmts[0].members[0].type.list_length.value, IntNumberNode)
     assert stmts[0].members[0].type.list_length.value.value == 1
     assert stmts[0].members[0].type.list_length.op == "-"
+    stmts[0].to_str()
 
     stmts = Parser(get_tokens("struct test { uint8[1+1] member1, uint8[15-3] member2, }")).run()
     assert isinstance(stmts[0].members[1].type.list_length, BinOpNode)
     assert isinstance(stmts[0].members[1].type.list_length.left_node, IntNumberNode)
     assert isinstance(stmts[0].members[1].type.list_length.right_node, IntNumberNode)
     assert stmts[0].members[1].type.list_length.op == "-"
-    Parser(get_tokens("struct test { uint8[1+1] member1, int16 member2, uint8[-3+24] member2, }")).run()
-    Parser(get_tokens("struct test { uint8[3*(2+3)] member1, int16 member2, uint8[-(-3*12)] member3, }")).run()
-    Parser(get_tokens("struct test { uint8 member1, int16[some_struct.member_value*2] member2, }")).run()
-    Parser(get_tokens("struct test { uint8[] member1, int16 member2, uint8[2*3-(3)] member2, }")).run()
+    stmts[0].to_str()
+
+    Parser(get_tokens("struct test { uint8[1+1] member1, int16 member2, uint8[-3+24] member2, }")).run()[0].to_str()
+    Parser(get_tokens("struct test { uint8[3*(2+3)] member1, int16 member2, uint8[-(-3*12)] member3, }")).run()[0].to_str()
+    Parser(get_tokens("struct test { uint8 member1, int16[some_struct.member_value*2] member2, }")).run()[0].to_str()
+    Parser(get_tokens("struct test { uint8[] member1, int16 member2, uint8[2*3-(3)] member2, }")).run()[0].to_str()
 
 def test_struct_endian():
     stmts = Parser(get_tokens("struct test { } BE struct test2 { }")).run()
     assert stmts[0].endian == BIG_ENDIAN
     assert stmts[1].endian == BIG_ENDIAN
+    stmts[0].to_str()
+    stmts[1].to_str()
 
     stmts = Parser(get_tokens("LE struct test { }")).run()
     assert stmts[0].endian == LITTLE_ENDIAN
+    stmts[0].to_str()
 
     stmts = Parser(get_tokens("struct test { uint8 member, } BE struct test2 { uint8 member, }")).run()
     assert stmts[0].endian == BIG_ENDIAN
     assert stmts[1].endian == BIG_ENDIAN
+    stmts[0].to_str()
+    stmts[1].to_str()
 
     stmts = Parser(get_tokens("LE struct test { uint8 member, }")).run()
     assert stmts[0].endian == LITTLE_ENDIAN
+    stmts[0].to_str()
 
 def test_struct_member_endian():
     stmts = Parser(get_tokens("struct test { uint8 member, } BE struct test2 { BE uint8 member, }")).run()
     assert stmts[0].members[0].type.endian == BIG_ENDIAN
     assert stmts[1].members[0].type.endian == BIG_ENDIAN
+    stmts[0].to_str()
+    stmts[1].to_str()
 
     stmts = Parser(get_tokens("struct test { LE uint8 member, } BE struct test2 { LE uint8 member, }")).run()
     assert stmts[0].members[0].type.endian == LITTLE_ENDIAN
     assert stmts[1].members[0].type.endian == LITTLE_ENDIAN
+    stmts[0].to_str()
+    stmts[1].to_str()
 
     stmts = Parser(get_tokens("struct test { BE uint8 member, LE uint8 member2, }")).run()
     assert stmts[0].members[0].type.endian == BIG_ENDIAN
     assert stmts[0].members[1].type.endian == LITTLE_ENDIAN
+    stmts[0].to_str()
 
     stmts = Parser(get_tokens("struct test { uint8 member, LE uint8 member2, }")).run()
     assert stmts[0].members[0].type.endian == BIG_ENDIAN
     assert stmts[0].members[1].type.endian == LITTLE_ENDIAN
+    stmts[0].to_str()
 
     stmts = Parser(get_tokens("LE struct test { uint8 member, uint8 member2, }")).run()
     assert stmts[0].members[0].type.endian == LITTLE_ENDIAN
     assert stmts[0].members[1].type.endian == LITTLE_ENDIAN
+    stmts[0].to_str()
 
     stmts = Parser(get_tokens("LE struct test { uint8 member, LE uint8 member2, }")).run()
     assert stmts[0].members[0].type.endian == LITTLE_ENDIAN
     assert stmts[0].members[1].type.endian == LITTLE_ENDIAN
+    stmts[0].to_str()
 
     stmts = Parser(get_tokens("LE struct test { LE uint8 member, LE uint8 member2, }")).run()
     assert stmts[0].members[0].type.endian == LITTLE_ENDIAN
     assert stmts[0].members[1].type.endian == LITTLE_ENDIAN
+    stmts[0].to_str()
 
     stmts = Parser(get_tokens("BE struct test { uint8 member, LE uint8 member2, }")).run()
     assert stmts[0].members[0].type.endian == BIG_ENDIAN
     assert stmts[0].members[1].type.endian == LITTLE_ENDIAN
+    stmts[0].to_str()
 
 def test_struct_members_string():
     stmts = Parser(get_tokens(r"struct test { string test, }")).run()
     assert stmts[0].members[0].type.type == "string"
     assert stmts[0].members[0].type.string_delimiter == r"\0"
     assert stmts[0].members[0].type.as_data_type().string_delimiter == r"\0"
+    stmts[0].to_str()
+
     stmts = Parser(get_tokens(r"struct test { string(\0) test, }")).run()
     assert stmts[0].members[0].type.type == "string"
     assert stmts[0].members[0].type.string_delimiter == r"\0"
     assert stmts[0].members[0].type.as_data_type().string_delimiter == r"\0"
+    stmts[0].to_str()
+
     stmts = Parser(get_tokens(r"struct test { string(\x15) test, }")).run()
     assert stmts[0].members[0].type.type == "string"
     assert stmts[0].members[0].type.string_delimiter == r"\x15"
     assert stmts[0].members[0].type.as_data_type().string_delimiter == r"\x15"
+    stmts[0].to_str()
+
     stmts = Parser(get_tokens(r"struct test { string(test) test, }")).run()
     assert stmts[0].members[0].type.type == "string"
     assert stmts[0].members[0].type.string_delimiter == "test"
     assert stmts[0].members[0].type.as_data_type().string_delimiter == "test"
-
+    stmts[0].to_str()
 
 def test_struct_members_match():
     stmts = Parser(get_tokens("struct test { match(1+1) {1: uint8,} member, }")).run()
@@ -137,6 +167,7 @@ def test_struct_members_match():
     cases = stmts[0].members[0].cases
     assert isinstance(list(cases.keys())[0], IntNumberNode) # first case element
     assert cases[list(cases.keys())[0]].type == "uint8" # first case element
+    stmts[0].to_str()
 
     stmts = Parser(get_tokens("struct test { match(1+1) {1: uint8, 2: uint16,} member, }")).run()
     assert len(stmts[0].members[0].cases) == 2
@@ -146,12 +177,14 @@ def test_struct_members_match():
     assert cases[list(cases.keys())[0]].type == "uint8" # first case element
     assert isinstance(list(cases.keys())[1], IntNumberNode) # second case element
     assert cases[list(cases.keys())[1]].type == "uint16" # second case element
+    stmts[0].to_str()
 
     stmts = Parser(get_tokens("struct test { match(15+(-3)*2) {-15*2: uint8, (95): uint16,} member, }")).run()
     cases = stmts[0].members[0].cases
     assert isinstance(list(cases.keys())[0], BinOpNode)
     assert isinstance(stmts[0].members[0].condition, BinOpNode)
     assert cases[list(cases.keys())[0]].type == "uint8"
+    stmts[0].to_str()
 
     stmts = Parser(get_tokens("struct test { uint16 first_member, match(first_member*2) {first_member+3: uint8, first_member*3: uint16,} second_member,}")).run()
     assert isinstance(stmts[0].members[1], MatchNode)
@@ -168,8 +201,10 @@ def test_struct_members_match():
     assert len(cases[list(cases.keys())[1]]) == 2
     assert isinstance(cases[list(cases.keys())[1]][0], StructMemberDeclareNode)
     assert isinstance(cases[list(cases.keys())[1]][1], StructMemberDeclareNode)
+    stmts[0].to_str()
 
     stmts = Parser(get_tokens("struct test { match(1+1) {1: {uint8 some_member1, uint8 some_member2,}, 2: {uint16 member1, uint16 member2,},}, }")).run()
+    stmts[0].to_str()
 
 def test_struct_members_match_errors():
     with pytest.raises(InvalidSyntaxError):
@@ -367,31 +402,31 @@ def test_struct_members_with_expressions_errors():
         Parser(get_tokens("struct MyStruct { uint8[(2+5*3)/] member, }")).run()
 
 def test_empty_bitfield():
-    parser = Parser(get_tokens("bitfield test { }")).run()
+    parser = Parser(get_tokens("bitfield test { }")).run()[0].to_str()
 
 def test_empty_bitfield_with_size_in_bytes():
-    Parser(get_tokens("bitfield test (1) { }")).run()
-    Parser(get_tokens("bitfield test (1+3) { }")).run()
-    Parser(get_tokens("bitfield test (2-1*(3*5)) { }")).run()
+    Parser(get_tokens("bitfield test (1) { }")).run()[0].to_str()
+    Parser(get_tokens("bitfield test (1+3) { }")).run()[0].to_str()
+    Parser(get_tokens("bitfield test (2-1*(3*5)) { }")).run()[0].to_str()
 
 def test_bitfield_members():
-    Parser(get_tokens("bitfield test { member, }")).run()
-    Parser(get_tokens("bitfield test { member1, member2, }")).run()
-    Parser(get_tokens("bitfield test { member1, member2, member3, member4, }")).run()
+    Parser(get_tokens("bitfield test { member, }")).run()[0].to_str()
+    Parser(get_tokens("bitfield test { member1, member2, }")).run()[0].to_str()
+    Parser(get_tokens("bitfield test { member1, member2, member3, member4, }")).run()[0].to_str()
 
 def test_bitfield_members_with_size():
-    Parser(get_tokens("bitfield test { member (2), }")).run()
-    Parser(get_tokens("bitfield test { member1 (1), member2 (3), }")).run()
-    Parser(get_tokens("bitfield test { member1 (1), member2 (3 + 2), }")).run()
-    Parser(get_tokens("bitfield test { member1(1), member2, }")).run()
-    Parser(get_tokens("bitfield test { member1, member2 (3 + 2), }")).run()
+    Parser(get_tokens("bitfield test { member (2), }")).run()[0].to_str()
+    Parser(get_tokens("bitfield test { member1 (1), member2 (3), }")).run()[0].to_str()
+    Parser(get_tokens("bitfield test { member1 (1), member2 (3 + 2), }")).run()[0].to_str()
+    Parser(get_tokens("bitfield test { member1(1), member2, }")).run()[0].to_str()
+    Parser(get_tokens("bitfield test { member1, member2 (3 + 2), }")).run()[0].to_str()
 
 def test_bitfield_with_size_with_members():
-    Parser(get_tokens("bitfield test (5) { member (1), }")).run()
-    Parser(get_tokens("bitfield test (5) { member1 (1), member2 (5+2), }")).run()
-    Parser(get_tokens("bitfield test (5) { member1, member2 (5+2), }")).run()
-    Parser(get_tokens("bitfield test (5) { member1(3*(2+3)), member2 (5+2), }")).run()
-    Parser(get_tokens("bitfield test (5) { member1(3*(2+3)), member2, }")).run()
+    Parser(get_tokens("bitfield test (5) { member (1), }")).run()[0].to_str()
+    Parser(get_tokens("bitfield test (5) { member1 (1), member2 (5+2), }")).run()[0].to_str()
+    Parser(get_tokens("bitfield test (5) { member1, member2 (5+2), }")).run()[0].to_str()
+    Parser(get_tokens("bitfield test (5) { member1(3*(2+3)), member2 (5+2), }")).run()[0].to_str()
+    Parser(get_tokens("bitfield test (5) { member1(3*(2+3)), member2, }")).run()[0].to_str()
 
 def test_bitfield_with_members_with_errors():
     with pytest.raises(InvalidSyntaxError):

@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-from typing import List, Optional, Union, Dict
-from lexer import TT_MINUS, TT_MULT, TT_NUM_INT, TT_PLUS, TT_DIV, Token
+from typing import List, Optional, Union, Dict, NewType
+from lexer import *
 from abc import ABC, abstractmethod
 from utils import DataType, BIG_ENDIAN
 
+# Just to have better typing annotations
+ComparisonOperatorType = NewType("ComparisonOperatorType", str)
+OperatorType = NewType("OperatorType", str)
 
 class ASTNode(ABC):
     """
@@ -172,49 +175,100 @@ class IdentifierAccessNode(ASTNode):
         return self._name
 
 
+class ComparisonOperatorNode(ASTNode):
+    """
+    Represents a relational operator (e.g. !=, ==, <, etc...).
+    """
+
+    LESS_THAN: ComparisonOperatorType = "LESS_THAN"
+    GREATER_THAN: ComparisonOperatorType = "GREATER_THAN"
+    EQUAL: ComparisonOperatorType = "EQUAL"
+    NOT_EQUAL: ComparisonOperatorType = "NOT_EQUAL"
+    LESS_OR_EQUAL: ComparisonOperatorType = "LESS_OR_EQUAL"
+    GREATER_OR_EQUAL: ComparisonOperatorType = "GREATER_OR_EQUAL"
+    AND: ComparisonOperatorType = "AND"
+    OR: ComparisonOperatorType = "OR"
+
+    def __init__(self, comp_op_token: Token):
+        """
+        :param comp_op_token: Token of the comparison operator.
+        :type comp_op_token: Token
+        """
+        self._comp_op_token: Token = comp_op_token
+
+    def to_str(self, depth: int = 0) -> str:
+        return "\t" * depth + "ComparisonOperatorNode(" + str(self.type) + ")\n"
+    
+    @property
+    def type(self) -> ComparisonOperatorType:
+        """
+        Type of the comparison operator.
+        Is one of: 
+        - ComparisonOperatorNode.LESS_THAN
+        - ComparisonOperatorNode.GREATER_THAN
+        - ComparisonOperatorNode.EQUAL
+        - ComparisonOperatorNode.NOT_EQUAL
+        - ComparisonOperatorNode.LESS_OR_EQUAL
+        - ComparisonOperatorNode.GREATER_OR_EQUAL
+        - ComparisonOperatorNode.AND
+        - ComparisonOperatorNode.OR
+        """
+        comp_dict: Dict[str, ComparisonOperatorType] = {
+            TT_COMP_EQ: ComparisonOperatorNode.EQUAL,
+            TT_COMP_NE: ComparisonOperatorNode.NOT_EQUAL,
+            TT_COMP_GT: ComparisonOperatorNode.GREATER_THAN,
+            TT_COMP_LT: ComparisonOperatorNode.LESS_THAN,
+            TT_COMP_GEQ: ComparisonOperatorNode.GREATER_OR_EQUAL,
+            TT_COMP_LEQ: ComparisonOperatorNode.LESS_OR_EQUAL,
+            TT_COMP_AND: ComparisonOperatorNode.AND,
+            TT_COMP_OR: ComparisonOperatorNode.OR
+        }
+        return comp_dict[self._comp_op_token.type]
+
+
 class ComparisonNode(ASTNode):
     """
     Represent a comparison between two AST nodes.
     """
-    def __init__(self, left_cond_op: ASTNode, condition_op: str, right_cond_op: ASTNode):
+    def __init__(self, left_node: ASTNode, comparison_op: ComparisonOperatorNode, right_node: ASTNode):
         """
-        :param left_cond_op: Left part of the comparison.
-        :type left_cond_op: ASTNode
-        :param condition_op: Comparison (eg. ==, !=, <) as a string.
-        :type condition_op: str
-        :param right_cond_op: Right part of the comparison.
-        :type right_cond_op: ASTNode
+        :param left_node: Left part of the comparison.
+        :type left_node: ASTNode
+        :param comparison_op: Relational operator of the comparison.
+        :type comparison_op: ComparisonOperatorNode
+        :param right_node: Right part of the comparison.
+        :type right_node: ASTNode
         """
-        self._left_cond_op: ASTNode = left_cond_op
-        self._condition_op: str = condition_op
-        self._right_cond_op: ASTNode = right_cond_op
+        self._left_node: ASTNode = right_node
+        self._comparison_op: ComparisonOperatorNode = comparison_op
+        self._right_node: ASTNode = right_node
 
     def to_str(self, depth: int = 0):
-        res: str = self._left_cond_op.to_str(depth)
-        res += ("\t" * depth) + self._condition_op + "\n"
-        res += self._right_cond_op.to_str(depth)
+        res: str = self._left_node.to_str(depth)
+        res += self._comparison_op.to_str(depth)
+        res += self._right_node.to_str(depth)
         return res + "\n"
 
     @property
-    def left_op(self) -> ASTNode:
+    def left_node(self) -> ASTNode:
         """
-        Left operand of the comparison.
+        Left node of the comparison.
         """
-        return self._left_cond_op
+        return self._left_node
 
     @property
-    def right_op(self) -> ASTNode:
+    def right_node(self) -> ASTNode:
         """
-        Right operand of the comparison.
+        Right node of the comparison.
         """
-        return self._right_cond_op
+        return self._right_node
 
     @property
-    def condition(self) -> str:
+    def comparison_op(self) -> ComparisonOperatorNode:
         """
-        Condition operand of the comparison.
+        Relational operator of the comparison.
         """
-        return self._condition_op
+        return self._comparison_op
 
 
 class TernaryDataTypeNode(ASTNode):
@@ -414,7 +468,13 @@ class MatchNode(ASTNode):
         for case in self._cases.keys():
             res += case.to_str(depth+1)
             res += ("\t" * (depth+1)) + "=>\n"
-            res += self._cases[case].to_str(depth+1)
+            if isinstance(self._cases[case], list):
+                res += ("\t" * (depth+1)) + "{"
+                for struct_member in self._cases[case]:
+                    res += struct_member.to_str(depth+2)
+                res += ("\t" * (depth+1)) + "}"
+            else:
+                res += self._cases[case].to_str(depth+1)
         res += ("\t" * depth) + ")\n"
         return res
 

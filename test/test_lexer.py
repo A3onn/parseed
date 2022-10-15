@@ -52,6 +52,16 @@ def test_arithmetic():
     assert tokens[2].type == TT_MULT
     assert tokens[3].type == TT_DIV
 
+def test_binary_operators():
+    lexer = Lexer("& | ^ << >> ~", "")
+    tokens = lexer.run()
+    assert tokens[0].type == TT_BIN_AND
+    assert tokens[1].type == TT_BIN_OR
+    assert tokens[2].type == TT_BIN_XOR
+    assert tokens[3].type == TT_BIN_LSHIFT
+    assert tokens[4].type == TT_BIN_RSHIFT
+    assert tokens[5].type == TT_BIN_NOT
+
 def test_comments_and_div():
     lexer = Lexer(" / / 123 // some test //", "")
     tokens = lexer.run()
@@ -133,7 +143,7 @@ def test_comma_colon_semicolon_dot_question_mark():
     assert tokens[12].type == TT_QUESTION_MARK
 
 def test_comparator():
-    lexer = Lexer("==  <= <   >= > !=", "")
+    lexer = Lexer("==  <= <   >= > != && ||", "")
     tokens = lexer.run()
     assert tokens[0].type == TT_COMP_EQ
     assert tokens[1].type == TT_COMP_LEQ
@@ -141,6 +151,8 @@ def test_comparator():
     assert tokens[3].type == TT_COMP_GEQ
     assert tokens[4].type == TT_COMP_GT
     assert tokens[5].type == TT_COMP_NE
+    assert tokens[6].type == TT_COMP_AND
+    assert tokens[7].type == TT_COMP_OR
 
     with pytest.raises(ExpectedMoreCharError):
         lexer = Lexer("!", "")

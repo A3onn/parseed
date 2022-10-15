@@ -26,30 +26,29 @@
 
 
 ; expressions
-<expr> ::= <term> (("+" | "-") <term>)*
+<expr> ::= <term> (("+" | "-" | <logical_operator>) <term>)*
 
 <term> ::= <factor> (("*" | "/") <factor>)*
 
 <factor> ::= <num_int> | <num_float>
-             | ("+" | "-") <factor>
+             | ("+" | "-" | <logical_operator>) <factor>
              | "(" <expr> ")"
              | <identifier> ("." <identifier>)*
 
-<no_identifier_expr> ::= <no_identifier_term> (("+" | "-") <no_identifier_term>)*
+<no_identifier_expr> ::= <no_identifier_term> (("+" | "-" | <logical_operator>) <no_identifier_term>)*
 
 <no_identifier_term> ::= <no_identifier_factor> (("*" | "/") <no_identifier_factor>)*
 
 <no_identifier_factor> ::=  <num_int> | <num_float>
-                            | ("+" | "-") <no_identifier_factor>
+                            | ("+" | "-" | <logical_operator>) <no_identifier_factor>
                             | "(" <no_identifier_expr> ")"
 
+<logical_operator> ::= "&" | "|" | "^" | "<<" | ">>" | "~"
 
 ; comparisons
-<comparison> ::= <expr> <comparator> <expr>
+<comparison> ::= <expr> <comparison_operator> <expr>
 
-<comparator> ::= "<=" | "<" | "==" | ">" | ">=" | "!="
-
-<logical_operator> ::= "&&" | "||"
+<comparison_operator> ::= "<=" | "<" | "==" | ">" | ">=" | "!=" | "&&" | "||"
 
 
 ; data-types
