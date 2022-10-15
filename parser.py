@@ -330,7 +330,7 @@ class Parser:
 
         if token.type in [TT_PLUS, TT_MINUS, TT_BIN_OR, TT_BIN_AND, TT_BIN_NOT, TT_BIN_XOR, TT_BIN_LSHIFT, TT_BIN_RSHIFT]:
             self.advance()
-            return UnaryOpNode(token, self.no_identifier_factor())
+            return UnaryOpNode(MathOperatorNode(token), self.no_identifier_factor())
         elif token.type == TT_LPAREN:
             self.advance()
             expr = self.no_identifier_expr()
@@ -365,7 +365,7 @@ class Parser:
 
         if token.type in [TT_PLUS, TT_MINUS, TT_BIN_OR, TT_BIN_AND, TT_BIN_NOT, TT_BIN_XOR, TT_BIN_LSHIFT, TT_BIN_RSHIFT]:
             self.advance()
-            return UnaryOpNode(token, self.factor())
+            return UnaryOpNode(MathOperatorNode(token), self.factor())
         elif token.type == TT_LPAREN:
             self.advance()
             expr = self.expr()
@@ -415,5 +415,5 @@ class Parser:
             if right_token is None:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected value or expression")
 
-            left_token = BinOpNode(left_token, op_token, right_token)
+            left_token = BinOpNode(left_token, MathOperatorNode(op_token), right_token)
         return left_token

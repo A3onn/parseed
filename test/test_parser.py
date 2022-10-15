@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from parser import Parser
-from ast_nodes import BinOpNode, IntNumberNode, MatchNode, StructMemberDeclareNode, UnaryOpNode
+from ast_nodes import *
 from lexer import Lexer
 from errors import InvalidSyntaxError
 from utils import *
@@ -47,21 +47,21 @@ def test_struct_members_with_expressions():
     assert isinstance(stmts[0].members[0].type.list_length, BinOpNode)
     assert isinstance(stmts[0].members[0].type.list_length.left_node, IntNumberNode)
     assert isinstance(stmts[0].members[0].type.list_length.right_node, IntNumberNode)
-    assert stmts[0].members[0].type.list_length.op == "+"
+    assert stmts[0].members[0].type.list_length.op.type == MathOperatorNode.ADD
     stmts[0].to_str()
 
     stmts = Parser(get_tokens("struct test { uint8[-1] member, }")).run()
     assert isinstance(stmts[0].members[0].type.list_length, UnaryOpNode)
     assert isinstance(stmts[0].members[0].type.list_length.value, IntNumberNode)
     assert stmts[0].members[0].type.list_length.value.value == 1
-    assert stmts[0].members[0].type.list_length.op == "-"
+    assert stmts[0].members[0].type.list_length.op.type == MathOperatorNode.SUBTRACT
     stmts[0].to_str()
 
     stmts = Parser(get_tokens("struct test { uint8[1+1] member1, uint8[15-3] member2, }")).run()
     assert isinstance(stmts[0].members[1].type.list_length, BinOpNode)
     assert isinstance(stmts[0].members[1].type.list_length.left_node, IntNumberNode)
     assert isinstance(stmts[0].members[1].type.list_length.right_node, IntNumberNode)
-    assert stmts[0].members[1].type.list_length.op == "-"
+    assert stmts[0].members[1].type.list_length.op.type == MathOperatorNode.SUBTRACT
     stmts[0].to_str()
 
     Parser(get_tokens("struct test { uint8[1+1] member1, int16 member2, uint8[-3+24] member2, }")).run()[0].to_str()

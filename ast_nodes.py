@@ -6,7 +6,7 @@ from utils import DataType, BIG_ENDIAN
 
 # Just to have better typing annotations
 ComparisonOperatorType = NewType("ComparisonOperatorType", str)
-OperatorType = NewType("OperatorType", str)
+MathOperationType = NewType("OperationType", str)
 
 class ASTNode(ABC):
     """
@@ -73,36 +73,90 @@ class IntNumberNode(ASTNode):
 
 
 # operators
+class MathOperatorNode(ASTNode):
+    """
+    Represent a mathematical operator (+, -, /, *) or a binary operator (&, |, ^, ~, <<, >>).
+    """
+
+    ADD: MathOperationType = "ADD"
+    SUBTRACT: MathOperationType = "SUBTRACT"
+    DIVIDE: MathOperationType = "DIVIDE"
+    MULTIPLY: MathOperationType = "MULTIPLY"
+    AND: MathOperationType = "OR"
+    OR: MathOperationType = "OR"
+    XOR: MathOperationType = "XOR"
+    NOT: MathOperationType = "NOT"
+    LEFT_SHIFT: MathOperationType = "LEFT_SHIFT"
+    RIGHT_SHIFT: MathOperationType = "RIGHT_SHIFT"
+
+    def __init__(self, op_token):
+        self._math_op_token: Token = op_token
+
+    def to_str(self, depth:int = 0):
+        return ("\t" * depth) + "MathOperationNode(" + self.type + ")\n"
+
+    @property
+    def type(self) -> MathOperationType:
+        """
+        Type of the operator.
+        Is one of: 
+        - MathOperatorNode.ADD
+        - MathOperatorNode.SUBTRACT
+        - MathOperatorNode.DIVIDE
+        - MathOperatorNode.MULTIPLY
+        - MathOperatorNode.AND
+        - MathOperatorNode.OR
+        - MathOperatorNode.XOR
+        - MathOperatorNode.NOT
+        - MathOperatorNode.LEFT_SHIFT
+        - MathOperatorNode.RIGHT_SHIFT
+        """
+        math_op_dict: Dict[str, MathOperationType] = {
+            TT_PLUS: MathOperatorNode.ADD,
+            TT_MINUS: MathOperatorNode.SUBTRACT,
+            TT_DIV: MathOperatorNode.DIVIDE,
+            TT_MULT: MathOperatorNode.MULTIPLY,
+            TT_BIN_AND: MathOperatorNode.AND,
+            TT_BIN_OR: MathOperatorNode.OR,
+            TT_BIN_XOR: MathOperatorNode.XOR,
+            TT_BIN_NOT: MathOperatorNode.NOT,
+            TT_BIN_LSHIFT: MathOperatorNode.LEFT_SHIFT,
+            TT_BIN_RSHIFT: MathOperatorNode.RIGHT_SHIFT
+        }
+        return math_op_dict[self._math_op_token.type]
+
+
 class BinOpNode(ASTNode):
     """
     Represent a binary operation between a two nodes (value or expression).
     """
-    def __init__(self, left_node: ASTNode, op_token: Token, right_node: ASTNode):
+    def __init__(self, left_node: ASTNode, math_op: MathOperatorNode, right_node: ASTNode):
         """
         :param left_node: Left node of the operation.
         :type left_node: ASTNode
-        :param op_token: Token representing the operand.
-        :type op_token: Token
+        :param math_op: Operand of the operation.
+        :type math_op: MathOperatorNode
         :param right_node: Right node of the operation.
         :type right_node: ASTNode
         """
         self._left_node: ASTNode = left_node
-        self._op_token: Token = op_token
+        self._math_op: MathOperatorNode = math_op
         self._right_node: ASTNode = right_node
 
     def to_str(self, depth: int = 0) -> str:
-        return ("\t" * depth) + "BinOpNode(\n" + self._left_node.to_str(depth + 1) \
-            + ("\t" * (depth + 1)) + str(self._op_token) + "\n" \
-            + self._right_node.to_str(depth + 1) \
-            + ("\t" * depth) + ")\n"
+        res: str = ("\t" * depth) + "BinOpNode(\n"
+        res += self._left_node.to_str(depth + 1)
+        res += self._math_op.to_str(depth+1)
+        res += self._right_node.to_str(depth + 1)
+        res += ("\t" * depth) + ")\n"
+        return res
 
     @property
-    def op(self) -> str:
+    def op(self) -> MathOperatorNode:
         """
-        Operand token as a string.
+        Operator of the operation.
         """
-        comparators_dict: Dict = {TT_PLUS: "+", TT_MINUS: "-", TT_MULT: "*", TT_DIV: "/"}
-        return comparators_dict[self._op_token.type]
+        return self._math_op
 
     @property
     def left_node(self) -> ASTNode:
@@ -121,28 +175,31 @@ class BinOpNode(ASTNode):
 
 class UnaryOpNode(ASTNode):
     """
-    Represent an unary operation between an operand (-, +, /, etc...) and a node (value or expression).
+    Represent an unary operation between an mathematical operator and a node (value or expression).
     """
-    def __init__(self, op_token: Token, node: ASTNode):
+    def __init__(self, math_op: MathOperatorNode, node: ASTNode):
         """
-        :param op_token: Token representing the operand.
-        :type op_token: Token
+        :param math_op: Mathematical operator of the operation.
+        :type math_op: MathOperatorNode
         :param node: Node representing the value of the operation.
         :type node: ASTNode
         """
-        self._op_token: Token = op_token
+        self._math_op: MathOperatorNode = math_op
         self._node: ASTNode = node
 
     def to_str(self, depth: int = 0) -> str:
-        return ("\t" * depth) + "UnaryOpNode(\n" + ("\t" * (depth + 1)) + str(self._op_token) + "\n" + self._node.to_str(depth + 1) + ("\t" * depth) + ")\n"
+        res: str = ("\t" * depth) + "UnaryOpNode(\n"
+        res += self._math_op.to_str(depth+1)
+        res += self._node.to_str(depth + 1)
+        res += ("\t" * depth) + ")\n"
+        return res
 
     @property
     def op(self) -> str:
         """
-        Operand node as a string.
+        Operator of the operation.
         """
-        comparators_dict: Dict = {TT_PLUS: "+", TT_MINUS: "-", TT_MULT: "*", TT_DIV: "/"}
-        return comparators_dict[self._op_token.type]
+        return self._math_op
 
     @property
     def value(self) -> ASTNode:
@@ -632,17 +689,17 @@ class BitfieldDefNode(ASTNode):
         if len(self.members) == 1:
             return self.members[0].size
         elif len(self.members) == 2:
-            return BinOpNode(self.members[0].size, Token(TT_PLUS), self.members[1].size)
+            return BinOpNode(self.members[0].size, MathOperatorNode(Token(TT_PLUS)), self.members[1].size)
 
         # generate the sum of sizes
-        res: BinOpNode = BinOpNode(self.members[0].size, Token(TT_PLUS), None)
+        res: BinOpNode = BinOpNode(self.members[0].size, MathOperatorNode(Token(TT_PLUS)), None)
 
-        tmp: BinOpNode = BinOpNode(None, Token(TT_PLUS), None)
+        tmp: BinOpNode = BinOpNode(None, MathOperatorNode(Token(TT_PLUS)), None)
         res._right_node = tmp
         for i in range(1, len(self.members)-2):
             tmp._left_node = self.members[i].size
             tmp._op_token = Token(TT_PLUS)
-            tmp._right_node = BinOpNode(None, Token(TT_PLUS), None)
+            tmp._right_node = BinOpNode(None, MathOperatorNode(Token(TT_PLUS)), None)
             tmp = tmp._right_node
 
         tmp._left_node = self.members[-2].size
