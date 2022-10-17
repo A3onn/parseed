@@ -2,7 +2,7 @@
 from lexer import Lexer, TT_COMP_EQ
 from parser import Parser
 from ast_nodes import *
-from utils import BIG_ENDIAN, LITTLE_ENDIAN
+from utils import Endian
 
 def get_AST(text):
     tokens = Lexer(text, "").run()
@@ -14,7 +14,7 @@ def test_struct():
     assert isinstance(ast[0], StructDefNode)
     assert ast[0].name == "test"
     assert len(ast[0].members) == 0
-    assert ast[0].endian == BIG_ENDIAN
+    assert ast[0].endian == Endian.BIG
 
 def test_struct_members():
     ast = get_AST("struct test { uint8 some_member, }")
@@ -25,7 +25,7 @@ def test_struct_members():
     assert isinstance(member, StructMemberDeclareNode)
     assert member.name == "some_member"
     assert member.type.type == "uint8"
-    assert member.type.endian == BIG_ENDIAN
+    assert member.type.endian == Endian.BIG
 
 
     ast = get_AST("struct test { uint8 some_member, LE uint16 member2,}")
@@ -34,11 +34,11 @@ def test_struct_members():
     assert isinstance(ast[0].members[0], StructMemberDeclareNode)
     assert ast[0].members[0].name == "some_member"
     assert ast[0].members[0].type.type == "uint8"
-    assert ast[0].members[0].type.endian == BIG_ENDIAN
+    assert ast[0].members[0].type.endian == Endian.BIG
     assert isinstance(ast[0].members[1], StructMemberDeclareNode)
     assert ast[0].members[1].name == "member2"
     assert ast[0].members[1].type.type == "uint16"
-    assert ast[0].members[1].type.endian == LITTLE_ENDIAN
+    assert ast[0].members[1].type.endian == Endian.LITTLE
     
 def test_struct_member_ternary_type():
     ast = get_AST("struct test { (1 == 1 ? uint8 : uint16) member, }")
@@ -48,7 +48,7 @@ def test_struct_member_ternary_type():
     member = ast[0].members[0]
     assert isinstance(member, StructMemberDeclareNode)
     assert member.name == "member"
-    assert member.type.endian == BIG_ENDIAN
+    assert member.type.endian == Endian.BIG
     assert isinstance(member.type.type, TernaryDataTypeNode)
     assert isinstance(member.type.type.if_true, DataType)
     assert isinstance(member.type.type.if_false, DataType)

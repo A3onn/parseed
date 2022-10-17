@@ -75,18 +75,18 @@ def test_struct():
     lexer = Lexer("struct  struct", "")
     tokens = lexer.run()
     assert tokens[0].type == TT_KEYWORD
-    assert tokens[0].value == "struct"
+    assert tokens[0].value == STRUCT_KEYWORD 
     assert tokens[1].type == TT_KEYWORD
-    assert tokens[1].value == "struct"
+    assert tokens[1].value == STRUCT_KEYWORD
     assert tokens[2].type == TT_EOF
 
 def test_bitfield():
     lexer = Lexer("bitfield   bitfield", "")
     tokens = lexer.run()
     assert tokens[0].type == TT_KEYWORD
-    assert tokens[0].value == "bitfield"
+    assert tokens[0].value == BITFIELD_KEYWORD
     assert tokens[1].type == TT_KEYWORD
-    assert tokens[1].value == "bitfield"
+    assert tokens[1].value == BITFIELD_KEYWORD
     assert tokens[2].type == TT_EOF
 
 def test_curly():

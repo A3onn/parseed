@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 from typing import List
+from enum import Enum
 
 
-# ENDIANNESS
-LITTLE_ENDIAN = "LE"
-BIG_ENDIAN = "BE"
+class Endian(Enum):
+    BIG = "BIG"
+    LITTLE = "LITTLE"
 
-KEYWORDS = ["struct", "bitfield", LITTLE_ENDIAN, BIG_ENDIAN, "match"]
 DATA_TYPES = [
     "uint8", "int8",
     "uint16", "int16",

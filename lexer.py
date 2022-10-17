@@ -1,13 +1,27 @@
 #!/usr/bin/env python3
 from typing import List, Optional
-from string import digits as DIGITS
-from string import ascii_letters as LETTERS
+from string import digits as DIGITS, ascii_letters as LETTERS
 from errors import IllegalCharacterError, ExpectedMoreCharError
 from utils import *
 
 LETTERS_DIGITS = LETTERS + DIGITS
 
 # List of tokens
+
+STRUCT_KEYWORD = "struct"
+BITFIELD_KEYWORD = "bitfield"
+MATCH_KEYWORD = "match"
+LITTLE_ENDIAN_KEYWORD = "LE"
+BIG_ENDIAN_KEYWORD = "BE"
+ENDIANNESS_KEYWORDS = [LITTLE_ENDIAN_KEYWORD, BIG_ENDIAN_KEYWORD]
+
+KEYWORDS = [
+    STRUCT_KEYWORD,
+    BITFIELD_KEYWORD,
+    MATCH_KEYWORD,
+    LITTLE_ENDIAN_KEYWORD,
+    BIG_ENDIAN_KEYWORD,
+]
 
 # Numerical values
 TT_NUM_INT = "NUM_INT"

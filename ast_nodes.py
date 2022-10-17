@@ -2,7 +2,7 @@
 from typing import List, Optional, Union, Dict, NewType
 from lexer import *
 from abc import ABC, abstractmethod
-from utils import DataType, BIG_ENDIAN
+from utils import DataType
 
 # Just to have better typing annotations
 ComparisonOperatorType = NewType("ComparisonOperatorType", str)
@@ -390,12 +390,12 @@ class StructMemberTypeNode(ASTNode):
     Represents the type of a member.
     This class contains the type, the endianness, if it is a list and it length (if it has one).
     """
-    def __init__(self, type_token: Union[Token,TernaryDataTypeNode], endian: str = BIG_ENDIAN, is_list: bool = False, list_length_node: Union[None,UnaryOpNode,BinOpNode] = None, string_delimiter: str = r"\0"):
+    def __init__(self, type_token: Union[Token,TernaryDataTypeNode], endian: Endian = Endian.BIG, is_list: bool = False, list_length_node: Union[None,UnaryOpNode,BinOpNode] = None, string_delimiter: str = r"\0"):
         r"""
         :param type_token: Token or ternary operator for the type of the member.
         :type type_token: Union[Token,TernaryDataTypeNode]
         :param endian: Endianness of the member, defaults to big.
-        :type endian: str, optional
+        :type endian: Endian, optional
         :param is_list: If the member is a list, defaults to False.
         :type is_list: bool, optional
         :param list_length_node: Length of the list if this member is a list, defaults to None
@@ -426,7 +426,7 @@ class StructMemberTypeNode(ASTNode):
         return self._type
 
     @property
-    def endian(self) -> str:
+    def endian(self) -> Endian:
         """
         Endianness of the member.
         """
@@ -561,14 +561,14 @@ class StructDefNode(ASTNode):
     """
     Represent a struct with its name, endianness and members.
     """
-    def __init__(self, name_token: Token, members: List[Union[StructMemberDeclareNode, MatchNode]], endian: str = BIG_ENDIAN):
+    def __init__(self, name_token: Token, members: List[Union[StructMemberDeclareNode, MatchNode]], endian: Endian = Endian.BIG):
         """
         :param name_token: Token representing the name of the struct.
         :type name_token: Token
         :param members: List of members of this struct.
         :type members: List[Union[StructMemberDeclareNode, MatchNode]]
         :param endian: Endianness of the struct, defaults to big.
-        :type endian: str, optional
+        :type endian: Endian, optional
         """
         self._name_token: Token = name_token
         self._members: List[Union[StructMemberDeclareNode, MatchNode]] = members
@@ -595,7 +595,7 @@ class StructDefNode(ASTNode):
         return self._members
 
     @property
-    def endian(self) -> str:
+    def endian(self) -> Endian:
         """
         Endianness of the struct.
         """

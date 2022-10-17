@@ -39,9 +39,9 @@ class Parser:
         token: Token = self.current_token
 
         if token.type == TT_KEYWORD:
-            if token.value == "struct" or token.value in (BIG_ENDIAN, LITTLE_ENDIAN):
+            if token.value == STRUCT_KEYWORD or token.value in ENDIANNESS_KEYWORDS:
                 return self.struct_stmt()
-            elif token.value == "bitfield":
+            elif token.value == BITFIELD_KEYWORD:
                 return self.bitfield_stmt()
         else:
             raise InvalidSyntaxError(token.pos_start, token.pos_end, "expected struct or bitfield statement")
@@ -107,10 +107,12 @@ class Parser:
         """
         <struct_stmt> ::= ["LE" | "BE"] "struct" <identifier> "{" (<struct_member_def> | <match_stmt>)+ "}"
         """
-        endian = BIG_ENDIAN
-        if self.current_token.value in (BIG_ENDIAN, LITTLE_ENDIAN):
-            if self.current_token.value == LITTLE_ENDIAN:
-                endian = LITTLE_ENDIAN
+        endian = Endian.BIG
+        if self.current_token.value == LITTLE_ENDIAN_KEYWORD:
+            endian = Endian.LITTLE
+            self.advance()
+        elif self.current_token.value == BIG_ENDIAN_KEYWORD:
+            endian = Endian.BIG
             self.advance()
 
         self.advance()
@@ -126,7 +128,7 @@ class Parser:
 
         struct_members: List[StructMemberDeclareNode] = []
         while self.current_token.type not in [TT_RCURLY, TT_EOF]:
-            if self.current_token.type == TT_KEYWORD and self.current_token.value == "match":
+            if self.current_token.type == TT_KEYWORD and self.current_token.value == MATCH_KEYWORD:
                 struct_members.append(self.match_stmt(endian))
             else:
                 struct_members.append(self.struct_member_def(endian))
@@ -144,9 +146,11 @@ class Parser:
                                 | ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>) "[]"  ;; repeat this member until the end of the buffer
         """
         endian = struct_endian
-        if self.current_token.value in (BIG_ENDIAN, LITTLE_ENDIAN):
-            if self.current_token.value == LITTLE_ENDIAN:
-                endian = LITTLE_ENDIAN
+        if self.current_token.value == LITTLE_ENDIAN_KEYWORD:
+            endian = Endian.LITTLE
+            self.advance()
+        elif self.current_token.value == BIG_ENDIAN_KEYWORD:
+            endian = Endian.BIG
             self.advance()
 
         if self.current_token.type not in [TT_DATA_TYPE, TT_IDENTIFIER, TT_LPAREN]:

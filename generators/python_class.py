@@ -79,9 +79,9 @@ class Python_Class(ParseedOutputGenerator):
                         cb.add_line(f"cursor += {datatype.size}")
         cb = cb.end_block()
 
-    def member_read_struct(self, datatype: DataType, endian: str):
+    def member_read_struct(self, datatype: DataType, endian: Endian):
         res = "struct.unpack(\""
-        res += "<" if endian == LITTLE_ENDIAN else ">"
+        res += "<" if endian == Endian.LITTLE else ">"
 
         c = ""
         if datatype.is_float():
