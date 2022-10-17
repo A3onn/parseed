@@ -3,12 +3,39 @@ from utils import *
 
 
 class ParseedBaseError(BaseException):
-    def _underline_error(self, pos_start: Position, pos_end: Position, error_line_text: str) -> str:
+    def _underline_error(self, pos_start: Position, pos_end: Position) -> str:
+        res_text: List[str] = []
+        res_underline: List[str] = []
+
+        # start at the beginning to have the beginning of the line printed out in the error
+        curr_pos = pos_start.get_copy().go_to_beginning_of_line()
+        tmp_res_text = ""
+        tmp_res_underline = ""
+        while curr_pos != pos_end:
+            curr_char = curr_pos.file_text[curr_pos.idx]
+
+            if curr_char == "\n":
+                res_text.append(tmp_res_text)
+                res_underline.append(tmp_res_underline)
+                tmp_res_text = ""
+                tmp_res_underline = ""
+            else:
+                tmp_res_text += curr_char
+                # as we start at the beginning of the line, we need
+                # to check if we are in the error part to underline it
+                if curr_pos >= pos_start:
+                    tmp_res_underline += "~"
+                else:
+                    tmp_res_underline += " "
+            curr_pos.advance()
+
+        res_text.append(tmp_res_text)
+        res_underline.append(tmp_res_underline)
+
         res: str = ""
-        for i in range(0, pos_start.col):
-            res += " "
-        for i in range(0, pos_end.col - pos_start.col):
-            res += "~"
+        for i in range(len(res_text)):
+            res += res_text[i] + "\n"
+            res += res_underline[i] + "\n"
         return res
 
 
@@ -20,8 +47,7 @@ class ParseedSimpleUnderlinedError(ParseedBaseError):
         self.details: str = details
 
     def __str__(self):
-        error_line_text: str = self.pos_start.get_line_text()
-        return f"\nFile {self.pos_start.filename}, on line {self.pos_start.ln + 1}\n{error_line_text}\n{self._underline_error(self.pos_start, self.pos_end, error_line_text)}\n{self.error_name}: {self.details}"
+        return f"\nFile {self.pos_start.filename}, on line {self.pos_start.ln + 1}\n{self._underline_error(self.pos_start, self.pos_end)}\n{self.error_name}: {self.details}"
 
 
 class ParseedMultipleUnderlinedError(ParseedBaseError):
@@ -36,8 +62,7 @@ class ParseedMultipleUnderlinedError(ParseedBaseError):
         res = f"\nFile {self.pos_start[0].filename},"
 
         for i in range(len(self.pos_start)):  # same thing if it was self.pos_end
-            error_line_text: str = self.pos_start[i].get_line_text()
-            res += f"\n\non line {self.pos_start[i].ln + 1},\n{error_line_text}\n{self._underline_error(self.pos_start[i], self.pos_end[i], error_line_text)}"
+            res += f"\n\non line {self.pos_start[i].ln + 1},\n{self._underline_error(self.pos_start[i], self.pos_end[i])}"
 
         res += f"\n{self.error_name}: {self.details}\n"
         return res
