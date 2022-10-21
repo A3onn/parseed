@@ -4,7 +4,7 @@ from lexer import Token
 from abc import ABC, abstractmethod
 from ast_nodes import BitfieldDefNode, StructDefNode, StructMemberDeclareNode, TernaryDataTypeNode
 from errors import *
-from utils import DATA_TYPES, DataType
+from utils import DATA_TYPES
 
 
 class _Block:
@@ -123,7 +123,7 @@ class ParseedOutputGenerator(ABC):
                     # check for unknown types
                     if isinstance(member.infos._type, Token) and member.infos.type not in [struct.name for struct in self.structs] and \
                             member.infos.type not in [bitfield.name for bitfield in self.bitfields]:
-                        raise UnknownTypeError(member.infos._type.pos_start, member.infos._type.pos_end, member.infos._type, struct.name)
+                        raise UnknownTypeError(member.infos._type.pos_start, member.infos._type.pos_end, member.infos.type, struct.name)
 
         # if there is no unknown types, now we can check for recursive structs
         for struct in self.structs:
@@ -176,7 +176,7 @@ class ParseedOutputGenerator(ABC):
             return
         elif isinstance(visited_member.infos.type, TernaryDataTypeNode):
             # TODO
-            return 
+            return
 
         if visited_member.infos.type in DATA_TYPES:  # base case, cannot visit native data types as they are not structs
             return

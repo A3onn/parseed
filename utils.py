@@ -28,6 +28,7 @@ DATA_TYPES = [
     "string",
 ]
 
+
 class Position:
     def __init__(self, idx: int, ln: int, col: int, filename: str, file_text: str):
         self.idx = idx
@@ -45,7 +46,7 @@ class Position:
         if current_char == "\n":
             self.ln += 1
             self.col = 0
-        
+
         return self
 
     def get_line_text(self) -> str:
@@ -109,6 +110,7 @@ class Position:
         if not isinstance(__o, Position):
             raise TypeError(f"Cannot compare Position with '{type(__o).__name__}'")
         return self.idx != __o.idx and self.file_text == __o.file_text
+
 
 class DataType:
     """
@@ -213,7 +215,7 @@ class DataType:
         Use the 'is_float' method to check if it a float.
         """
         return self.name == "double"
-    
+
     def __str__(self) -> str:
         res: str = f"(DATATYPE:{self.name}"
         if hasattr(self, "size"):

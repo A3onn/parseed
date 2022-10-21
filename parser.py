@@ -13,7 +13,7 @@ class Parser:
         # self.tokens contains at least a TT_EOF token
         self.current_token: Token = self.tokens[0]
         self.advance()
-    
+
     def _rollback_to(self, token: Token):
         """
         Rollback parser to specified token.
@@ -22,7 +22,7 @@ class Parser:
         :param token: Token to rollback to.
         :type token: Token, must be an instance present in the self.tokens list.
         """
-        for i,t in enumerate(self.tokens):
+        for i, t in enumerate(self.tokens):
             if t == token:
                 self.current_token = t
                 self.token_index = i
@@ -91,13 +91,13 @@ class Parser:
                             | "bitfield" <identifier> "(" <no_identifier_expr> ")" "{" <bitfield_member_def>+ "}"
         """
         self.advance()
-        name: str = self.current_token
+        name: Token = self.current_token
 
         self.advance()
-        bytes_count: ASTNode = None  # size of the bitfield
+        bytes_count: Optional[ASTNode] = None  # size of the bitfield
         if self.current_token.type == TT_LPAREN:
             self.advance()
-            size = self.no_identifier_expr()
+            bytes_count = self.no_identifier_expr()
             if self.current_token.type != TT_RPAREN:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
             self.advance()
@@ -142,7 +142,7 @@ class Parser:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '{'")
         self.advance()
 
-        struct_members: List[StructMemberDeclareNode] = []
+        struct_members: List[Union[StructMemberDeclareNode, MatchNode]] = []
         while self.current_token.type not in [TT_RCURLY, TT_EOF]:
             if self.current_token.type == TT_KEYWORD and self.current_token.value == MATCH_KEYWORD:
                 struct_members.append(self.match_stmt(endian))
@@ -154,8 +154,8 @@ class Parser:
         self.advance()
 
         return StructDefNode(struct_name, struct_members, endian)
-    
-    def struct_member_type(self, struct_endian: str) -> StructMemberInfoNode:
+
+    def struct_member_type(self, struct_endian: Endian) -> StructMemberInfoNode:
         """
         <struct_member_type> ::= (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>)
                                 | (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>) "[" <expr> "]"
@@ -176,23 +176,25 @@ class Parser:
         if self.current_token.type not in [TT_DATA_TYPE, TT_IDENTIFIER, TT_LPAREN]:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected data-type, identifier or ternary operator")
 
+        member_type: Union[Token, TernaryDataTypeNode]
+
         if self.current_token.type == TT_LPAREN:
             # either endian or type, we cannot know now
-            res: Union[TernaryEndianNode,TernaryDataTypeNode] = self._handle_ternary_member_type_or_endian()
+            res: Union[TernaryEndianNode, TernaryDataTypeNode] = self._handle_ternary_member_type_or_endian()
             if isinstance(res, TernaryDataTypeNode):
                 member_type = res
             else:
                 endian = res
                 # now that we are sure we passed the endian, we can check for the type
                 if self.current_token.type == TT_LPAREN:
-                    member_type: TernaryDataTypeNode = self.ternary_data_type()
+                    member_type = self.ternary_data_type()
                 else:
-                    member_type: Token = self.current_token
+                    member_type = self.current_token
                     self.advance()
         else:
             # endian and ternary data type was check just before
             # we are sure that we are dealing with the type here
-            member_type: Token = self.current_token
+            member_type = self.current_token
             self.advance()
 
         is_list: bool = False
@@ -200,17 +202,18 @@ class Parser:
 
         if self.current_token.type == TT_IDENTIFIER:  # nothing to do, just continue parsing
             return StructMemberInfoNode(member_type, endian)
-        elif self.current_token.type == TT_LPAREN and member_type.value == "string":
+        elif self.current_token.type == TT_LPAREN and isinstance(member_type, Token) and member_type.value == "string":
             self.advance()
 
             delimiter: str = ""
             if self.current_token.type == TT_BACKSLASH:
                 delimiter += "\\"
                 self.advance()
-            delimiter += self.current_token.value
-            
-            if delimiter == "" or delimiter == "\\" or delimiter == None:
+
+            if self.current_token.value == "" or self.current_token.value == "\\" or self.current_token.value is None:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected character as delimiter")
+            delimiter += self.current_token.value
+
             self.advance()
             if self.current_token.type != TT_RPAREN:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
@@ -228,7 +231,7 @@ class Parser:
 
         return StructMemberInfoNode(member_type, endian, is_list, list_length_node)
 
-    def struct_member_def(self, struct_endian: str) -> StructMemberDeclareNode:
+    def struct_member_def(self, struct_endian: Endian) -> StructMemberDeclareNode:
         """
         <struct_member_def> ::= <struct_member_type> <identifier> ","
         """
@@ -245,7 +248,7 @@ class Parser:
 
         return StructMemberDeclareNode(member_type, member_name)
 
-    def match_stmt(self, struct_endian: str) -> MatchNode:
+    def match_stmt(self, struct_endian: Endian) -> MatchNode:
         """
         <match_stmt> ::= "match (" <expr> ") {" (<expr> ":" <struct_member_type> ",")+ "}" <identifier> ","
                         | "match (" <expr> ") {" (<expr> ": {" <struct_member_def>+ "},")+ "},"  ;; multiple members in the match case
@@ -336,7 +339,7 @@ class Parser:
 
         if self.current_token.type != TT_KEYWORD or self.current_token.value not in ENDIANNESS_KEYWORDS:
             raise InvalidStateError("Not a ternary endian.")
-        
+
         if_false: Endian = Endian.from_token(self.current_token)
         self.advance()
 
@@ -370,11 +373,11 @@ class Parser:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
         self.advance()
 
-        if_true: IdentifierAccessNode = IdentifierAccessNode(if_true_token.value)
+        if_true: Union[IdentifierAccessNode, DataType] = IdentifierAccessNode(if_true_token.value)
         if if_true_token.value in DATA_TYPES:
             if_true = DataType(if_true_token.value)
 
-        if_false: IdentifierAccessNode = IdentifierAccessNode(if_false_token.value)
+        if_false: Union[IdentifierAccessNode, DataType] = IdentifierAccessNode(if_false_token.value)
         if if_false_token.value in DATA_TYPES:
             if_false = DataType(if_false_token.value)
 
@@ -385,14 +388,14 @@ class Parser:
         <comparison> ::= <expr> <comparison_operator> <expr>
         <comparison_operator> ::= "<=" | "<" | "==" | ">" | ">=" | "!=" | "&&" | "||"
         """
-        left_node: Token = self.expr()
+        left_node: ASTNode = self.expr()
         comparison_op_token: Token = self.current_token
         comparison_op_dict: Dict = {TT_COMP_EQ: "==", TT_COMP_NE: "!=", TT_COMP_GT: ">", TT_COMP_LT: "<", TT_COMP_GEQ: ">=", TT_COMP_LEQ: "<=", TT_COMP_AND: "&&", TT_COMP_OR: "||"}
         if comparison_op_token.type not in comparison_op_dict.keys():
             list_comp: str = ", ".join([f"'{c}'" for c in comparison_op_dict.values()])
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, f"expected one of: " + list_comp)
         self.advance()
-        right_node: Token = self.expr()
+        right_node: ASTNode = self.expr()
 
         return ComparisonNode(left_node, ComparisonOperatorNode(comparison_op_token), right_node)
 

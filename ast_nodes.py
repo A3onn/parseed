@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-from distutils.log import info
-from typing import Generator, Iterable, List, Optional, Union, Dict, NewType
+from typing import Generator, List, Optional, Union, Dict, NewType
 from lexer import *
 from abc import ABC, abstractmethod
 from utils import DataType
 
 # Just to have better typing annotations
 ComparisonOperatorType = NewType("ComparisonOperatorType", str)
-MathOperationType = NewType("OperationType", str)
+MathOperationType = NewType("MathOperationType", str)
+
 
 class ASTNode(ABC):
     """
@@ -79,28 +79,28 @@ class MathOperatorNode(ASTNode):
     Represent a mathematical operator (+, -, /, *) or a binary operator (&, |, ^, ~, <<, >>).
     """
 
-    ADD: MathOperationType = "ADD"
-    SUBTRACT: MathOperationType = "SUBTRACT"
-    DIVIDE: MathOperationType = "DIVIDE"
-    MULTIPLY: MathOperationType = "MULTIPLY"
-    AND: MathOperationType = "OR"
-    OR: MathOperationType = "OR"
-    XOR: MathOperationType = "XOR"
-    NOT: MathOperationType = "NOT"
-    LEFT_SHIFT: MathOperationType = "LEFT_SHIFT"
-    RIGHT_SHIFT: MathOperationType = "RIGHT_SHIFT"
+    ADD: MathOperationType = MathOperationType("ADD")
+    SUBTRACT: MathOperationType = MathOperationType("SUBTRACT")
+    DIVIDE: MathOperationType = MathOperationType("DIVIDE")
+    MULTIPLY: MathOperationType = MathOperationType("MULTIPLY")
+    AND: MathOperationType = MathOperationType("AND")
+    OR: MathOperationType = MathOperationType("OR")
+    XOR: MathOperationType = MathOperationType("XOR")
+    NOT: MathOperationType = MathOperationType("NOT")
+    LEFT_SHIFT: MathOperationType = MathOperationType("LEFT_SHIFT")
+    RIGHT_SHIFT: MathOperationType = MathOperationType("RIGHT_SHIFT")
 
     def __init__(self, op_token):
         self._math_op_token: Token = op_token
 
-    def to_str(self, depth:int = 0):
+    def to_str(self, depth: int = 0):
         return ("\t" * depth) + "MathOperationNode(" + self.type + ")\n"
 
     @property
     def type(self) -> MathOperationType:
         """
         Type of the operator.
-        Is one of: 
+        Is one of:
         - MathOperatorNode.ADD
         - MathOperatorNode.SUBTRACT
         - MathOperatorNode.DIVIDE
@@ -147,7 +147,7 @@ class BinOpNode(ASTNode):
     def to_str(self, depth: int = 0) -> str:
         res: str = ("\t" * depth) + "BinOpNode(\n"
         res += self._left_node.to_str(depth + 1)
-        res += self._math_op.to_str(depth+1)
+        res += self._math_op.to_str(depth + 1)
         res += self._right_node.to_str(depth + 1)
         res += ("\t" * depth) + ")\n"
         return res
@@ -190,13 +190,13 @@ class UnaryOpNode(ASTNode):
 
     def to_str(self, depth: int = 0) -> str:
         res: str = ("\t" * depth) + "UnaryOpNode(\n"
-        res += self._math_op.to_str(depth+1)
+        res += self._math_op.to_str(depth + 1)
         res += self._node.to_str(depth + 1)
         res += ("\t" * depth) + ")\n"
         return res
 
     @property
-    def op(self) -> str:
+    def op(self) -> MathOperatorNode:
         """
         Operator of the operation.
         """
@@ -231,7 +231,7 @@ class IdentifierAccessNode(ASTNode):
         Name of the whole identifier (meaning with dots).
         """
         return self._name
-    
+
     def get_names(self) -> Generator:
         """
         Generator returning each sub-identifier composing this identifier.
@@ -255,14 +255,14 @@ class ComparisonOperatorNode(ASTNode):
     Represents a relational operator (e.g. !=, ==, <, etc...).
     """
 
-    LESS_THAN: ComparisonOperatorType = "LESS_THAN"
-    GREATER_THAN: ComparisonOperatorType = "GREATER_THAN"
-    EQUAL: ComparisonOperatorType = "EQUAL"
-    NOT_EQUAL: ComparisonOperatorType = "NOT_EQUAL"
-    LESS_OR_EQUAL: ComparisonOperatorType = "LESS_OR_EQUAL"
-    GREATER_OR_EQUAL: ComparisonOperatorType = "GREATER_OR_EQUAL"
-    AND: ComparisonOperatorType = "AND"
-    OR: ComparisonOperatorType = "OR"
+    LESS_THAN: ComparisonOperatorType = ComparisonOperatorType("LESS_THAN")
+    GREATER_THAN: ComparisonOperatorType = ComparisonOperatorType("GREATER_THAN")
+    EQUAL: ComparisonOperatorType = ComparisonOperatorType("EQUAL")
+    NOT_EQUAL: ComparisonOperatorType = ComparisonOperatorType("NOT_EQUAL")
+    LESS_OR_EQUAL: ComparisonOperatorType = ComparisonOperatorType("LESS_OR_EQUAL")
+    GREATER_OR_EQUAL: ComparisonOperatorType = ComparisonOperatorType("GREATER_OR_EQUAL")
+    AND: ComparisonOperatorType = ComparisonOperatorType("AND")
+    OR: ComparisonOperatorType = ComparisonOperatorType("OR")
 
     def __init__(self, comp_op_token: Token):
         """
@@ -273,12 +273,12 @@ class ComparisonOperatorNode(ASTNode):
 
     def to_str(self, depth: int = 0) -> str:
         return "\t" * depth + "ComparisonOperatorNode(" + str(self.type) + ")\n"
-    
+
     @property
     def type(self) -> ComparisonOperatorType:
         """
         Type of the comparison operator.
-        Is one of: 
+        Is one of:
         - ComparisonOperatorNode.LESS_THAN
         - ComparisonOperatorNode.GREATER_THAN
         - ComparisonOperatorNode.EQUAL
@@ -365,22 +365,22 @@ class TernaryDataTypeNode(ASTNode):
 
     def to_str(self, depth: int = 0) -> str:
         res: str = ("\t" * depth) + "TernaryDataType(\n"
-        res += self._comparison.to_str(depth+1)
-        res += ("\t" * (depth+1)) + "?\n"
+        res += self._comparison.to_str(depth + 1)
+        res += ("\t" * (depth + 1)) + "?\n"
 
         if isinstance(self._if_true, IdentifierAccessNode):
-            res += self._if_true.to_str(depth+2) + "\n"
+            res += self._if_true.to_str(depth + 2) + "\n"
         else:
-            res += ("\t" * (depth+1)) + str(self._if_true) + "\n"
+            res += ("\t" * (depth + 1)) + str(self._if_true) + "\n"
 
-        res += ("\t" * (depth+1)) + ":\n"
+        res += ("\t" * (depth + 1)) + ":\n"
 
         if isinstance(self._if_false, IdentifierAccessNode):
-            res += self._if_false.to_str(depth+2) + "\n)"
+            res += self._if_false.to_str(depth + 2) + "\n)"
         else:
-            res += ("\t" * (depth+1)) + str(self._if_false) + "\n"
+            res += ("\t" * (depth + 1)) + str(self._if_false) + "\n"
         return res + ("\t" * depth) + ")" + "\n"
-    
+
     @property
     def comparison(self) -> ComparisonNode:
         """
@@ -402,6 +402,7 @@ class TernaryDataTypeNode(ASTNode):
         """
         return self._if_false
 
+
 class TernaryEndianNode(ASTNode):
     """
     This class represents a ternary operator for endianness.
@@ -421,15 +422,15 @@ class TernaryEndianNode(ASTNode):
 
     def to_str(self, depth: int = 0) -> str:
         res: str = ("\t" * depth) + "TernaryEndianType(\n"
-        res += self._comparison.to_str(depth+1)
-        res += ("\t" * (depth+1)) + "?\n"
-        res += ("\t" * (depth+1)) + self._if_true
+        res += self._comparison.to_str(depth + 1)
+        res += ("\t" * (depth + 1)) + "?\n"
+        res += ("\t" * (depth + 1)) + str(self._if_true)
 
-        res += ("\t" * (depth+1)) + ":\n"
-        res += ("\t" * (depth+1)) + self._if_false
+        res += ("\t" * (depth + 1)) + ":\n"
+        res += ("\t" * (depth + 1)) + str(self._if_false)
 
         return res + ("\t" * depth) + ")" + "\n"
-    
+
     @property
     def comparison(self) -> ComparisonNode:
         """
@@ -457,7 +458,7 @@ class StructMemberInfoNode(ASTNode):
     Represents the type of a member.
     This class contains the type, the endianness, if it is a list and it length (if it has one).
     """
-    def __init__(self, type_token: Union[Token,TernaryDataTypeNode], endian: Union[Endian, TernaryEndianNode] = Endian.BIG, is_list: bool = False, list_length_node: Union[None,UnaryOpNode,BinOpNode] = None, string_delimiter: str = r"\0"):
+    def __init__(self, type_token: Union[Token, TernaryDataTypeNode], endian: Union[Endian, TernaryEndianNode] = Endian.BIG, is_list: bool = False, list_length_node: Union[None, UnaryOpNode, BinOpNode] = None, string_delimiter: str = r"\0"):
         r"""
         :param type_token: Token or ternary operator for the type of the member.
         :type type_token: Union[Token,TernaryDataTypeNode]
@@ -470,21 +471,21 @@ class StructMemberInfoNode(ASTNode):
         :param string_delimiter: If the type is a string, the delimiter of the string, default to '\\0'.
         :type string_delimiter: str
         """
-        self._type: Union[Token,TernaryDataTypeNode] = type_token
-        self._endian: str = endian
+        self._type: Union[Token, TernaryDataTypeNode] = type_token
+        self._endian: Union[Endian, TernaryEndianNode] = endian
         self._is_list: bool = is_list
-        self._list_length_node: Union[None,UnaryOpNode,BinOpNode] = list_length_node
+        self._list_length_node: Union[None, UnaryOpNode, BinOpNode] = list_length_node
         self._string_delimiter: str = string_delimiter
 
     def to_str(self, depth: int = 0) -> str:
         if self._is_list:
-            if self._list_length_node != None:
+            if self._list_length_node is not None:
                 return ("\t" * depth) + "StructMemberInfoNode(" + str(self._type) + f"[\n{self._list_length_node.to_str(depth+1)}" + ("\t" * depth) + "])\n"
             return ("\t" * depth) + "StructMemberInfoNode(" + str(self._type) + f"[])\n"
         return ("\t" * depth) + "StructMemberInfoNode(" + str(self._type) + ")\n"
 
     @property
-    def type(self) -> Union[str,TernaryDataTypeNode]:
+    def type(self) -> Union[str, TernaryDataTypeNode]:
         """
         Type of the member.
         """
@@ -493,7 +494,7 @@ class StructMemberInfoNode(ASTNode):
         return self._type
 
     @property
-    def endian(self) -> Union[TernaryEndianNode,Endian]:
+    def endian(self) -> Union[Endian, TernaryEndianNode]:
         """
         Endianness of the member.
         """
@@ -507,7 +508,7 @@ class StructMemberInfoNode(ASTNode):
         return self._is_list
 
     @property
-    def list_length(self) -> Union[None,UnaryOpNode,BinOpNode]:
+    def list_length(self) -> Union[None, UnaryOpNode, BinOpNode]:
         """
         The length of this member (if it is a list, otherwise None).
         """
@@ -549,8 +550,8 @@ class StructMemberDeclareNode(ASTNode):
 
     def to_str(self, depth: int = 0) -> str:
         res: str = ("\t" * depth) + "StructMemberDeclareNode(\n"
-        res += self._infos.to_str(depth+1)
-        res += ("\t" * (depth+1)) + str(self._name_token) + "\n" + ("\t" * depth) + ")\n"
+        res += self._infos.to_str(depth + 1)
+        res += ("\t" * (depth + 1)) + str(self._name_token) + "\n" + ("\t" * depth) + ")\n"
         return res
 
     @property
@@ -572,7 +573,7 @@ class MatchNode(ASTNode):
     """
     Represent a match expression inside structs.
     """
-    def __init__(self, condition: ASTNode, cases: Dict[ASTNode,Union[StructMemberInfoNode,List[StructMemberDeclareNode]]], member_name: str = None):
+    def __init__(self, condition: ASTNode, cases: Dict[ASTNode, Union[StructMemberInfoNode, List[StructMemberDeclareNode]]], member_name: str = None):
         """
         :param condition: The condition that one case must match.
         :type condition: ASTNode
@@ -582,23 +583,23 @@ class MatchNode(ASTNode):
         :type member_name: str, optional
         """
         self._condition: ASTNode = condition
-        self._cases: Dict[ASTNode,Union[StructMemberInfoNode,List[StructMemberDeclareNode]]] = cases
-        self._member_name: str = member_name
+        self._cases: Dict[ASTNode, Union[StructMemberInfoNode, List[StructMemberDeclareNode]]] = cases
+        self._member_name: Optional[str] = member_name
 
     def to_str(self, depth: int = 0):
         res: str = ("\t" * depth) + "MatchNode((\n"
-        res += self._condition.to_str(depth+2)
-        res += ("\t" * (depth+1)) + "),\n"
+        res += self._condition.to_str(depth + 2)
+        res += ("\t" * (depth + 1)) + "),\n"
         for case in self._cases.keys():
-            res += case.to_str(depth+1)
-            res += ("\t" * (depth+1)) + "=>\n"
+            res += case.to_str(depth + 1)
+            res += ("\t" * (depth + 1)) + "=>\n"
             if isinstance(self._cases[case], list):
-                res += ("\t" * (depth+1)) + "{"
+                res += ("\t" * (depth + 1)) + "{"
                 for struct_member in self._cases[case]:
-                    res += struct_member.to_str(depth+2)
-                res += ("\t" * (depth+1)) + "}"
+                    res += struct_member.to_str(depth + 2)
+                res += ("\t" * (depth + 1)) + "}"
             else:
-                res += self._cases[case].to_str(depth+1)
+                res += self._cases[case].to_str(depth + 1)
         res += ("\t" * depth) + ")\n"
         return res
 
@@ -610,14 +611,14 @@ class MatchNode(ASTNode):
         return self._condition
 
     @property
-    def cases(self) -> Dict[ASTNode,Union[StructMemberInfoNode,List[StructMemberDeclareNode]]]:
+    def cases(self) -> Dict[ASTNode, Union[StructMemberInfoNode, List[StructMemberDeclareNode]]]:
         """
         Cases of this match expression.
         """
         return self._cases
 
     @property
-    def member_name(self) -> str:
+    def member_name(self) -> Optional[str]:
         """
         Member's name if this match is used to select the type of a member.
         """
@@ -639,7 +640,7 @@ class StructDefNode(ASTNode):
         """
         self._name_token: Token = name_token
         self._members: List[Union[StructMemberDeclareNode, MatchNode]] = members
-        self._endian: str = endian
+        self._endian: Union[TernaryEndianNode, Endian] = endian
 
     def to_str(self, depth: int = 0) -> str:
         res: str = ("\t" * depth) + "struct " + str(self._name_token) + "(\n"
@@ -655,7 +656,7 @@ class StructDefNode(ASTNode):
         return str(self._name_token.value)
 
     @property
-    def members(self) -> List[StructMemberDeclareNode]:
+    def members(self) -> List[Union[StructMemberDeclareNode, MatchNode]]:
         """
         Struct's members.
         """
@@ -704,7 +705,7 @@ class BitfieldMemberNode(ASTNode):
         If the size was not declare, returns IntNumberNode of 1
         """
         if self._bits_count_node is None:
-            return IntNumberNode(Token(TT_NUM_INT, 1))
+            return IntNumberNode(Token(TT_NUM_INT, "1"))
         return self._bits_count_node
 
 
@@ -727,9 +728,9 @@ class BitfieldDefNode(ASTNode):
 
     def to_str(self, depth: int = 0) -> str:
         res: str = ("\t" * depth) + "BitfieldDefNode(" + str(self._name_token) + "\n"
-        res += ("\t" * (depth+1)) + "(\n"
-        res += self.size.to_str(depth+1)
-        res += ("\t" * (depth+1)) + ")\n"
+        res += ("\t" * (depth + 1)) + "(\n"
+        res += self.size.to_str(depth + 1)
+        res += ("\t" * (depth + 1)) + ")\n"
         for node in self._bitfield_members:
             res += node.to_str(depth + 1)
         res += ("\t" * depth) + ")\n"
@@ -750,9 +751,9 @@ class BitfieldDefNode(ASTNode):
         """
         if self._bitfield_bytes_count_token is not None:
             return self._bitfield_bytes_count_token
-        
+
         if len(self.members) == 0:
-            return IntNumberNode(Token(TT_NUM_INT, 0))
+            return IntNumberNode(Token(TT_NUM_INT, "0"))
         if len(self.members) == 1:
             return self.members[0].size
         elif len(self.members) == 2:
@@ -763,14 +764,14 @@ class BitfieldDefNode(ASTNode):
 
         tmp: BinOpNode = BinOpNode(None, MathOperatorNode(Token(TT_PLUS)), None)
         res._right_node = tmp
-        for i in range(1, len(self.members)-2):
+        for i in range(1, len(self.members) - 2):
             tmp._left_node = self.members[i].size
-            tmp._op_token = Token(TT_PLUS)
+            tmp._math_op = MathOperatorNode(Token(TT_PLUS))
             tmp._right_node = BinOpNode(None, MathOperatorNode(Token(TT_PLUS)), None)
             tmp = tmp._right_node
 
         tmp._left_node = self.members[-2].size
-        tmp._op_token = Token(TT_PLUS)
+        tmp._math_op = MathOperatorNode(Token(TT_PLUS))
         tmp._right_node = self.members[-1].size
         print(self.members[-2].to_str())
         return res
