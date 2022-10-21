@@ -39,6 +39,26 @@ def test_struct_members():
     assert ast[0].members[1].name == "member2"
     assert ast[0].members[1].infos.type == "uint16"
     assert ast[0].members[1].infos.endian == Endian.LITTLE
+
+
+    # check the get_names generator
+    ast = get_AST("""
+    struct struct_one {
+        uint8 some_member,
+    }
+    struct struct_two {
+        struct_one another_member,
+    }
+    struct struct_three {
+        struct_two another_one,
+        (another_one.another_member.some_member == 1 ? uint8 : uint16) final_member,
+    }
+    """)
+    identifiers_list = [identifier.name for identifier in ast[2].members[1].infos.type.comparison.left_node.get_names()]
+    assert identifiers_list[0] == "another_one"
+    assert identifiers_list[1] == "another_member"
+    assert identifiers_list[2] == "some_member"
+
     
 def test_struct_member_ternary_type():
     ast = get_AST("struct test { (1 == 1 ? uint8 : uint16) member, }")

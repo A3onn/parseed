@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from distutils.log import info
-from typing import List, Optional, Union, Dict, NewType
+from typing import Generator, Iterable, List, Optional, Union, Dict, NewType
 from lexer import *
 from abc import ABC, abstractmethod
 from utils import DataType
@@ -228,9 +228,26 @@ class IdentifierAccessNode(ASTNode):
     @property
     def name(self) -> str:
         """
-        Name of the identifier.
+        Name of the whole identifier (meaning with dots).
         """
         return self._name
+    
+    def get_names(self) -> Generator:
+        """
+        Generator returning each sub-identifier composing this identifier.
+        Example:
+            my_val.sub_member.another_sub_member
+
+            This will return:
+                IdentifierAccessNode(my_val)
+                IdentifierAccessNode(sub_member)
+                IdentifierAccessNode(another_sub_member)
+
+        :return: a generator for sub-identifier
+        :rtype: Generator[IdentifierAccessNode]
+        """
+        for name in self.name.split("."):
+            yield IdentifierAccessNode(name)
 
 
 class ComparisonOperatorNode(ASTNode):
@@ -297,7 +314,7 @@ class ComparisonNode(ASTNode):
         :param right_node: Right part of the comparison.
         :type right_node: ASTNode
         """
-        self._left_node: ASTNode = right_node
+        self._left_node: ASTNode = left_node
         self._comparison_op: ComparisonOperatorNode = comparison_op
         self._right_node: ASTNode = right_node
 
