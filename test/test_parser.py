@@ -90,6 +90,12 @@ def test_struct_endian():
     assert stmts[0].endian == Endian.LITTLE
     stmts[0].to_str()
 
+    with pytest.raises(InvalidSyntaxError):
+        stmts = Parser(get_tokens("(1 == 1 ? LE : BE) struct test { uint8 member, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        stmts = Parser(get_tokens("(1 != test ? LE : BE) struct test { uint8 member, }")).run()
+
 def test_struct_member_endian():
     stmts = Parser(get_tokens("struct test { uint8 member, } BE struct test2 { BE uint8 member, }")).run()
     assert stmts[0].members[0].type.endian == Endian.BIG
@@ -131,6 +137,30 @@ def test_struct_member_endian():
     stmts = Parser(get_tokens("BE struct test { uint8 member, LE uint8 member2, }")).run()
     assert stmts[0].members[0].type.endian == Endian.BIG
     assert stmts[0].members[1].type.endian == Endian.LITTLE
+    stmts[0].to_str()
+
+    stmts = Parser(get_tokens("struct test { (1 == 1 ? BE : LE) uint8 member, }")).run()
+    assert isinstance(stmts[0].members[0].type.endian, TernaryEndianNode)
+    assert stmts[0].members[0].type.endian.if_true == Endian.BIG
+    assert stmts[0].members[0].type.endian.if_false == Endian.LITTLE
+    stmts[0].to_str()
+
+    stmts = Parser(get_tokens("LE struct test { (1 == 1 ? BE : LE) uint8 member, }")).run()
+    assert isinstance(stmts[0].members[0].type.endian, TernaryEndianNode)
+    assert stmts[0].members[0].type.endian.if_true == Endian.BIG
+    assert stmts[0].members[0].type.endian.if_false == Endian.LITTLE
+    stmts[0].to_str()
+
+    stmts = Parser(get_tokens("LE struct test { (1 == 1 ? LE : BE) uint8 member, }")).run()
+    assert isinstance(stmts[0].members[0].type.endian, TernaryEndianNode)
+    assert stmts[0].members[0].type.endian.if_true == Endian.LITTLE
+    assert stmts[0].members[0].type.endian.if_false == Endian.BIG
+    stmts[0].to_str()
+
+    stmts = Parser(get_tokens("LE struct test { (1 == 1 ? LE : BE) () member, }")).run()
+    assert isinstance(stmts[0].members[0].type.endian, TernaryEndianNode)
+    assert stmts[0].members[0].type.endian.if_true == Endian.LITTLE
+    assert stmts[0].members[0].type.endian.if_false == Endian.BIG
     stmts[0].to_str()
 
 def test_struct_members_string():

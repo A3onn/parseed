@@ -12,11 +12,11 @@
 
 
 ; struct
-<struct_stmt> ::= ["LE" | "BE"] "struct" <identifier> "{" (<struct_member_def> | <match_stmt>)+ "}"
+<struct_stmt> ::= <endian>+ "struct" <identifier> "{" (<struct_member_def> | <match_stmt>)+ "}"
 
-<struct_member_type> ::= ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>)
-                        | ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>) "[" <expr> "]"
-                        | ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>) "[]"  ;; repeat this member until the end of the buffer
+<struct_member_type> ::= (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>)
+                        | (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>) "[" <expr> "]"
+                        | (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>) "[]"  ;; repeat this member until the end of the buffer
 
 <struct_member_def> ::= <struct_member_type> <identifier> ","
 
@@ -50,6 +50,10 @@
 
 <comparison_operator> ::= "<=" | "<" | "==" | ">" | ">=" | "!=" | "&&" | "||"
 
+; endianness
+<endian> ::= "LE" | "BE"
+
+<ternary_endian> ::= "(" <comparison> "?" <endian> ":" <endian> ")"
 
 ; data-types
 <data_type> ::= "uint8" | "int8" | "uint16" | "int16" | "uint24" | "int24" | "uint32" | "int32" | "uint40" | "int40" | "uint48" | "int48" | "uint64" | "int64" | "uint128" | "int128" | "float" | "double" | <string_data_type>

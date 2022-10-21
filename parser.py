@@ -2,7 +2,7 @@
 from typing import List, Any, Union, Dict
 from lexer import *
 from ast_nodes import *
-from errors import InvalidSyntaxError
+from errors import InvalidStateError, InvalidSyntaxError
 
 
 class Parser:
@@ -13,6 +13,19 @@ class Parser:
         # self.tokens contains at least a TT_EOF token
         self.current_token: Token = self.tokens[0]
         self.advance()
+    
+    def _rollback_to(self, token: Token):
+        """
+        Rollback parser to specified token.
+        The token must be in the self.tokens.
+
+        :param token: Token to rollback to.
+        :type token: Token, must be an instance present in the self.tokens list.
+        """
+        for i,t in enumerate(self.tokens):
+            if t == token:
+                self.current_token = t
+                self.token_index = i
 
     def run(self) -> list:
         """
@@ -105,7 +118,10 @@ class Parser:
 
     def struct_stmt(self) -> StructDefNode:
         """
-        <struct_stmt> ::= ["LE" | "BE"] "struct" <identifier> "{" (<struct_member_def> | <match_stmt>)+ "}"
+        <struct_stmt> ::= (<endian> | <ternary_endian>)+ "struct" <identifier> "{" (<struct_member_def> | <match_stmt>)+ "}"
+
+        <endian> ::= "LE" | "BE"
+        <ternary_endian> ::= "(" <comparison> "?" <endian> ":" <endian> ")"
         """
         endian = Endian.BIG
         if self.current_token.value == LITTLE_ENDIAN_KEYWORD:
@@ -141,15 +157,19 @@ class Parser:
     
     def struct_member_type(self, struct_endian: str) -> StructMemberTypeNode:
         """
-        <struct_member_type> ::= ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>)
-                                | ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>) "[" <expr> "]"
-                                | ["LE" | "BE"] (<data_type> | <ternary_data_type> | <identifier>) "[]"  ;; repeat this member until the end of the buffer
+        <struct_member_type> ::= (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>)
+                                | (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>) "[" <expr> "]"
+                                | (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>) "[]"  ;; repeat this member until the end of the buffer
+
+        <endian> ::= "LE" | "BE"
+        <ternary_endian> ::= "(" <comparison> "?" <endian> ":" <endian> ")"
         """
         endian = struct_endian
-        if self.current_token.value == LITTLE_ENDIAN_KEYWORD:
+        # check endian without ternary
+        if self.current_token.type == TT_KEYWORD and self.current_token.value == LITTLE_ENDIAN_KEYWORD:
             endian = Endian.LITTLE
             self.advance()
-        elif self.current_token.value == BIG_ENDIAN_KEYWORD:
+        elif self.current_token.type == TT_KEYWORD and self.current_token.value == BIG_ENDIAN_KEYWORD:
             endian = Endian.BIG
             self.advance()
 
@@ -157,8 +177,21 @@ class Parser:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected data-type, identifier or ternary operator")
 
         if self.current_token.type == TT_LPAREN:
-            member_type: TernaryDataTypeNode = self.ternary_data_type()
+            # either endian or type, we cannot know now
+            res: Union[TernaryEndianNode,TernaryDataTypeNode] = self._handle_ternary_member_type_or_endian()
+            if isinstance(res, TernaryDataTypeNode):
+                member_type = res
+            else:
+                endian = res
+                # now that we are sure we passed the endian, we can check for the type
+                if self.current_token.type == TT_LPAREN:
+                    member_type: TernaryDataTypeNode = self.ternary_data_type()
+                else:
+                    member_type: Token = self.current_token
+                    self.advance()
         else:
+            # endian and ternary data type was check just before
+            # we are sure that we are dealing with the type here
             member_type: Token = self.current_token
             self.advance()
 
@@ -271,6 +304,47 @@ class Parser:
         self.advance()
 
         return MatchNode(condition, cases, member_name)
+
+    def _handle_ternary_member_type_or_endian(self) -> Union[TernaryEndianNode, TernaryDataTypeNode]:
+        tmp_curr_token = self.current_token
+        try:
+            return self.ternary_endian()
+        except InvalidStateError:
+            self._rollback_to(tmp_curr_token)
+            return self.ternary_data_type()
+
+    def ternary_endian(self) -> TernaryEndianNode:
+        """
+        <endian> ::= "LE" | "BE"
+
+        <ternary_endian> ::= "(" <comparison> "?" <endian> ":" <endian> ")"
+        """
+        self.advance()
+        comparison_node: ComparisonNode = self.comparison()
+        if self.current_token.type != TT_QUESTION_MARK:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '?'")
+        self.advance()
+
+        if self.current_token.type != TT_KEYWORD or self.current_token.value not in ENDIANNESS_KEYWORDS:
+            raise InvalidStateError("Not a ternary endian.")
+        if_true: Endian = Endian.from_token(self.current_token)
+        self.advance()
+
+        if self.current_token.type != TT_COLON:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ':'")
+        self.advance()
+
+        if self.current_token.type != TT_KEYWORD or self.current_token.value not in ENDIANNESS_KEYWORDS:
+            raise InvalidStateError("Not a ternary endian.")
+        
+        if_false: Endian = Endian.from_token(self.current_token)
+        self.advance()
+
+        if self.current_token.type != TT_RPAREN:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
+        self.advance()
+
+        return TernaryEndianNode(comparison_node, if_true, if_false)
 
     def ternary_data_type(self) -> TernaryDataTypeNode:
         """

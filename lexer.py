@@ -6,13 +6,13 @@ from utils import *
 
 LETTERS_DIGITS = LETTERS + DIGITS
 
-# List of tokens
-
+# Keywords
 STRUCT_KEYWORD = "struct"
 BITFIELD_KEYWORD = "bitfield"
 MATCH_KEYWORD = "match"
 LITTLE_ENDIAN_KEYWORD = "LE"
 BIG_ENDIAN_KEYWORD = "BE"
+
 ENDIANNESS_KEYWORDS = [LITTLE_ENDIAN_KEYWORD, BIG_ENDIAN_KEYWORD]
 
 KEYWORDS = [
@@ -23,6 +23,7 @@ KEYWORDS = [
     BIG_ENDIAN_KEYWORD,
 ]
 
+# List of tokens
 # Numerical values
 TT_NUM_INT = "NUM_INT"
 TT_NUM_FLOAT = "NUM_FLOAT"

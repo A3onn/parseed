@@ -108,3 +108,11 @@ class DuplicateStructOrBitfieldError(ParseedMultipleUnderlinedError):
         pos_start: List[Position] = [n._name_token.pos_start for n in nodes]
         pos_end: List[Position] = [n._name_token.pos_end for n in nodes]
         super().__init__(pos_start, pos_end, "Duplicate struct or bitfield error", nodes[0].name)
+
+
+class InvalidStateError(Exception):
+    """
+    This error is used in the parser to indicate some intern invalid state,
+    but not an error from the code.
+    """
+    pass

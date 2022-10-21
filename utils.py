@@ -7,6 +7,14 @@ class Endian(Enum):
     BIG = "BIG"
     LITTLE = "LITTLE"
 
+    @staticmethod
+    def from_token(token):
+        if token.value == "LE":
+            return Endian.LITTLE
+        elif token.value == "BE":
+            return Endian.BIG
+
+
 DATA_TYPES = [
     "uint8", "int8",
     "uint16", "int16",

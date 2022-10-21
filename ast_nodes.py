@@ -384,18 +384,67 @@ class TernaryDataTypeNode(ASTNode):
         """
         return self._if_false
 
+class TernaryEndianNode(ASTNode):
+    """
+    This class represents a ternary operator for endianness.
+    """
+    def __init__(self, comparison_node: ComparisonNode, if_true: Endian, if_false: Endian):
+        """
+        :param comparison_node: Comparison of the ternary operator.
+        :type comparison_node: ComparisonNode
+        :param if_true: Endian used if the comparison is true.
+        :type if_true: Endian
+        :param if_false: Endian used if the comparison if false.
+        :type if_false: Endian
+        """
+        self._comparison: ComparisonNode = comparison_node
+        self._if_true: Endian = if_true
+        self._if_false: Endian = if_false
+
+    def to_str(self, depth: int = 0) -> str:
+        res: str = ("\t" * depth) + "TernaryEndianType(\n"
+        res += self._comparison.to_str(depth+1)
+        res += ("\t" * (depth+1)) + "?\n"
+        res += ("\t" * (depth+1)) + self._if_true
+
+        res += ("\t" * (depth+1)) + ":\n"
+        res += ("\t" * (depth+1)) + self._if_false
+
+        return res + ("\t" * depth) + ")" + "\n"
+    
+    @property
+    def comparison(self) -> ComparisonNode:
+        """
+        Comparison node of ternary operator.
+        """
+        return self._comparison
+
+    @property
+    def if_true(self) -> Endian:
+        """
+        Node used if the comparison is true.
+        """
+        return self._if_true
+
+    @property
+    def if_false(self) -> Endian:
+        """
+        Node used if the comparison is false.
+        """
+        return self._if_false
+
 
 class StructMemberTypeNode(ASTNode):
     """
     Represents the type of a member.
     This class contains the type, the endianness, if it is a list and it length (if it has one).
     """
-    def __init__(self, type_token: Union[Token,TernaryDataTypeNode], endian: Endian = Endian.BIG, is_list: bool = False, list_length_node: Union[None,UnaryOpNode,BinOpNode] = None, string_delimiter: str = r"\0"):
+    def __init__(self, type_token: Union[Token,TernaryDataTypeNode], endian: Union[Endian, TernaryEndianNode] = Endian.BIG, is_list: bool = False, list_length_node: Union[None,UnaryOpNode,BinOpNode] = None, string_delimiter: str = r"\0"):
         r"""
         :param type_token: Token or ternary operator for the type of the member.
         :type type_token: Union[Token,TernaryDataTypeNode]
         :param endian: Endianness of the member, defaults to big.
-        :type endian: Endian, optional
+        :type endian: Union[Endian, TernaryEndianNode]
         :param is_list: If the member is a list, defaults to False.
         :type is_list: bool, optional
         :param list_length_node: Length of the list if this member is a list, defaults to None
@@ -426,7 +475,7 @@ class StructMemberTypeNode(ASTNode):
         return self._type
 
     @property
-    def endian(self) -> Endian:
+    def endian(self) -> Union[TernaryEndianNode,Endian]:
         """
         Endianness of the member.
         """
@@ -561,14 +610,14 @@ class StructDefNode(ASTNode):
     """
     Represent a struct with its name, endianness and members.
     """
-    def __init__(self, name_token: Token, members: List[Union[StructMemberDeclareNode, MatchNode]], endian: Endian = Endian.BIG):
+    def __init__(self, name_token: Token, members: List[Union[StructMemberDeclareNode, MatchNode]], endian: Union[TernaryEndianNode, Endian] = Endian.BIG):
         """
         :param name_token: Token representing the name of the struct.
         :type name_token: Token
         :param members: List of members of this struct.
         :type members: List[Union[StructMemberDeclareNode, MatchNode]]
         :param endian: Endianness of the struct, defaults to big.
-        :type endian: Endian, optional
+        :type endian: Union[TernaryEndianNode, Endian]
         """
         self._name_token: Token = name_token
         self._members: List[Union[StructMemberDeclareNode, MatchNode]] = members
@@ -595,7 +644,7 @@ class StructDefNode(ASTNode):
         return self._members
 
     @property
-    def endian(self) -> Endian:
+    def endian(self) -> Union[TernaryEndianNode, Endian]:
         """
         Endianness of the struct.
         """
