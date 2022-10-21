@@ -44,24 +44,24 @@ def test_struct_members():
 
 def test_struct_members_with_expressions():
     stmts = Parser(get_tokens("struct test { uint8[1+1] member, }")).run()
-    assert isinstance(stmts[0].members[0].type.list_length, BinOpNode)
-    assert isinstance(stmts[0].members[0].type.list_length.left_node, IntNumberNode)
-    assert isinstance(stmts[0].members[0].type.list_length.right_node, IntNumberNode)
-    assert stmts[0].members[0].type.list_length.op.type == MathOperatorNode.ADD
+    assert isinstance(stmts[0].members[0].infos.list_length, BinOpNode)
+    assert isinstance(stmts[0].members[0].infos.list_length.left_node, IntNumberNode)
+    assert isinstance(stmts[0].members[0].infos.list_length.right_node, IntNumberNode)
+    assert stmts[0].members[0].infos.list_length.op.type == MathOperatorNode.ADD
     stmts[0].to_str()
 
     stmts = Parser(get_tokens("struct test { uint8[-1] member, }")).run()
-    assert isinstance(stmts[0].members[0].type.list_length, UnaryOpNode)
-    assert isinstance(stmts[0].members[0].type.list_length.value, IntNumberNode)
-    assert stmts[0].members[0].type.list_length.value.value == 1
-    assert stmts[0].members[0].type.list_length.op.type == MathOperatorNode.SUBTRACT
+    assert isinstance(stmts[0].members[0].infos.list_length, UnaryOpNode)
+    assert isinstance(stmts[0].members[0].infos.list_length.value, IntNumberNode)
+    assert stmts[0].members[0].infos.list_length.value.value == 1
+    assert stmts[0].members[0].infos.list_length.op.type == MathOperatorNode.SUBTRACT
     stmts[0].to_str()
 
     stmts = Parser(get_tokens("struct test { uint8[1+1] member1, uint8[15-3] member2, }")).run()
-    assert isinstance(stmts[0].members[1].type.list_length, BinOpNode)
-    assert isinstance(stmts[0].members[1].type.list_length.left_node, IntNumberNode)
-    assert isinstance(stmts[0].members[1].type.list_length.right_node, IntNumberNode)
-    assert stmts[0].members[1].type.list_length.op.type == MathOperatorNode.SUBTRACT
+    assert isinstance(stmts[0].members[1].infos.list_length, BinOpNode)
+    assert isinstance(stmts[0].members[1].infos.list_length.left_node, IntNumberNode)
+    assert isinstance(stmts[0].members[1].infos.list_length.right_node, IntNumberNode)
+    assert stmts[0].members[1].infos.list_length.op.type == MathOperatorNode.SUBTRACT
     stmts[0].to_str()
 
     Parser(get_tokens("struct test { uint8[1+1] member1, int16 member2, uint8[-3+24] member2, }")).run()[0].to_str()
@@ -98,94 +98,94 @@ def test_struct_endian():
 
 def test_struct_member_endian():
     stmts = Parser(get_tokens("struct test { uint8 member, } BE struct test2 { BE uint8 member, }")).run()
-    assert stmts[0].members[0].type.endian == Endian.BIG
-    assert stmts[1].members[0].type.endian == Endian.BIG
+    assert stmts[0].members[0].infos.endian == Endian.BIG
+    assert stmts[1].members[0].infos.endian == Endian.BIG
     stmts[0].to_str()
     stmts[1].to_str()
 
     stmts = Parser(get_tokens("struct test { LE uint8 member, } BE struct test2 { LE uint8 member, }")).run()
-    assert stmts[0].members[0].type.endian == Endian.LITTLE
-    assert stmts[1].members[0].type.endian == Endian.LITTLE
+    assert stmts[0].members[0].infos.endian == Endian.LITTLE
+    assert stmts[1].members[0].infos.endian == Endian.LITTLE
     stmts[0].to_str()
     stmts[1].to_str()
 
     stmts = Parser(get_tokens("struct test { BE uint8 member, LE uint8 member2, }")).run()
-    assert stmts[0].members[0].type.endian == Endian.BIG
-    assert stmts[0].members[1].type.endian == Endian.LITTLE
+    assert stmts[0].members[0].infos.endian == Endian.BIG
+    assert stmts[0].members[1].infos.endian == Endian.LITTLE
     stmts[0].to_str()
 
     stmts = Parser(get_tokens("struct test { uint8 member, LE uint8 member2, }")).run()
-    assert stmts[0].members[0].type.endian == Endian.BIG
-    assert stmts[0].members[1].type.endian == Endian.LITTLE
+    assert stmts[0].members[0].infos.endian == Endian.BIG
+    assert stmts[0].members[1].infos.endian == Endian.LITTLE
     stmts[0].to_str()
 
     stmts = Parser(get_tokens("LE struct test { uint8 member, uint8 member2, }")).run()
-    assert stmts[0].members[0].type.endian == Endian.LITTLE
-    assert stmts[0].members[1].type.endian == Endian.LITTLE
+    assert stmts[0].members[0].infos.endian == Endian.LITTLE
+    assert stmts[0].members[1].infos.endian == Endian.LITTLE
     stmts[0].to_str()
 
     stmts = Parser(get_tokens("LE struct test { uint8 member, LE uint8 member2, }")).run()
-    assert stmts[0].members[0].type.endian == Endian.LITTLE
-    assert stmts[0].members[1].type.endian == Endian.LITTLE
+    assert stmts[0].members[0].infos.endian == Endian.LITTLE
+    assert stmts[0].members[1].infos.endian == Endian.LITTLE
     stmts[0].to_str()
 
     stmts = Parser(get_tokens("LE struct test { LE uint8 member, LE uint8 member2, }")).run()
-    assert stmts[0].members[0].type.endian == Endian.LITTLE
-    assert stmts[0].members[1].type.endian == Endian.LITTLE
+    assert stmts[0].members[0].infos.endian == Endian.LITTLE
+    assert stmts[0].members[1].infos.endian == Endian.LITTLE
     stmts[0].to_str()
 
     stmts = Parser(get_tokens("BE struct test { uint8 member, LE uint8 member2, }")).run()
-    assert stmts[0].members[0].type.endian == Endian.BIG
-    assert stmts[0].members[1].type.endian == Endian.LITTLE
+    assert stmts[0].members[0].infos.endian == Endian.BIG
+    assert stmts[0].members[1].infos.endian == Endian.LITTLE
     stmts[0].to_str()
 
     stmts = Parser(get_tokens("struct test { (1 == 1 ? BE : LE) uint8 member, }")).run()
-    assert isinstance(stmts[0].members[0].type.endian, TernaryEndianNode)
-    assert stmts[0].members[0].type.endian.if_true == Endian.BIG
-    assert stmts[0].members[0].type.endian.if_false == Endian.LITTLE
+    assert isinstance(stmts[0].members[0].infos.endian, TernaryEndianNode)
+    assert stmts[0].members[0].infos.endian.if_true == Endian.BIG
+    assert stmts[0].members[0].infos.endian.if_false == Endian.LITTLE
     stmts[0].to_str()
 
     stmts = Parser(get_tokens("LE struct test { (1 == 1 ? BE : LE) uint8 member, }")).run()
-    assert isinstance(stmts[0].members[0].type.endian, TernaryEndianNode)
-    assert stmts[0].members[0].type.endian.if_true == Endian.BIG
-    assert stmts[0].members[0].type.endian.if_false == Endian.LITTLE
+    assert isinstance(stmts[0].members[0].infos.endian, TernaryEndianNode)
+    assert stmts[0].members[0].infos.endian.if_true == Endian.BIG
+    assert stmts[0].members[0].infos.endian.if_false == Endian.LITTLE
     stmts[0].to_str()
 
     stmts = Parser(get_tokens("LE struct test { (1 == 1 ? LE : BE) uint8 member, }")).run()
-    assert isinstance(stmts[0].members[0].type.endian, TernaryEndianNode)
-    assert stmts[0].members[0].type.endian.if_true == Endian.LITTLE
-    assert stmts[0].members[0].type.endian.if_false == Endian.BIG
+    assert isinstance(stmts[0].members[0].infos.endian, TernaryEndianNode)
+    assert stmts[0].members[0].infos.endian.if_true == Endian.LITTLE
+    assert stmts[0].members[0].infos.endian.if_false == Endian.BIG
     stmts[0].to_str()
 
-    stmts = Parser(get_tokens("LE struct test { (1 == 1 ? LE : BE) () member, }")).run()
-    assert isinstance(stmts[0].members[0].type.endian, TernaryEndianNode)
-    assert stmts[0].members[0].type.endian.if_true == Endian.LITTLE
-    assert stmts[0].members[0].type.endian.if_false == Endian.BIG
+    stmts = Parser(get_tokens("LE struct test { (1 == 1 ? LE : BE) (2 == 1 ? uint16 : uint8) member, }")).run()
+    assert isinstance(stmts[0].members[0].infos.endian, TernaryEndianNode)
+    assert stmts[0].members[0].infos.endian.if_true == Endian.LITTLE
+    assert stmts[0].members[0].infos.endian.if_false == Endian.BIG
     stmts[0].to_str()
 
 def test_struct_members_string():
     stmts = Parser(get_tokens(r"struct test { string test, }")).run()
-    assert stmts[0].members[0].type.type == "string"
-    assert stmts[0].members[0].type.string_delimiter == r"\0"
-    assert stmts[0].members[0].type.as_data_type().string_delimiter == r"\0"
+    assert stmts[0].members[0].infos.type == "string"
+    assert stmts[0].members[0].infos.string_delimiter == r"\0"
+    assert stmts[0].members[0].infos.as_data_type().string_delimiter == r"\0"
     stmts[0].to_str()
 
     stmts = Parser(get_tokens(r"struct test { string(\0) test, }")).run()
-    assert stmts[0].members[0].type.type == "string"
-    assert stmts[0].members[0].type.string_delimiter == r"\0"
-    assert stmts[0].members[0].type.as_data_type().string_delimiter == r"\0"
+    assert stmts[0].members[0].infos.type == "string"
+    assert stmts[0].members[0].infos.string_delimiter == r"\0"
+    assert stmts[0].members[0].infos.as_data_type().string_delimiter == r"\0"
     stmts[0].to_str()
 
     stmts = Parser(get_tokens(r"struct test { string(\x15) test, }")).run()
-    assert stmts[0].members[0].type.type == "string"
-    assert stmts[0].members[0].type.string_delimiter == r"\x15"
-    assert stmts[0].members[0].type.as_data_type().string_delimiter == r"\x15"
+    assert stmts[0].members[0].infos.type == "string"
+    assert stmts[0].members[0].infos.string_delimiter == r"\x15"
+    assert stmts[0].members[0].infos.as_data_type().string_delimiter == r"\x15"
     stmts[0].to_str()
 
     stmts = Parser(get_tokens(r"struct test { string(test) test, }")).run()
-    assert stmts[0].members[0].type.type == "string"
-    assert stmts[0].members[0].type.string_delimiter == "test"
-    assert stmts[0].members[0].type.as_data_type().string_delimiter == "test"
+    assert stmts[0].members[0].infos.type == "string"
+    assert stmts[0].members[0].infos.string_delimiter == "test"
+    assert stmts[0].members[0].infos.as_data_type().string_delimiter == "test"
     stmts[0].to_str()
 
 def test_struct_members_match():

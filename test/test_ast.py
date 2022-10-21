@@ -24,8 +24,8 @@ def test_struct_members():
     member = ast[0].members[0]
     assert isinstance(member, StructMemberDeclareNode)
     assert member.name == "some_member"
-    assert member.type.type == "uint8"
-    assert member.type.endian == Endian.BIG
+    assert member.infos.type == "uint8"
+    assert member.infos.endian == Endian.BIG
 
 
     ast = get_AST("struct test { uint8 some_member, LE uint16 member2,}")
@@ -33,12 +33,12 @@ def test_struct_members():
 
     assert isinstance(ast[0].members[0], StructMemberDeclareNode)
     assert ast[0].members[0].name == "some_member"
-    assert ast[0].members[0].type.type == "uint8"
-    assert ast[0].members[0].type.endian == Endian.BIG
+    assert ast[0].members[0].infos.type == "uint8"
+    assert ast[0].members[0].infos.endian == Endian.BIG
     assert isinstance(ast[0].members[1], StructMemberDeclareNode)
     assert ast[0].members[1].name == "member2"
-    assert ast[0].members[1].type.type == "uint16"
-    assert ast[0].members[1].type.endian == Endian.LITTLE
+    assert ast[0].members[1].infos.type == "uint16"
+    assert ast[0].members[1].infos.endian == Endian.LITTLE
     
 def test_struct_member_ternary_type():
     ast = get_AST("struct test { (1 == 1 ? uint8 : uint16) member, }")
@@ -48,12 +48,12 @@ def test_struct_member_ternary_type():
     member = ast[0].members[0]
     assert isinstance(member, StructMemberDeclareNode)
     assert member.name == "member"
-    assert member.type.endian == Endian.BIG
-    assert isinstance(member.type.type, TernaryDataTypeNode)
-    assert isinstance(member.type.type.if_true, DataType)
-    assert isinstance(member.type.type.if_false, DataType)
+    assert member.infos.endian == Endian.BIG
+    assert isinstance(member.infos.type, TernaryDataTypeNode)
+    assert isinstance(member.infos.type.if_true, DataType)
+    assert isinstance(member.infos.type.if_false, DataType)
 
-    assert isinstance(member.type.type.comparison, ComparisonNode)
-    assert member.type.type.comparison.left_node.value == 1
-    assert member.type.type.comparison.right_node.value == 1
-    assert member.type.type.comparison.comparison_op.type == ComparisonOperatorNode.EQUAL
+    assert isinstance(member.infos.type.comparison, ComparisonNode)
+    assert member.infos.type.comparison.left_node.value == 1
+    assert member.infos.type.comparison.right_node.value == 1
+    assert member.infos.type.comparison.comparison_op.type == ComparisonOperatorNode.EQUAL

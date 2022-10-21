@@ -48,19 +48,22 @@ class Python_Class(ParseedOutputGenerator):
                             cb.add_line(f"elif {self.expression_as_str(member.condition)} == {self.expression_as_str(case)}:")
                         cb = cb.add_block()
                         for member_match in member.cases[case]:
-                            cb.add_line(f"self.{member_match.name} = {self.member_read_struct(member_match.type.as_data_type(), member_match.type.endian)}")
+                            cb.add_line(f"self.{member_match.name} = {self.member_read_struct(member_match.infos.as_data_type(), member_match.infos.endian)}")
                         cb = cb.end_block()
             else:
-                datatype: DataType = member.type.as_data_type()
-                if member.type.is_list:
-                    if member.type.list_length is None:
+                if isinstance(member.infos.type, TernaryDataTypeNode):
+                    # TODO
+                    continue
+                datatype: DataType = member.infos.as_data_type()
+                if member.infos.is_list:
+                    if member.infos.list_length is None:
                         cb.add_line(f"self.{member.name} = []")
                         # TODO
                     else:
                         cb.add_line(f"self.{member.name} = []")
-                        cb.add_line(f"for i in range({self.expression_as_str(member.type.list_length)}):")
+                        cb.add_line(f"for i in range({self.expression_as_str(member.infos.list_length)}):")
                         cb = cb.add_block()
-                        cb.add_line(f"self.{member.name}.append(" + self.member_read_struct(datatype, member.type.endian) + ")")
+                        cb.add_line(f"self.{member.name}.append(" + self.member_read_struct(datatype, member.infos.endian) + ")")
                         cb.add_line(f"cursor += {datatype.size}")
                         cb = cb.end_block()
                 else:
@@ -75,7 +78,7 @@ class Python_Class(ParseedOutputGenerator):
                         cb = cb.end_block()
                         cb.add_line(f"self.{member.name} = self.{member.name}.decode(\"utf-8\")")
                     else:
-                        cb.add_line(f"self.{member.name} = {self.member_read_struct(datatype, member.type.endian)}")
+                        cb.add_line(f"self.{member.name} = {self.member_read_struct(datatype, member.infos.endian)}")
                         cb.add_line(f"cursor += {datatype.size}")
         cb = cb.end_block()
 
@@ -168,10 +171,13 @@ class Python_Class(ParseedOutputGenerator):
                             cb = cb.end_block()
                         cb = cb.end_block()
             else:
-                datatype: DataType = member.type.as_data_type()
+                datatype: DataType = member.infos.as_data_type()
+                if isinstance(member.infos.type, TernaryDataTypeNode):
+                    # TODO
+                    continue
                 if datatype.is_string():
                     cb.add_line(f"res += \"\\t{member.name} = \" + self.{member.name} + \"\\n\"")
-                elif member.type.is_list:
+                elif member.infos.is_list:
                     cb.add_line(f"res += \"\\t{member.name} = \" + \", \".join([str(m) for m in self.{member.name}]) + \"\\n\"")
                 else:
                     cb.add_line(f"res += \"\\t{member.name} = \" + str(self.{member.name}) + \"\\n\"")

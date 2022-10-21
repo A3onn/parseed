@@ -155,7 +155,7 @@ class Parser:
 
         return StructDefNode(struct_name, struct_members, endian)
     
-    def struct_member_type(self, struct_endian: str) -> StructMemberTypeNode:
+    def struct_member_type(self, struct_endian: str) -> StructMemberInfoNode:
         """
         <struct_member_type> ::= (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>)
                                 | (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>) "[" <expr> "]"
@@ -199,7 +199,7 @@ class Parser:
         list_length_node: Any = None
 
         if self.current_token.type == TT_IDENTIFIER:  # nothing to do, just continue parsing
-            return StructMemberTypeNode(member_type, endian)
+            return StructMemberInfoNode(member_type, endian)
         elif self.current_token.type == TT_LPAREN and member_type.value == "string":
             self.advance()
 
@@ -215,7 +215,7 @@ class Parser:
             if self.current_token.type != TT_RPAREN:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
             self.advance()
-            return StructMemberTypeNode(member_type, endian, string_delimiter=delimiter)
+            return StructMemberInfoNode(member_type, endian, string_delimiter=delimiter)
         elif self.current_token.type == TT_LBRACK:
             is_list = True
             self.advance()
@@ -226,13 +226,13 @@ class Parser:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ']'")
             self.advance()
 
-        return StructMemberTypeNode(member_type, endian, is_list, list_length_node)
+        return StructMemberInfoNode(member_type, endian, is_list, list_length_node)
 
     def struct_member_def(self, struct_endian: str) -> StructMemberDeclareNode:
         """
         <struct_member_def> ::= <struct_member_type> <identifier> ","
         """
-        member_type: StructMemberTypeNode = self.struct_member_type(struct_endian)
+        member_type: StructMemberInfoNode = self.struct_member_type(struct_endian)
         if self.current_token.type != TT_IDENTIFIER:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier")
         member_name: Token = self.current_token

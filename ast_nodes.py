@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from distutils.log import info
 from typing import List, Optional, Union, Dict, NewType
 from lexer import *
 from abc import ABC, abstractmethod
@@ -434,7 +435,7 @@ class TernaryEndianNode(ASTNode):
         return self._if_false
 
 
-class StructMemberTypeNode(ASTNode):
+class StructMemberInfoNode(ASTNode):
     """
     Represents the type of a member.
     This class contains the type, the endianness, if it is a list and it length (if it has one).
@@ -461,9 +462,9 @@ class StructMemberTypeNode(ASTNode):
     def to_str(self, depth: int = 0) -> str:
         if self._is_list:
             if self._list_length_node != None:
-                return ("\t" * depth) + "StructMemberTypeNode(" + str(self._type) + f"[\n{self._list_length_node.to_str(depth+1)}" + ("\t" * depth) + "])\n"
-            return ("\t" * depth) + "StructMemberTypeNode(" + str(self._type) + f"[])\n"
-        return ("\t" * depth) + "StructMemberTypeNode(" + str(self._type) + ")\n"
+                return ("\t" * depth) + "StructMemberInfoNode(" + str(self._type) + f"[\n{self._list_length_node.to_str(depth+1)}" + ("\t" * depth) + "])\n"
+            return ("\t" * depth) + "StructMemberInfoNode(" + str(self._type) + f"[])\n"
+        return ("\t" * depth) + "StructMemberInfoNode(" + str(self._type) + ")\n"
 
     @property
     def type(self) -> Union[str,TernaryDataTypeNode]:
@@ -519,28 +520,28 @@ class StructMemberDeclareNode(ASTNode):
     Represent a member of a struct.
     It contains the name and the type of the member.
     """
-    def __init__(self, type_: StructMemberTypeNode, name_token: Token):
+    def __init__(self, infos: StructMemberInfoNode, name_token: Token):
         """
-        :param type_: Type of the member.
-        :type type_: StructMemberTypeNode
+        :param infos: Type of the member.
+        :type infos: StructMemberInfoNode
         :param name_token: Token representing the name of the member.
         :type name_token: Token
         """
-        self._type: StructMemberTypeNode = type_
+        self._infos: StructMemberInfoNode = infos
         self._name_token: Token = name_token
 
     def to_str(self, depth: int = 0) -> str:
         res: str = ("\t" * depth) + "StructMemberDeclareNode(\n"
-        res += self._type.to_str(depth+1)
+        res += self._infos.to_str(depth+1)
         res += ("\t" * (depth+1)) + str(self._name_token) + "\n" + ("\t" * depth) + ")\n"
         return res
 
     @property
-    def type(self) -> StructMemberTypeNode:
+    def infos(self) -> StructMemberInfoNode:
         """
-        Type of the member.
+        Informations about the member (type, endian, is_list etc...) as a StructMemberInfoNode.
         """
-        return self._type
+        return self._infos
 
     @property
     def name(self) -> str:
@@ -554,17 +555,17 @@ class MatchNode(ASTNode):
     """
     Represent a match expression inside structs.
     """
-    def __init__(self, condition: ASTNode, cases: Dict[ASTNode,Union[StructMemberTypeNode,List[StructMemberDeclareNode]]], member_name: str = None):
+    def __init__(self, condition: ASTNode, cases: Dict[ASTNode,Union[StructMemberInfoNode,List[StructMemberDeclareNode]]], member_name: str = None):
         """
         :param condition: The condition that one case must match.
         :type condition: ASTNode
         :param cases: Cases of the match expression.
-        :type cases: Dict[ASTNode,Union[StructMemberTypeNode,List[StructMemberDeclareNode]]]
+        :type cases: Dict[ASTNode,Union[StructMemberInfoNode,List[StructMemberDeclareNode]]]
         :param member_name: If this match is used to select the type of a member, this is its name, defaults to None.
         :type member_name: str, optional
         """
         self._condition: ASTNode = condition
-        self._cases: Dict[ASTNode,Union[StructMemberTypeNode,List[StructMemberDeclareNode]]] = cases
+        self._cases: Dict[ASTNode,Union[StructMemberInfoNode,List[StructMemberDeclareNode]]] = cases
         self._member_name: str = member_name
 
     def to_str(self, depth: int = 0):
@@ -592,7 +593,7 @@ class MatchNode(ASTNode):
         return self._condition
 
     @property
-    def cases(self) -> Dict[ASTNode,Union[StructMemberTypeNode,List[StructMemberDeclareNode]]]:
+    def cases(self) -> Dict[ASTNode,Union[StructMemberInfoNode,List[StructMemberDeclareNode]]]:
         """
         Cases of this match expression.
         """
