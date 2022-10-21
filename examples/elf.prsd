@@ -1,0 +1,25 @@
+// ELF binary format
+
+BE struct ELF_header {
+    uint32 magic,
+    uint8 class,
+    uint8 endianness,
+    uint8 version,
+    uint8 os_abi,
+    uint8 abi_version,
+    uint8[7] pad,
+    (endianness == 1 ? LE : BE) uint16 type,
+    (endianness == 1 ? LE : BE) uint16 machine,
+    (endianness == 1 ? LE : BE) uint8 version_bis,
+    (endianness == 1 ? LE : BE) (class == 1 ? uint32 : uint64) entry,
+    (endianness == 1 ? LE : BE) (class == 1 ? uint32 : uint64) phoff,
+    (endianness == 1 ? LE : BE) (class == 1 ? uint32 : uint64) shoff,
+    (endianness == 1 ? LE : BE) uint32 flags,
+    (endianness == 1 ? LE : BE) uint32 ehsize,
+    (endianness == 1 ? LE : BE) uint16 phentsize,
+    (endianness == 1 ? LE : BE) uint16 phnum,
+    (endianness == 1 ? LE : BE) uint16 shentsize,
+    (endianness == 1 ? LE : BE) uint16 shnum,
+    (endianness == 1 ? LE : BE) uint16 shstrndx,
+}
+
