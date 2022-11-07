@@ -209,10 +209,37 @@ class Parser:
             if self.current_token.type == TT_BACKSLASH:
                 delimiter += "\\"
                 self.advance()
-
-            if self.current_token.value == "" or self.current_token.value == "\\" or self.current_token.value is None:
+            
+            if self.current_token.type == TT_APOST:
+                # SIMPLE CHAR AS DELIMITER
+                self.advance()
+                if self.current_token.type == TT_BACKSLASH:
+                    # example: '\0'
+                    self.advance()
+                    token_str: str = convert_token_as_str(self.current_token)
+                    if len(token_str) != 1:
+                        raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "invalid character")
+                    delimiter += "\\" + token_str
+                else:
+                    token_str: str = convert_token_as_str(self.current_token)
+                    if len(token_str) != 1:
+                        raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "invalid character")
+                    delimiter += token_str
+                self.advance()
+                if self.current_token.type != TT_APOST:
+                    raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected apostrophe")
+            elif self.current_token.type == TT_QUOTAT_MARK:
+                # STRING AS DELIMITER
+                self.advance()
+                delimiter += self._consume_string()
+                if self.current_token.type != TT_QUOTAT_MARK:
+                    raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected quotation mark")
+            elif self.current_token.type == TT_NUM_INT:
+                delimiter += str(self.current_token.value)
+            elif self.current_token.type == TT_IDENTIFIER and self.current_token.value.startswith("x"):
+                delimiter += str(self.current_token.value)
+            else:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected character as delimiter")
-            delimiter += self.current_token.value
 
             self.advance()
             if self.current_token.type != TT_RPAREN:
@@ -498,3 +525,24 @@ class Parser:
 
             left_token = BinOpNode(left_token, MathOperatorNode(op_token), right_token)
         return left_token
+
+    def _consume_string(self) -> str:
+        res: str = ""
+
+        while True:
+            if self.current_token.type == TT_QUOTAT_MARK:
+                break
+            elif self.current_token.type == TT_BACKSLASH:
+                self.advance()
+                if self.current_token.type == TT_QUOTAT_MARK:
+                    res += '"'
+                else:
+                    res += "\\" + convert_token_as_str(self.current_token)
+            else:
+                if self.current_token.type == TT_EOF:
+                    # if there is an error just in case
+                    break
+                res += self.current_token.value
+            self.advance()
+
+        return res

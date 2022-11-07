@@ -334,3 +334,75 @@ class Lexer:
             res += self.current_char
             self._next_token()
         return res
+
+
+def convert_token_as_str(token: Token) -> str:
+    if token.type == TT_EOF:
+        return ""
+    elif token.type == TT_PLUS:
+        return "+"
+    elif token.type == TT_MINUS:
+        return "-"
+    elif token.type == TT_MULT:
+        return "*"
+    elif token.type == TT_DIV:
+        return "/"
+    elif token.type == TT_BIN_AND:
+        return "&"
+    elif token.type == TT_BIN_OR:
+        return "|"
+    elif token.type == TT_BIN_XOR:
+        return "^"
+    elif token.type == TT_BIN_NOT:
+        return "!"
+    elif token.type == TT_BIN_LSHIFT:
+        return "<<"
+    elif token.type == TT_BIN_RSHIFT:
+        return ">>"
+    elif token.type == TT_COMP_EQ:
+        return "=="
+    elif token.type == TT_COMP_NE:
+        return "!="
+    elif token.type == TT_COMP_GT:
+        return ">"
+    elif token.type == TT_COMP_LT:
+        return "<"
+    elif token.type == TT_COMP_GEQ:
+        return ">="
+    elif token.type == TT_COMP_LEQ:
+        return "<="
+    elif token.type == TT_COMP_AND:
+        return "&&"
+    elif token.type == TT_COMP_OR:
+        return "||"
+    elif token.type == TT_LPAREN:
+        return "("
+    elif token.type == TT_RPAREN:
+        return ")"
+    elif token.type == TT_LCURLY:
+        return "{"
+    elif token.type == TT_RCURLY:
+        return "}"
+    elif token.type == TT_LBRACK:
+        return "["
+    elif token.type == TT_RBRACK:
+        return "]"
+    elif token.type == TT_COMMENT:
+        return "//"
+    elif token.type == TT_COMMA:
+        return ","
+    elif token.type == TT_DOT:
+        return "."
+    elif token.type == TT_SEMICOL:
+        return ";"
+    elif token.type == TT_APOST:
+        return "'"
+    elif token.type == TT_QUOTAT_MARK:
+        return '"'
+    elif token.type == TT_BACKSLASH:
+        return "\\"
+    elif token.type == TT_COLON:
+        return ":"
+    elif token.type == TT_QUESTION_MARK:
+        return "?"
+    return token.value

@@ -170,23 +170,73 @@ def test_struct_members_string():
     assert stmts[0].members[0].infos.as_data_type().string_delimiter == r"\0"
     stmts[0].to_str()
 
-    stmts = Parser(get_tokens(r"struct test { string(\0) test, }")).run()
+    stmts = Parser(get_tokens(r'struct test { string("\0") test, }')).run()
     assert stmts[0].members[0].infos.type == "string"
     assert stmts[0].members[0].infos.string_delimiter == r"\0"
     assert stmts[0].members[0].infos.as_data_type().string_delimiter == r"\0"
     stmts[0].to_str()
 
-    stmts = Parser(get_tokens(r"struct test { string(\x15) test, }")).run()
+    stmts = Parser(get_tokens(r"struct test { string('\0') test, }")).run()
+    assert stmts[0].members[0].infos.type == "string"
+    assert stmts[0].members[0].infos.string_delimiter == r"\0"
+    assert stmts[0].members[0].infos.as_data_type().string_delimiter == r"\0"
+    stmts[0].to_str()
+
+    stmts = Parser(get_tokens(r'struct test { string(0) test, }')).run()
+    assert stmts[0].members[0].infos.type == "string"
+    assert stmts[0].members[0].infos.string_delimiter == "0"
+    assert stmts[0].members[0].infos.as_data_type().string_delimiter == "0"
+    stmts[0].to_str()
+
+    stmts = Parser(get_tokens(r'struct test { string(\x15) test, }')).run()
     assert stmts[0].members[0].infos.type == "string"
     assert stmts[0].members[0].infos.string_delimiter == r"\x15"
     assert stmts[0].members[0].infos.as_data_type().string_delimiter == r"\x15"
     stmts[0].to_str()
 
-    stmts = Parser(get_tokens(r"struct test { string(test) test, }")).run()
+    stmts = Parser(get_tokens(r'struct test { string("test") test, }')).run()
     assert stmts[0].members[0].infos.type == "string"
     assert stmts[0].members[0].infos.string_delimiter == "test"
     assert stmts[0].members[0].infos.as_data_type().string_delimiter == "test"
     stmts[0].to_str()
+
+    stmts = Parser(get_tokens(r"struct test { string('d') test, }")).run()
+    assert stmts[0].members[0].infos.type == "string"
+    assert stmts[0].members[0].infos.string_delimiter == "d"
+    assert stmts[0].members[0].infos.as_data_type().string_delimiter == "d"
+    stmts[0].to_str()
+
+    # delimiter is a single quote (")
+    stmts = Parser(get_tokens(r'struct test { string("\"") test, }')).run()
+    assert stmts[0].members[0].infos.type == "string"
+    assert stmts[0].members[0].infos.string_delimiter == "\""
+    assert stmts[0].members[0].infos.as_data_type().string_delimiter == "\""
+    stmts[0].to_str()
+
+    # delimiter is a single apostrophe (')
+    stmts = Parser(get_tokens(r"struct test { string('\'') test, }")).run()
+    assert stmts[0].members[0].infos.type == "string"
+    assert stmts[0].members[0].infos.string_delimiter == "\\'"
+    assert stmts[0].members[0].infos.as_data_type().string_delimiter == "\\'"
+    stmts[0].to_str()
+
+def test_struct_member_string_errors():
+    with pytest.raises(InvalidSyntaxError):
+        # missing quotes around the delimiter
+        Parser(get_tokens(r'struct test { string(some_string) test, }')).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing quotes around the delimiter
+        Parser(get_tokens(r'struct test { string(some string) test, }')).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # invalid string
+        Parser(get_tokens(r'struct test { string("some" string) test, }')).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # char with len > 1
+        Parser(get_tokens(r"struct test { string('test') test, }")).run()
+
 
 def test_struct_members_match():
     stmts = Parser(get_tokens("struct test { match(1+1) {1: uint8,} member, }")).run()
