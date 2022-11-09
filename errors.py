@@ -86,7 +86,7 @@ class ExpectedMoreCharError(ParseedSimpleUnderlinedError):
 
 class UnknownTypeError(ParseedSimpleUnderlinedError):
     def __init__(self, pos_start: Position, pos_end: Position, type_name: str, struct_name: str):
-        super().__init__(pos_start, pos_end, f"Unknown data type error", f"\"{type_name}\" in struct {struct_name}")
+        super().__init__(pos_start, pos_end, "Unknown data type error", f"\"{type_name}\" in struct {struct_name}")
 
 
 class RecursiveStructError(ParseedMultipleUnderlinedError):
@@ -100,7 +100,7 @@ class DuplicateMemberError(ParseedMultipleUnderlinedError):
     def __init__(self, members, struct_name: str):
         pos_start: List[Position] = [m._name_token.pos_start for m in members]
         pos_end: List[Position] = [m._name_token.pos_end for m in members]
-        super().__init__(pos_start, pos_end, f"Duplicate member error", members[0].name)
+        super().__init__(pos_start, pos_end, "Duplicate member error", members[0].name)
 
 
 class DuplicateStructOrBitfieldError(ParseedMultipleUnderlinedError):

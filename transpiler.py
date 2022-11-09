@@ -7,7 +7,7 @@ from errors import *
 from utils import DATA_TYPES
 
 
-class _Block:
+class CodeBlock:
     """
     Represents a block of code.
     This class can be viewed as a stack, you can push with add_block and pop with end_block.
@@ -16,7 +16,7 @@ class _Block:
     def __init__(self, depth: int, parent):
         self.text: List = []
         self.depth: int = depth
-        self.parent: _Block = parent
+        self.parent: CodeBlock = parent
 
     def add_line(self, line: str) -> None:
         """
@@ -35,7 +35,7 @@ class _Block:
         """
         Add a new code block that is on top of this instance block.
         """
-        res = _Block(self.depth + 1, self)
+        res = CodeBlock(self.depth + 1, self)
         self.text.append(res)
         return res
 
@@ -55,19 +55,19 @@ class _Block:
 class Writer:
     """
     This helper class represents the generated code from the generator.
-    It can be seen as a stack of _Block.
-    Each _Block represents a part of code with a certain depth (=indentation).
-    This class keeps a list of _Block that are root block (depth=0).
+    It can be seen as a stack of CodeBlock.
+    Each CodeBlock represents a part of code with a certain depth (=indentation).
+    This class keeps a list of CodeBlock that are root block (depth=0).
     """
     def __init__(self):
         self.text = ""
-        self.blocks: List[_Block] = []
+        self.blocks: List[CodeBlock] = []
 
-    def add_block(self) -> _Block:
+    def add_block(self) -> CodeBlock:
         """
         Create a new root code block and returns it.
         """
-        res: _Block = _Block(0, None)
+        res: CodeBlock = CodeBlock(0, None)
         self.blocks.append(res)
         return res
 

@@ -209,7 +209,7 @@ class Parser:
             if self.current_token.type == TT_BACKSLASH:
                 delimiter += "\\"
                 self.advance()
-            
+
             if self.current_token.type == TT_APOST:
                 # SIMPLE CHAR AS DELIMITER
                 self.advance()
@@ -420,7 +420,7 @@ class Parser:
         comparison_op_dict: Dict = {TT_COMP_EQ: "==", TT_COMP_NE: "!=", TT_COMP_GT: ">", TT_COMP_LT: "<", TT_COMP_GEQ: ">=", TT_COMP_LEQ: "<=", TT_COMP_AND: "&&", TT_COMP_OR: "||"}
         if comparison_op_token.type not in comparison_op_dict.keys():
             list_comp: str = ", ".join([f"'{c}'" for c in comparison_op_dict.values()])
-            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, f"expected one of: " + list_comp)
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected one of: " + list_comp)
         self.advance()
         right_node: ASTNode = self.expr()
 

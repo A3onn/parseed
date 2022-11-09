@@ -481,7 +481,7 @@ class StructMemberInfoNode(ASTNode):
         if self._is_list:
             if self._list_length_node is not None:
                 return ("\t" * depth) + "StructMemberInfoNode(" + str(self._type) + f"[\n{self._list_length_node.to_str(depth+1)}" + ("\t" * depth) + "])\n"
-            return ("\t" * depth) + "StructMemberInfoNode(" + str(self._type) + f"[])\n"
+            return ("\t" * depth) + "StructMemberInfoNode(" + str(self._type) + "[])\n"
         return ("\t" * depth) + "StructMemberInfoNode(" + str(self._type) + ")\n"
 
     @property
