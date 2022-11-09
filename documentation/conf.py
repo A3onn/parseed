@@ -31,3 +31,5 @@ master_doc = "index"
 
 html_theme = 'alabaster'
 html_static_path = ['_static']
+
+pygment_style = "sphinx"
