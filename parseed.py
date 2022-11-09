@@ -3,13 +3,22 @@ from lexer import Lexer, Token
 from parser import Parser
 from ast_nodes import ASTNode
 from transpiler import ParseedOutputGenerator, Writer
-from generators import *
 from errors import ParseedBaseError
 from typing import List
+from glob import glob
+from os import path as os_path
+from pathlib import Path
+from importlib import import_module
 import argparse
 
 
 def main():
+    # import generators dynamically
+    for file_path in glob("generators" + os_path.sep + "*.py"):
+        filename = os_path.basename(file_path)
+        # importing "generators.<file name without '.py'>"
+        import_module("generators." + Path(filename).stem)
+
     argparser = argparse.ArgumentParser(description="A simple language simplifying the creation of parsers.")
     argparser.add_argument("file", help="File to parse", nargs="?", default="")
     argparser.add_argument("-o", "--output", help="Output file of the generated code ('-' for STDOUT).", dest="output_file", default="-")
