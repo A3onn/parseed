@@ -424,10 +424,10 @@ class TernaryEndianNode(ASTNode):
         res: str = ("\t" * depth) + "TernaryEndianType(\n"
         res += self._comparison.to_str(depth + 1)
         res += ("\t" * (depth + 1)) + "?\n"
-        res += ("\t" * (depth + 1)) + str(self._if_true)
+        res += ("\t" * (depth + 1)) + str(self._if_true) + "\n"
 
         res += ("\t" * (depth + 1)) + ":\n"
-        res += ("\t" * (depth + 1)) + str(self._if_false)
+        res += ("\t" * (depth + 1)) + str(self._if_false) + "\n"
 
         return res + ("\t" * depth) + ")" + "\n"
 
@@ -478,11 +478,34 @@ class StructMemberInfoNode(ASTNode):
         self._string_delimiter: str = string_delimiter
 
     def to_str(self, depth: int = 0) -> str:
+        type_str: str = ""
+        endian_str: str = ""
+        list_str: str = ""
+
+        if isinstance(self._type, TernaryDataTypeNode):
+            type_str = self._type.to_str(depth+1)
+        else:
+            type_str = ("\t" * (depth+1)) + str(self._type) + "\n"
+
+        if isinstance(self._endian, TernaryEndianNode):
+            endian_str = self._endian.to_str(depth+1)
+        else:
+            endian_str = ("\t" * (depth+1)) + str(self._endian) + "\n"
+
         if self._is_list:
             if self._list_length_node is not None:
-                return ("\t" * depth) + "StructMemberInfoNode(" + str(self._type) + f"[\n{self._list_length_node.to_str(depth+1)}" + ("\t" * depth) + "])\n"
-            return ("\t" * depth) + "StructMemberInfoNode(" + str(self._type) + "[])\n"
-        return ("\t" * depth) + "StructMemberInfoNode(" + str(self._type) + ")\n"
+                list_str = ("\t" * (depth+1)) + "[\n" + self._list_length_node.to_str(depth+2) + ("\t" * (depth+1)) + "]\n"
+            else:
+                list_str = "[]\n"
+
+        res: str = ("\t" * depth) + "StructMemberInfoNode(\n"
+        if endian_str != "":
+            res += endian_str
+        res += type_str
+        if list_str != "":
+            res += list_str
+        res += ("\t" * depth) + ")\n"
+        return res
 
     @property
     def type(self) -> Union[str, TernaryDataTypeNode]:
