@@ -483,18 +483,18 @@ class StructMemberInfoNode(ASTNode):
         list_str: str = ""
 
         if isinstance(self._type, TernaryDataTypeNode):
-            type_str = self._type.to_str(depth+1)
+            type_str = self._type.to_str(depth + 1)
         else:
-            type_str = ("\t" * (depth+1)) + str(self._type) + "\n"
+            type_str = ("\t" * (depth + 1)) + str(self._type) + "\n"
 
         if isinstance(self._endian, TernaryEndianNode):
-            endian_str = self._endian.to_str(depth+1)
+            endian_str = self._endian.to_str(depth + 1)
         else:
-            endian_str = ("\t" * (depth+1)) + str(self._endian) + "\n"
+            endian_str = ("\t" * (depth + 1)) + str(self._endian) + "\n"
 
         if self._is_list:
             if self._list_length_node is not None:
-                list_str = ("\t" * (depth+1)) + "[\n" + self._list_length_node.to_str(depth+2) + ("\t" * (depth+1)) + "]\n"
+                list_str = ("\t" * (depth + 1)) + "[\n" + self._list_length_node.to_str(depth + 2) + ("\t" * (depth + 1)) + "]\n"
             else:
                 list_str = "[]\n"
 
