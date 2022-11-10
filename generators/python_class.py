@@ -18,7 +18,7 @@ class Python_Class(ParseedOutputGenerator):
             # TODO
             pass
 
-    def add_struct(self, struct, cb):
+    def add_struct(self, struct: StructDefNode, cb: CodeBlock):
         cb.add_line(f"class {struct.name}:")
         cb = cb.add_block()
 
@@ -115,7 +115,7 @@ class Python_Class(ParseedOutputGenerator):
         res += f"\", buf[cursor:cursor+{datatype.size}])[0]"
         return res
 
-    def expression_as_str(self, node):
+    def expression_as_str(self, node: Union[FloatNumberNode, IntNumberNode, BinOpNode, UnaryOpNode, IdentifierAccessNode]):
         res = ""
         if type(node) in (FloatNumberNode, IntNumberNode):
             res += str(node.value)
@@ -147,7 +147,7 @@ class Python_Class(ParseedOutputGenerator):
                 res += self.expression_as_str(node.right_node)
         return res
 
-    def generate_str(self, struct, cb):
+    def generate_str(self, struct: StructDefNode, cb: CodeBlock):
         cb.add_line("def __str__(self):")
         cb = cb.add_block()
         cb.add_line(f"res = \"{struct.name}(\\n\"")
