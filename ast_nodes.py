@@ -126,6 +126,9 @@ class MathOperatorNode(ASTNode):
         }
         return math_op_dict[self._math_op_token.type]
 
+    def __eq__(self, o) -> bool:
+        return self.type == o
+
 
 class BinOpNode(ASTNode):
     """
@@ -300,6 +303,8 @@ class ComparisonOperatorNode(ASTNode):
         }
         return comp_dict[self._comp_op_token.type]
 
+    def __eq__(self, o) -> bool:
+        return self.type == o
 
 class ComparisonNode(ASTNode):
     """
