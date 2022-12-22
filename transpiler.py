@@ -120,15 +120,26 @@ class ParseedOutputGenerator(ABC):
                     # TODO
                     continue
                 if member.infos.type not in DATA_TYPES:
-                    # check for unknown types
-                    if isinstance(member.infos._type, Token) and member.infos.type not in [struct.name for struct in self.structs] and \
-                            member.infos.type not in [bitfield.name for bitfield in self.bitfields]:
-                        raise UnknownTypeError(member.infos._type.pos_start, member.infos._type.pos_end, member.infos.type, struct.name)
+                    self.__check_unknown_type(struct, member)
 
         # if there is no unknown types, now we can check for recursive structs
         for struct in self.structs:
             for member in struct.members:
                 self.__verify_recursive_struct_member(member, [])
+
+    def __check_unknown_type(self, struct, member):
+        # check for unknown types
+        if isinstance(member.infos.type, str):  # if the type is an identifier
+            if self.get_struct_by_name(member.infos.type) == None:
+                raise UnknownTypeError(member.infos._type.pos_start, member.infos._type.pos_end, member.infos.type, struct.name)
+        elif isinstance(member.infos.type, TernaryDataTypeNode):
+            # TODO: change error position to correct token
+            if not isinstance(member.infos.type.if_true, DataType):
+                if self.get_struct_by_name(member.infos.type.if_true) is None:
+                    raise UnknownTypeError(member._name_token.pos_start, member._name_token.pos_end, member.infos.type.if_true.name, struct.name)
+            if not isinstance(member.infos.type.if_false, DataType):
+                if self.get_struct_by_name(member.infos.type.if_false) is None:
+                    raise UnknownTypeError(member._name_token.pos_start, member._name_token.pos_end, member.infos.type.if_false.name, struct.name)
 
     def __check_duplicate_members(self, struct):
         """
@@ -175,7 +186,8 @@ class ParseedOutputGenerator(ABC):
             # TODO
             return
         elif isinstance(visited_member.infos.type, TernaryDataTypeNode):
-            # TODO
+            # ternary operator can contain a base case for a recursive struct
+            # so we don't need to check anything here and we can just leave
             return
 
         if visited_member.infos.type in DATA_TYPES:  # base case, cannot visit native data types as they are not structs

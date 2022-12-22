@@ -11,7 +11,7 @@ def get_AST(text):
 
 class TranspilerTest(ParseedOutputGenerator):
     def generate(writer):
-        return ""
+        pass
 
 def test_structs():
     tt = TranspilerTest(get_AST(""))
@@ -93,3 +93,8 @@ def test_nested_structs():
 
     with pytest.raises(RecursiveStructError):
         TranspilerTest(get_AST("struct root_struct { nested_struct_1 test, } struct nested_struct_1 { nested_struct_2 should_not_work, } struct nested_struct_2 { root_struct should_not_work , }"))
+
+def unknwon_types():
+    with pytest.raises(UnknownTypeError):
+        # unknown struct in ternary data-type
+        Parser(get_tokens("struct test { (1 == 1 ? Unknown_Struct : uint8) some_member, }")).run()

@@ -2,7 +2,7 @@
 from parser import Parser
 from ast_nodes import *
 from lexer import Lexer
-from errors import InvalidSyntaxError
+from errors import InvalidSyntaxError, UnknownTypeError
 from utils import *
 import pytest
 
@@ -34,7 +34,7 @@ def test_struct_members():
     Parser(get_tokens("struct test { uint8[4] member1, float member2, int24[15] member3, }")).run()[0].to_str()
     Parser(get_tokens("struct test { uint8[4] member1, float member2, int24[] member3, }")).run()[0].to_str()
     Parser(get_tokens("struct test { (1 == 1 ? uint8 : uint16)[] member,}")).run()[0].to_str()
-    Parser(get_tokens("struct test { (1 != 1 ? uint8 : SomeIdentifier) member,}")).run()[0].to_str()
+    Parser(get_tokens("struct SomeIdentifier{} struct test { (1 != 1 ? uint8 : SomeIdentifier) member,}")).run()[0].to_str()
     Parser(get_tokens("struct test { LE (1 != 1 ? uint8 : uint16) member1, (2 == 2 ? uint16 : int16) member2, }")).run()[0].to_str()
     Parser(get_tokens("struct test { (1 != 1 ? SomeIdentifier : SomeIdentifier) member,}")).run()[0].to_str()
     Parser(get_tokens("struct test { uint8 member1, LE (2 == 2 ? uint16 : int16) member2, }")).run()[0].to_str()
@@ -439,6 +439,10 @@ def test_struct_members_errors():
     with pytest.raises(InvalidSyntaxError):
         # missing condition results
         Parser(get_tokens("struct test { (1 != 1 ?  : ) member,}")).run()
+    
+    with pytest.raises(InvalidSyntaxError):
+        # struct with a dot, cannot be a member here
+        Parser(get_tokens("struct test { (1 == 1 ? Unknown.Struct : uint8) some_member, }")).run()
 
 def test_struct_members_with_expressions_errors():
     with pytest.raises(InvalidSyntaxError):
