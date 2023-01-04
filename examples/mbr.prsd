@@ -1,0 +1,20 @@
+// Master Boot Record
+
+struct MBR {
+    uint8[440] boot_code,
+    uint32 unique_mbr_signature,
+    uint16 unknown,
+    Partition_entry[4] partitions,
+    uint8[2] signature,
+}
+
+struct Partition_entry {
+    uint8 boot_indicator,
+    uint8 start_head,
+    uint16 start_sector_cylinder,
+    uint8 partition_type,
+    uint8 end_head,
+    uint16 end_sector_cylinder,
+    uint32 start_sector,
+    uint32 num_sectors,
+}
