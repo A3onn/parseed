@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from typing import Any, List
+from typing import Any, List, Optional
 from lexer import Token
 from abc import ABC, abstractmethod
 from ast_nodes import BitfieldDefNode, StructDefNode, StructMemberDeclareNode, TernaryDataTypeNode
@@ -201,11 +201,23 @@ class ParseedOutputGenerator(ABC):
             self.__verify_recursive_struct_member(member, structs_stack)
         structs_stack.pop()
 
-    def get_struct_by_name(self, name):
+    def get_struct_by_name(self, name: str) -> Optional[StructDefNode]:
         """
         Returns a struct instance present in the self.struct attribute from it name.
+
+        :param name: Name of the struct to find
+        :type name: str
         """
         struct_res = [struct for struct in self.structs if struct.name == name]
         if len(struct_res) == 0:
             return None
         return struct_res[0]
+
+    def is_member_type_struct(self, type_: str) -> bool:
+        """
+        Returns if the member's type is a struct.
+
+        :param name: member
+        :type name: str
+        """
+        return type_ in [struct.name for struct in self.structs]

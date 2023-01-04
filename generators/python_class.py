@@ -29,7 +29,7 @@ class Python_Class(ParseedOutputGenerator):
         cb.add_line("self.cursor = 0") # will be used sometimes by calling class in the python output file
         for member in struct.members:
             if isinstance(member, MatchNode):
-                if member.member_name is not None:  # this match is used to select the type of a member
+                if member.member_name is not None:  # this match-node is used to select the type of a member
                     cb.add_line(f"self.{member.member_name} = None")
 
                     for index, case in enumerate(member.cases.keys()):
@@ -48,7 +48,11 @@ class Python_Class(ParseedOutputGenerator):
                             cb.add_line(f"elif {self.expression_as_str(member.condition)} == {self.expression_as_str(case)}:")
                         cb = cb.add_block()
                         for member_match in member.cases[case]:
-                            cb.add_line(f"self.{member_match.name} = {self.member_read_struct(member_match.infos.as_data_type(), member_match.infos.endian)}")
+                            if self.is_member_match_type_struct(member_match.infos.type):
+                                cb.add_line(f"self.{member_match.name} = {member_match.name}(buf[self.cursor:])") # pass the buffer to the class representing the type
+                                cb.add_line(f"self.cursor += self.{member_match.name}.cursor") # continue to parse the buffer after the called class has parsed
+                            else:
+                                cb.add_line(f"self.{member_match.name} = {self.member_read_struct(member_match.name, member_match.infos.endian)}")
                         cb = cb.end_block()
             else:
                 if isinstance(member.infos.type, TernaryDataTypeNode):
@@ -70,6 +74,7 @@ class Python_Class(ParseedOutputGenerator):
                         cb.add_line(f"self.{member.name} = {self.member_read_struct(tdtn.if_false, member.infos.endian)}")
                     cb = cb.end_block()
                     continue
+
                 datatype: DataType = member.infos.as_data_type()
                 if member.infos.is_list:
                     if member.infos.list_length is None:
@@ -79,8 +84,13 @@ class Python_Class(ParseedOutputGenerator):
                         cb.add_line(f"self.{member.name} = []")
                         cb.add_line(f"for i in range({self.expression_as_str(member.infos.list_length)}):")
                         cb = cb.add_block()
-                        cb.add_line(f"self.{member.name}.append(" + self.member_read_struct(datatype, member.infos.endian) + ")")
-                        cb.add_line(f"self.cursor += {datatype.size}")
+                        if self.is_member_type_struct(member.infos.type):
+                            cb.add_line(f"{member.infos.type}_tmp = {member.infos.type}(buf[self.cursor:])")
+                            cb.add_line(f"self.{member.name}.append({member.infos.type}_tmp)")
+                            cb.add_line(f"self.cursor += {member.infos.type}_tmp.cursor") # continue to parse the buffer after the called class has parsed
+                        else:
+                            cb.add_line(f"self.{member.name}.append(" + self.member_read_struct(datatype, member.infos.endian) + ")")
+                            cb.add_line(f"self.cursor += {datatype.size}")
                         cb = cb.end_block()
                 else:
                     if datatype.is_string():
