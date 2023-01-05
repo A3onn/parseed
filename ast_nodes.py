@@ -463,7 +463,7 @@ class StructMemberInfoNode(ASTNode):
     Represents the type of a member.
     This class contains the type, the endianness, if it is a list and it length (if it has one).
     """
-    def __init__(self, type_token: Union[Token, TernaryDataTypeNode], endian: Union[Endian, TernaryEndianNode] = Endian.BIG, is_list: bool = False, list_length_node: Union[None, UnaryOpNode, BinOpNode] = None, string_delimiter: str = r"\0"):
+    def __init__(self, type_token: Union[Token, TernaryDataTypeNode], endian: Union[Endian, TernaryEndianNode] = Endian.BIG, is_list: bool = False, list_length_node: Union[None, UnaryOpNode, BinOpNode, ComparisonNode] = None, string_delimiter: str = r"\0"):
         r"""
         :param type_token: Token or ternary operator for the type of the member.
         :type type_token: Union[Token,TernaryDataTypeNode]
@@ -471,15 +471,15 @@ class StructMemberInfoNode(ASTNode):
         :type endian: Union[Endian, TernaryEndianNode]
         :param is_list: If the member is a list, defaults to False.
         :type is_list: bool, optional
-        :param list_length_node: Length of the list if this member is a list, defaults to None
-        :type list_length_node: Union[None,UnaryOpNode,BinOpNode]
+        :param list_length_node: Length of the list (as a integer or a comparison if the member is repeated) if this member is a list, can be None to indicates no length is specified, defaults to None.
+        :type list_length_node: Union[None,UnaryOpNode,BinOpNode,ComparisonNode]
         :param string_delimiter: If the type is a string, the delimiter of the string, default to '\\0'.
         :type string_delimiter: str
         """
         self._type: Union[Token, TernaryDataTypeNode] = type_token
         self._endian: Union[Endian, TernaryEndianNode] = endian
         self._is_list: bool = is_list
-        self._list_length_node: Union[None, UnaryOpNode, BinOpNode] = list_length_node
+        self._list_length_node: Union[None, UnaryOpNode, BinOpNode, ComparisonNode] = list_length_node
         self._string_delimiter: str = string_delimiter
 
     def to_str(self, depth: int = 0) -> str:
@@ -536,7 +536,7 @@ class StructMemberInfoNode(ASTNode):
         return self._is_list
 
     @property
-    def list_length(self) -> Union[None, UnaryOpNode, BinOpNode]:
+    def list_length(self) -> Union[None, UnaryOpNode, BinOpNode, ComparisonNode]:
         """
         The length of this member (if it is a list, otherwise None).
         """

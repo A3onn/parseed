@@ -30,6 +30,8 @@ def test_struct_members():
     Parser(get_tokens("struct test { uint8[] member,}")).run()[0].to_str()
     Parser(get_tokens("struct test { uint8[] member1, uint16[] member2,}")).run()[0].to_str()
     Parser(get_tokens("struct test { uint8[4] member1, float member2, }")).run()[0].to_str()
+    Parser(get_tokens("struct test { uint8[1 == 1] member1, float member2, }")).run()[0].to_str()
+    Parser(get_tokens("struct test { float member1, uint8[member1 == 1] member2, }")).run()[0].to_str()
     Parser(get_tokens("struct test { uint8 member1, float[member1] member2, }")).run()[0].to_str()
     Parser(get_tokens("struct test { uint8[4] member1, float member2, int24[15] member3, }")).run()[0].to_str()
     Parser(get_tokens("struct test { uint8[4] member1, float member2, int24[] member3, }")).run()[0].to_str()
@@ -62,6 +64,17 @@ def test_struct_members_with_expressions():
     assert isinstance(stmts[0].members[1].infos.list_length.left_node, IntNumberNode)
     assert isinstance(stmts[0].members[1].infos.list_length.right_node, IntNumberNode)
     assert stmts[0].members[1].infos.list_length.op.type == MathOperatorNode.SUBTRACT
+    stmts[0].to_str()
+
+    stmts = Parser(get_tokens("struct test { uint8[1 != 2] member1, uint8[member1 == 3] member2, }")).run()
+    assert isinstance(stmts[0].members[0].infos.list_length, ComparisonNode)
+    assert isinstance(stmts[0].members[0].infos.list_length.left_node, IntNumberNode)
+    assert isinstance(stmts[0].members[0].infos.list_length.right_node, IntNumberNode)
+    assert stmts[0].members[0].infos.list_length.comparison_op.type == ComparisonOperatorNode.NOT_EQUAL
+    assert isinstance(stmts[0].members[1].infos.list_length, ComparisonNode)
+    assert isinstance(stmts[0].members[1].infos.list_length.left_node, IdentifierAccessNode)
+    assert isinstance(stmts[0].members[1].infos.list_length.right_node, IntNumberNode)
+    assert stmts[0].members[1].infos.list_length.comparison_op.type == ComparisonOperatorNode.EQUAL
     stmts[0].to_str()
 
     Parser(get_tokens("struct test { uint8[1+1] member1, int16 member2, uint8[-3+24] member2, }")).run()[0].to_str()

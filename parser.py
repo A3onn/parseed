@@ -159,7 +159,8 @@ class Parser:
         """
         <struct_member_type> ::= (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>)
                                 | (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>) "[" <expr> "]"
-                                | (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>) "[]"  ;; repeat this member until the end of the buffer
+                                | (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>) "[" <comparison> "]" ;; repeat until the comparison is false
+                                | (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>) "[]"  ;; repeat this member as much as possible
 
         <endian> ::= "LE" | "BE"
         <ternary_endian> ::= "(" <comparison> "?" <endian> ":" <endian> ")"
@@ -251,7 +252,11 @@ class Parser:
             self.advance()
             list_length_node = None
             if self.current_token.type != TT_RBRACK:
+                current_token_tmp = self.current_token
                 list_length_node = self.expr()
+                if self.current_token.type != TT_RBRACK:
+                    self._rollback_to(current_token_tmp)
+                    list_length_node = self.comparison()
             if self.current_token.type != TT_RBRACK:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ']'")
             self.advance()
