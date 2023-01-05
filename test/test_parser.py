@@ -326,6 +326,63 @@ def test_struct_member_bytes_errors():
         # char with len > 1
         Parser(get_tokens(r"struct test { bytes('test') test, }")).run()
 
+def test_struct_member_ternary_type():
+    stmts = Parser(get_tokens("struct test { (2 == 1 ? uint16 : uint8) member, }")).run()
+    assert isinstance(stmts[0].members[0].infos.type, TernaryDataTypeNode)
+    assert stmts[0].members[0].infos.type.if_true.name == "uint16"
+    assert stmts[0].members[0].infos.type.if_false.name == "uint8"
+    stmts[0].to_str()
+
+    stmts = Parser(get_tokens("struct test { (2 == 1 ? string(0) : bytes(0)) member, }")).run()
+    assert isinstance(stmts[0].members[0].infos.type, TernaryDataTypeNode)
+    assert stmts[0].members[0].infos.type.if_true.is_string()
+    assert stmts[0].members[0].infos.type.if_false.is_bytes()
+    stmts[0].to_str()
+
+def test_struct_member_ternary_type_errors():
+    # same tests as string and bytes without the ternary operator,
+    # but there are to check if in ternary operators everything works correctly too
+    with pytest.raises(InvalidSyntaxError):
+        # missing quotes around the delimiter
+        Parser(get_tokens("struct test { (2 == 1 ? string(some_string) : uint16) test, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing quotes around the delimiter
+        Parser(get_tokens("struct test { (2 == 1 ? string(some string) : uint16) test, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # invalid string
+        Parser(get_tokens("struct test { (2 == 1 ? string(\"some\" string) : uint16) test, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # char with len > 1
+        Parser(get_tokens("struct test { (2 == 1 ? string('test') : uint16) test, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing delimiter
+        Parser(get_tokens("struct test { (2 == 1 ? bytes : uint16) test, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing delimiter's value
+        Parser(get_tokens("struct test { (2 == 1 ? bytes() : uint16) test, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing quotes around the delimiter
+        Parser(get_tokens("struct test { (2 == 1 ? bytes(some_bytes) : uint16) test, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # missing quotes around the delimiter
+        Parser(get_tokens("struct test { (2 == 1 ? bytes(some bytes) : uint16) test, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # invalid bytes
+        Parser(get_tokens("struct test { (2 == 1 ? bytes(\"some\" bytes) : uint16) test, }")).run()
+
+    with pytest.raises(InvalidSyntaxError):
+        # char with len > 1
+        Parser(get_tokens("struct test { (2 == 1 ? bytes('test') : uint16) test, }")).run()
+
+
 def test_struct_members_match():
     stmts = Parser(get_tokens("struct test { match(1+1) {1: uint8,} member, }")).run()
     assert isinstance(stmts[0].members[0], MatchNode)
