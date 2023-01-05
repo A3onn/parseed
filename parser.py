@@ -192,18 +192,22 @@ class Parser:
                 else:
                     member_type = self.current_token
                     self.advance()
+                    if member_type.value == "bytes" and self.current_token.type != TT_LPAREN:
+                        raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '(' for bytes data-type")
         else:
             # endian and ternary data type was check just before
             # we are sure that we are dealing with the type here
             member_type = self.current_token
             self.advance()
+            if member_type.value == "bytes" and self.current_token.type != TT_LPAREN:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '(' for bytes data-type")
 
         is_list: bool = False
         list_length_node: Any = None
 
         if self.current_token.type == TT_IDENTIFIER:  # nothing to do, just continue parsing
             return StructMemberInfoNode(member_type, endian)
-        elif self.current_token.type == TT_LPAREN and isinstance(member_type, Token) and member_type.value == "string":
+        elif self.current_token.type == TT_LPAREN and isinstance(member_type, Token) and member_type.value in ("string", "bytes"):
             self.advance()
 
             delimiter: str = ""
@@ -246,7 +250,7 @@ class Parser:
             if self.current_token.type != TT_RPAREN:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
             self.advance()
-            return StructMemberInfoNode(member_type, endian, string_delimiter=delimiter)
+            return StructMemberInfoNode(member_type, endian, delimiter=delimiter)
         elif self.current_token.type == TT_LBRACK:
             is_list = True
             self.advance()

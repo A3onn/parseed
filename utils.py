@@ -25,7 +25,7 @@ DATA_TYPES = [
     "uint64", "int64",
     "uint128", "int128",
     "float", "double",
-    "string",
+    "string", "bytes"
 ]
 
 
@@ -121,16 +121,16 @@ class DataType:
     name: str = ""
     size: int = -1
     signed = False
-    string_delimiter = ""
+    delimiter = ""
 
-    def __init__(self, name: str, string_delimiter=r"\0"):
+    def __init__(self, name: str, delimiter=r"\0"):
         """
         :param name: Name of the type, must not be an identifier.
         :type name: str
         """
         self.name = name
         self.size = -1
-        self.string_delimiter = string_delimiter
+        self.delimiter = delimiter
         if name == "uint8":
             self.size = 1
             self.signed = False
@@ -186,7 +186,7 @@ class DataType:
         elif name == "byte":
             self.size = 1
             self.signed = False
-        elif name == "string":
+        elif name in ("string", "bytes"):
             pass
         # other type have been checked by the ParseedOutputGenerator class
 
@@ -195,6 +195,12 @@ class DataType:
         Returns if the data-type is a string.
         """
         return self.name == "string"
+
+    def is_bytes(self) -> bool:
+        """
+        Returns if the data-type is a bytes.
+        """
+        return self.name == "bytes"
 
     def is_byte(self) -> bool:
         """

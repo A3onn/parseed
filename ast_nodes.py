@@ -463,7 +463,7 @@ class StructMemberInfoNode(ASTNode):
     Represents the type of a member.
     This class contains the type, the endianness, if it is a list and it length (if it has one).
     """
-    def __init__(self, type_token: Union[Token, TernaryDataTypeNode], endian: Union[Endian, TernaryEndianNode] = Endian.BIG, is_list: bool = False, list_length_node: Union[None, UnaryOpNode, BinOpNode, ComparisonNode] = None, string_delimiter: str = r"\0"):
+    def __init__(self, type_token: Union[Token, TernaryDataTypeNode], endian: Union[Endian, TernaryEndianNode] = Endian.BIG, is_list: bool = False, list_length_node: Union[None, UnaryOpNode, BinOpNode, ComparisonNode] = None, delimiter: str = r"\0"):
         r"""
         :param type_token: Token or ternary operator for the type of the member.
         :type type_token: Union[Token,TernaryDataTypeNode]
@@ -473,14 +473,14 @@ class StructMemberInfoNode(ASTNode):
         :type is_list: bool, optional
         :param list_length_node: Length of the list (as a integer or a comparison if the member is repeated) if this member is a list, can be None to indicates no length is specified, defaults to None.
         :type list_length_node: Union[None,UnaryOpNode,BinOpNode,ComparisonNode]
-        :param string_delimiter: If the type is a string, the delimiter of the string, default to '\\0'.
-        :type string_delimiter: str
+        :param delimiter: If the type is a string or a bytes, the delimiter of the string or the bytes, default to '\\0'.
+        :type delimiter: str
         """
         self._type: Union[Token, TernaryDataTypeNode] = type_token
         self._endian: Union[Endian, TernaryEndianNode] = endian
         self._is_list: bool = is_list
         self._list_length_node: Union[None, UnaryOpNode, BinOpNode, ComparisonNode] = list_length_node
-        self._string_delimiter: str = string_delimiter
+        self._delimiter: str = delimiter
 
     def to_str(self, depth: int = 0) -> str:
         type_str: str = ""
@@ -543,11 +543,11 @@ class StructMemberInfoNode(ASTNode):
         return self._list_length_node
 
     @property
-    def string_delimiter(self) -> str:
+    def delimiter(self) -> str:
         """
-        Delimiter of the string, if the type is a string.
+        Delimiter of the string or bytes, if the type is a string or a bytes.
         """
-        return self._string_delimiter
+        return self._delimiter
 
     def as_data_type(self) -> Optional[DataType]:
         """
@@ -558,7 +558,7 @@ class StructMemberInfoNode(ASTNode):
         """
         if isinstance(self.type, TernaryDataTypeNode):
             return None
-        return DataType(self.type, string_delimiter=self.string_delimiter)
+        return DataType(self.type, delimiter=self.delimiter)
 
 
 class StructMemberDeclareNode(ASTNode):

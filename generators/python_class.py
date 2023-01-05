@@ -93,14 +93,15 @@ class Python_Class(ParseedOutputGenerator):
                             cb.add_line(f"self.cursor += {datatype.size}")
                         cb = cb.end_block()
                 else:
-                    if datatype.is_string():
+                    if datatype.is_string() or datatype.is_bytes():
                         cb.add_line(f"self.{member.name} = b\"\"")
-                        cb.add_line(f"while buf[self.cursor:self.cursor+len(b\"{datatype.string_delimiter}\")] != b\"{datatype.string_delimiter}\":")
+                        cb.add_line(f"while buf[self.cursor:self.cursor+len(b\"{datatype.delimiter}\")] != b\"{datatype.delimiter}\":")
                         cb = cb.add_block()
-                        cb.add_line(f"self.{member.name} += buf[self.cursor:self.cursor+len(b\"{datatype.string_delimiter}\")]")
-                        cb.add_line(f"self.cursor += len(b\"{datatype.string_delimiter}\")")
+                        cb.add_line(f"self.{member.name} += buf[self.cursor:self.cursor+len(b\"{datatype.delimiter}\")]")
+                        cb.add_line(f"self.cursor += len(b\"{datatype.delimiter}\")")
                         cb = cb.end_block()
-                        cb.add_line(f"self.{member.name} = self.{member.name}.decode(\"utf-8\")")
+                        if datatype.is_string():
+                            cb.add_line(f"self.{member.name} = self.{member.name}.decode(\"utf-8\")")
                     else:
                         cb.add_line(f"self.{member.name} = {self.member_read_struct(datatype, member.infos.endian)}")
                         cb.add_line(f"self.cursor += {datatype.size}")
