@@ -329,14 +329,14 @@ def test_struct_member_bytes_errors():
 def test_struct_member_ternary_type():
     stmts = Parser(get_tokens("struct test { (2 == 1 ? uint16 : uint8) member, }")).run()
     assert isinstance(stmts[0].members[0].infos.type, TernaryDataTypeNode)
-    assert stmts[0].members[0].infos.type.if_true.name == "uint16"
-    assert stmts[0].members[0].infos.type.if_false.name == "uint8"
+    assert stmts[0].members[0].infos.type.if_true.type == "uint16"
+    assert stmts[0].members[0].infos.type.if_false.type == "uint8"
     stmts[0].to_str()
 
     stmts = Parser(get_tokens("struct test { (2 == 1 ? string(0) : bytes(0)) member, }")).run()
     assert isinstance(stmts[0].members[0].infos.type, TernaryDataTypeNode)
-    assert stmts[0].members[0].infos.type.if_true.is_string()
-    assert stmts[0].members[0].infos.type.if_false.is_bytes()
+    assert stmts[0].members[0].infos.type.if_true.as_data_type().is_string()
+    assert stmts[0].members[0].infos.type.if_false.as_data_type().is_bytes()
     stmts[0].to_str()
 
 def test_struct_member_ternary_type_errors():
@@ -429,6 +429,13 @@ def test_struct_members_match():
     stmts[0].to_str()
 
     stmts = Parser(get_tokens("struct test { match(1+1) {1: {uint8 some_member1, uint8 some_member2,}, 2: {uint16 member1, uint16 member2,},}, }")).run()
+    stmts[0].to_str()
+
+    stmts = Parser(get_tokens("struct test { match(1+1) {1: string, 2: string(0), 3: string('a'), } member, }")).run()
+    stmts[0].to_str()
+
+    stmts = Parser(get_tokens("struct test { match(1+1) {1: bytes(0), 2: bytes('a'),} member, }")).run()
+    cases = stmts[0].members[0].cases
     stmts[0].to_str()
 
 def test_struct_members_match_errors():

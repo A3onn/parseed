@@ -355,18 +355,18 @@ class TernaryDataTypeNode(ASTNode):
     """
     This class represents a ternary operator for data-types.
     """
-    def __init__(self, comparison_node: ComparisonNode, if_true: Union[IdentifierAccessNode, DataType], if_false: Union[IdentifierAccessNode, DataType]):
+    def __init__(self, comparison_node: ComparisonNode, if_true, if_false):
         """
         :param comparison_node: Comparison of the ternary operator.
         :type comparison_node: ComparisonNode
-        :param if_true: Type used if the comparison is true.
-        :type if_true: Union[IdentifierAccessNode, DataType]
-        :param if_false: Type used if the comparison if false.
-        :type if_false: Union[IdentifierAccessNode, DataType]
+        :param if_true: Type used if the comparison is true (endian property won't be used).
+        :type if_true: StructMemberInfoNode
+        :param if_false: Type used if the comparison if false (endian property won't be used).
+        :type if_false: StructMemberInfoNode
         """
         self._comparison: ComparisonNode = comparison_node
-        self._if_true: Union[IdentifierAccessNode, DataType] = if_true
-        self._if_false: Union[IdentifierAccessNode, DataType] = if_false
+        self._if_true = if_true
+        self._if_false = if_false
 
     def to_str(self, depth: int = 0) -> str:
         res: str = ("\t" * depth) + "TernaryDataType(\n"
@@ -394,16 +394,16 @@ class TernaryDataTypeNode(ASTNode):
         return self._comparison
 
     @property
-    def if_true(self) -> Union[IdentifierAccessNode, DataType]:
+    def if_true(self):
         """
-        Node used if the comparison is true.
+        Data-type used if the comparison is true.
         """
         return self._if_true
 
     @property
-    def if_false(self) -> Union[IdentifierAccessNode, DataType]:
+    def if_false(self):
         """
-        Node used if the comparison is false.
+        Data-type used if the comparison is false.
         """
         return self._if_false
 
