@@ -130,15 +130,15 @@ class ParseedOutputGenerator(ABC):
     def __check_unknown_type(self, struct, member):
         # check for unknown types
         if isinstance(member.infos.type, str):  # if the type is an identifier
-            if self.get_struct_by_name(member.infos.type) == None:
+            if self.get_struct_by_name(member.infos.type) == None and self.get_bitfield_by_name(member.infos.type) == None:
                 raise UnknownTypeError(member.infos._type.pos_start, member.infos._type.pos_end, member.infos.type, struct.name)
         elif isinstance(member.infos.type, TernaryDataTypeNode):
             # TODO: change error position to correct token
             if not isinstance(member.infos.type.if_true, DataType):
-                if self.get_struct_by_name(member.infos.type.if_true) is None:
+                if self.get_struct_by_name(member.infos.type.if_true) is None and self.get_bitfield_by_name(member.infos.type) == None:
                     raise UnknownTypeError(member._name_token.pos_start, member._name_token.pos_end, member.infos.type.if_true.name, struct.name)
             if not isinstance(member.infos.type.if_false, DataType):
-                if self.get_struct_by_name(member.infos.type.if_false) is None:
+                if self.get_struct_by_name(member.infos.type.if_false) is None and self.get_bitfield_by_name(member.infos.type) == None:
                     raise UnknownTypeError(member._name_token.pos_start, member._name_token.pos_end, member.infos.type.if_false.name, struct.name)
 
     def __check_duplicate_members(self, struct):
@@ -192,6 +192,8 @@ class ParseedOutputGenerator(ABC):
 
         if visited_member.infos.type in DATA_TYPES:  # base case, cannot visit native data types as they are not structs
             return
+        elif self.get_bitfield_by_name(visited_member.infos.type) is not None:  # base case too
+            return
         elif visited_member.infos.type in structs_stack:
             raise RecursiveStructError([self.get_struct_by_name(s) for s in structs_stack])
 
@@ -203,7 +205,7 @@ class ParseedOutputGenerator(ABC):
 
     def get_struct_by_name(self, name: str) -> Optional[StructDefNode]:
         """
-        Returns a struct instance present in the self.struct attribute from it name.
+        Returns a struct instance present in the self.structs attribute from it name.
 
         :param name: Name of the struct to find
         :type name: str
@@ -212,6 +214,18 @@ class ParseedOutputGenerator(ABC):
         if len(struct_res) == 0:
             return None
         return struct_res[0]
+
+    def get_bitfield_by_name(self, name: str) -> Optional[BitfieldDefNode]:
+        """
+        Returns a bitfield instance present in the self.bitfields attribute from it name.
+
+        :param name: Name of the bitfield to find
+        :type name: str
+        """
+        bitfield_res = [bitfield for bitfield in self.bitfields if bitfield.name == name]
+        if len(bitfield_res) == 0:
+            return None
+        return bitfield_res[0]
 
     def is_member_type_struct(self, type_: str) -> bool:
         """
