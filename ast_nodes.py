@@ -355,18 +355,18 @@ class TernaryDataTypeNode(ASTNode):
     """
     This class represents a ternary operator for data-types.
     """
-    def __init__(self, comparison_node: ComparisonNode, if_true: Union[IdentifierAccessNode, DataType], if_false: Union[IdentifierAccessNode, DataType]):
+    def __init__(self, comparison_node: ComparisonNode, if_true, if_false):
         """
         :param comparison_node: Comparison of the ternary operator.
         :type comparison_node: ComparisonNode
-        :param if_true: Type used if the comparison is true.
-        :type if_true: Union[IdentifierAccessNode, DataType]
-        :param if_false: Type used if the comparison if false.
-        :type if_false: Union[IdentifierAccessNode, DataType]
+        :param if_true: Type used if the comparison is true (endian property won't be used).
+        :type if_true: StructMemberInfoNode
+        :param if_false: Type used if the comparison if false (endian property won't be used).
+        :type if_false: StructMemberInfoNode
         """
         self._comparison: ComparisonNode = comparison_node
-        self._if_true: Union[IdentifierAccessNode, DataType] = if_true
-        self._if_false: Union[IdentifierAccessNode, DataType] = if_false
+        self._if_true = if_true
+        self._if_false = if_false
 
     def to_str(self, depth: int = 0) -> str:
         res: str = ("\t" * depth) + "TernaryDataType(\n"
@@ -394,16 +394,16 @@ class TernaryDataTypeNode(ASTNode):
         return self._comparison
 
     @property
-    def if_true(self) -> Union[IdentifierAccessNode, DataType]:
+    def if_true(self):
         """
-        Node used if the comparison is true.
+        Data-type used if the comparison is true.
         """
         return self._if_true
 
     @property
-    def if_false(self) -> Union[IdentifierAccessNode, DataType]:
+    def if_false(self):
         """
-        Node used if the comparison is false.
+        Data-type used if the comparison is false.
         """
         return self._if_false
 
@@ -463,7 +463,7 @@ class StructMemberInfoNode(ASTNode):
     Represents the type of a member.
     This class contains the type, the endianness, if it is a list and it length (if it has one).
     """
-    def __init__(self, type_token: Union[Token, TernaryDataTypeNode], endian: Union[Endian, TernaryEndianNode] = Endian.BIG, is_list: bool = False, list_length_node: Union[None, UnaryOpNode, BinOpNode] = None, string_delimiter: str = r"\0"):
+    def __init__(self, type_token: Union[Token, TernaryDataTypeNode], endian: Union[Endian, TernaryEndianNode] = Endian.BIG, is_list: bool = False, list_length_node: Union[None, UnaryOpNode, BinOpNode, ComparisonNode] = None, delimiter: str = r"\0"):
         r"""
         :param type_token: Token or ternary operator for the type of the member.
         :type type_token: Union[Token,TernaryDataTypeNode]
@@ -471,16 +471,16 @@ class StructMemberInfoNode(ASTNode):
         :type endian: Union[Endian, TernaryEndianNode]
         :param is_list: If the member is a list, defaults to False.
         :type is_list: bool, optional
-        :param list_length_node: Length of the list if this member is a list, defaults to None
-        :type list_length_node: Union[None,UnaryOpNode,BinOpNode]
-        :param string_delimiter: If the type is a string, the delimiter of the string, default to '\\0'.
-        :type string_delimiter: str
+        :param list_length_node: Length of the list (as a integer or a comparison if the member is repeated) if this member is a list, can be None to indicates no length is specified, defaults to None.
+        :type list_length_node: Union[None,UnaryOpNode,BinOpNode,ComparisonNode]
+        :param delimiter: If the type is a string or a bytes, the delimiter of the string or the bytes, default to '\\0'.
+        :type delimiter: str
         """
         self._type: Union[Token, TernaryDataTypeNode] = type_token
         self._endian: Union[Endian, TernaryEndianNode] = endian
         self._is_list: bool = is_list
-        self._list_length_node: Union[None, UnaryOpNode, BinOpNode] = list_length_node
-        self._string_delimiter: str = string_delimiter
+        self._list_length_node: Union[None, UnaryOpNode, BinOpNode, ComparisonNode] = list_length_node
+        self._delimiter: str = delimiter
 
     def to_str(self, depth: int = 0) -> str:
         type_str: str = ""
@@ -536,18 +536,18 @@ class StructMemberInfoNode(ASTNode):
         return self._is_list
 
     @property
-    def list_length(self) -> Union[None, UnaryOpNode, BinOpNode]:
+    def list_length(self) -> Union[None, UnaryOpNode, BinOpNode, ComparisonNode]:
         """
         The length of this member (if it is a list, otherwise None).
         """
         return self._list_length_node
 
     @property
-    def string_delimiter(self) -> str:
+    def delimiter(self) -> str:
         """
-        Delimiter of the string, if the type is a string.
+        Delimiter of the string or bytes, if the type is a string or a bytes.
         """
-        return self._string_delimiter
+        return self._delimiter
 
     def as_data_type(self) -> Optional[DataType]:
         """
@@ -558,7 +558,7 @@ class StructMemberInfoNode(ASTNode):
         """
         if isinstance(self.type, TernaryDataTypeNode):
             return None
-        return DataType(self.type, string_delimiter=self.string_delimiter)
+        return DataType(self.type, delimiter=self.delimiter)
 
 
 class StructMemberDeclareNode(ASTNode):

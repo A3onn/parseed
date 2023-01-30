@@ -16,7 +16,8 @@
 
 <struct_member_type> ::= (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>)
                         | (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>) "[" <expr> "]"
-                        | (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>) "[]"  ;; repeat this member until the end of the buffer
+                        | (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>) "[" <comparison> "]" ;; repeat until the comparison is false
+                        | (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>) "[]"  ;; repeat this member as much as possible
 
 <struct_member_def> ::= <struct_member_type> <identifier> ","
 
@@ -56,11 +57,13 @@
 <ternary_endian> ::= "(" <comparison> "?" <endian> ":" <endian> ")"
 
 ; data-types
-<data_type> ::= "uint8" | "int8" | "uint16" | "int16" | "uint24" | "int24" | "uint32" | "int32" | "uint40" | "int40" | "uint48" | "int48" | "uint64" | "int64" | "uint128" | "int128" | "float" | "double" | <string_data_type>
+<data_type> ::= <string_data_type> | <bytes_data_type> | "uint8" | "int8" | "uint16" | "int16" | "uint24" | "int24" | "uint32" | "int32" | "uint40" | "int40" | "uint48" | "int48" | "uint64" | "int64" | "uint128" | "int128" | "float" | "double"
 
 <ternary_data_type> ::= "(" <comparison> "?" (<data_type>|<identifier>) ":" (<data_type>|<identifier>) ")"
 
 <string_data_type> ::= "string" ( '(' (<expr> | <string> | <char>) ')' )? ;; "string" or "string(delimitor)"
+
+<bytes_data_type> ::= "bytes(" (<expr> | <string> | <char>) ")" ;; "bytes(delimitor)"
 
 
 ; identifier and numbers

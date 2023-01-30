@@ -159,7 +159,8 @@ class Parser:
         """
         <struct_member_type> ::= (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>)
                                 | (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>) "[" <expr> "]"
-                                | (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>) "[]"  ;; repeat this member until the end of the buffer
+                                | (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>) "[" <comparison> "]" ;; repeat until the comparison is false
+                                | (<endian> | <ternary_endian>)+ (<data_type> | <ternary_data_type> | <identifier>) "[]"  ;; repeat this member as much as possible
 
         <endian> ::= "LE" | "BE"
         <ternary_endian> ::= "(" <comparison> "?" <endian> ":" <endian> ")"
@@ -180,83 +181,95 @@ class Parser:
 
         if self.current_token.type == TT_LPAREN:
             # either endian or type, we cannot know now
-            res: Union[TernaryEndianNode, TernaryDataTypeNode] = self._handle_ternary_member_type_or_endian()
+            res: Union[TernaryEndianNode, TernaryDataTypeNode] = self._handle_ternary_member_type_or_endian(struct_endian)
             if isinstance(res, TernaryDataTypeNode):
                 member_type = res
             else:
                 endian = res
                 # now that we are sure we passed the endian, we can check for the type
                 if self.current_token.type == TT_LPAREN:
-                    member_type = self.ternary_data_type()
+                    member_type = self.ternary_data_type(struct_endian)
                 else:
                     member_type = self.current_token
                     self.advance()
+                    if member_type.value == "bytes" and self.current_token.type != TT_LPAREN:
+                        raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '(' for bytes data-type")
         else:
             # endian and ternary data type was check just before
             # we are sure that we are dealing with the type here
             member_type = self.current_token
             self.advance()
+            if member_type.value == "bytes" and self.current_token.type != TT_LPAREN:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '(' for bytes data-type")
 
         is_list: bool = False
         list_length_node: Any = None
 
         if self.current_token.type == TT_IDENTIFIER:  # nothing to do, just continue parsing
             return StructMemberInfoNode(member_type, endian)
-        elif self.current_token.type == TT_LPAREN and isinstance(member_type, Token) and member_type.value == "string":
+        elif self.current_token.type == TT_LPAREN and isinstance(member_type, Token) and member_type.value in ("string", "bytes"):
             self.advance()
-
-            delimiter: str = ""
-            if self.current_token.type == TT_BACKSLASH:
-                delimiter += "\\"
-                self.advance()
-
-            if self.current_token.type == TT_APOST:
-                # SIMPLE CHAR AS DELIMITER
-                self.advance()
-                if self.current_token.type == TT_BACKSLASH:
-                    # example: '\0'
-                    self.advance()
-                    token_str: str = convert_token_as_str(self.current_token)
-                    if len(token_str) != 1:
-                        raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "invalid character")
-                    delimiter += "\\" + token_str
-                else:
-                    token_str: str = convert_token_as_str(self.current_token)
-                    if len(token_str) != 1:
-                        raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "invalid character")
-                    delimiter += token_str
-                self.advance()
-                if self.current_token.type != TT_APOST:
-                    raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected apostrophe")
-            elif self.current_token.type == TT_QUOTAT_MARK:
-                # STRING AS DELIMITER
-                self.advance()
-                delimiter += self._consume_string()
-                if self.current_token.type != TT_QUOTAT_MARK:
-                    raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected quotation mark")
-            elif self.current_token.type == TT_NUM_INT:
-                delimiter += str(self.current_token.value)
-            elif self.current_token.type == TT_IDENTIFIER and self.current_token.value.startswith("x"):
-                delimiter += str(self.current_token.value)
-            else:
-                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected character as delimiter")
-
-            self.advance()
+            delimiter: str = self._read_delimiter()
             if self.current_token.type != TT_RPAREN:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
             self.advance()
-            return StructMemberInfoNode(member_type, endian, string_delimiter=delimiter)
+            return StructMemberInfoNode(member_type, endian, delimiter=delimiter)
         elif self.current_token.type == TT_LBRACK:
             is_list = True
             self.advance()
             list_length_node = None
             if self.current_token.type != TT_RBRACK:
+                current_token_tmp = self.current_token
                 list_length_node = self.expr()
+                if self.current_token.type != TT_RBRACK:
+                    self._rollback_to(current_token_tmp)
+                    list_length_node = self.comparison()
             if self.current_token.type != TT_RBRACK:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ']'")
             self.advance()
 
         return StructMemberInfoNode(member_type, endian, is_list, list_length_node)
+
+    def _read_delimiter(self) -> str:
+        delimiter: str = ""
+        if self.current_token.type == TT_BACKSLASH:
+            delimiter += "\\"
+            self.advance()
+
+        if self.current_token.type == TT_APOST:
+            # SIMPLE CHAR AS DELIMITER
+            self.advance()
+            if self.current_token.type == TT_BACKSLASH:
+                # example: '\0'
+                self.advance()
+                token_str: str = convert_token_as_str(self.current_token)
+                if len(token_str) != 1:
+                    raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "invalid character")
+                delimiter += "\\" + token_str
+            else:
+                token_str: str = convert_token_as_str(self.current_token)
+                if len(token_str) != 1:
+                    raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "invalid character")
+                delimiter += token_str
+            self.advance()
+            if self.current_token.type != TT_APOST:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected apostrophe")
+        elif self.current_token.type == TT_QUOTAT_MARK:
+            # STRING AS DELIMITER
+            self.advance()
+            delimiter += self._consume_string()
+            if self.current_token.type != TT_QUOTAT_MARK:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected quotation mark")
+        elif self.current_token.type == TT_NUM_INT:
+            delimiter += str(self.current_token.value)
+        elif self.current_token.type == TT_IDENTIFIER and self.current_token.value.startswith("x"):
+            delimiter += str(self.current_token.value)
+        else:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected character as delimiter")
+
+        self.advance()
+        
+        return delimiter
 
     def struct_member_def(self, struct_endian: Endian) -> StructMemberDeclareNode:
         """
@@ -335,13 +348,13 @@ class Parser:
 
         return MatchNode(condition, cases, member_name)
 
-    def _handle_ternary_member_type_or_endian(self) -> Union[TernaryEndianNode, TernaryDataTypeNode]:
+    def _handle_ternary_member_type_or_endian(self, struct_endian) -> Union[TernaryEndianNode, TernaryDataTypeNode]:
         tmp_curr_token = self.current_token
         try:
             return self.ternary_endian()
         except InvalidStateError:
             self._rollback_to(tmp_curr_token)
-            return self.ternary_data_type()
+            return self.ternary_data_type(struct_endian)
 
     def ternary_endian(self) -> TernaryEndianNode:
         """
@@ -376,7 +389,7 @@ class Parser:
 
         return TernaryEndianNode(comparison_node, if_true, if_false)
 
-    def ternary_data_type(self) -> TernaryDataTypeNode:
+    def ternary_data_type(self, struct_endian: Endian) -> TernaryDataTypeNode:
         """
         <ternary_data_type> ::= "(" <comparison> "?" <data_type> ":" <data_type> ")"
         """
@@ -386,29 +399,67 @@ class Parser:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '?'")
         self.advance()
 
-        if_true_token: Token = self.current_token
-
+        if_true_data_type: StructMemberInfoNode = StructMemberInfoNode(self.current_token)
         self.advance()
+
+        if if_true_data_type.type == "bytes" and self.current_token.type != TT_LPAREN:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '(' for bytes data-type")
+
+        if self.current_token.type == TT_LPAREN and if_true_data_type.type in ("string", "bytes"):
+            self.advance()
+            if_true_data_type._delimiter = self._read_delimiter()
+            if self.current_token.type != TT_RPAREN:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
+            self.advance()
+        elif self.current_token.type == TT_LBRACK:
+            is_list = True
+            self.advance()
+            list_length_node = None
+            if self.current_token.type != TT_RBRACK:
+                current_token_tmp = self.current_token
+                list_length_node = self.expr()
+                if self.current_token.type != TT_RBRACK:
+                    self._rollback_to(current_token_tmp)
+                    list_length_node = self.comparison()
+            if self.current_token.type != TT_RBRACK:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ']'")
+            self.advance()
+
         if self.current_token.type != TT_COLON:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ':'")
         self.advance()
 
-        if_false_token: Token = self.current_token
-
+        if_false_data_type: StructMemberInfoNode = StructMemberInfoNode(self.current_token)
         self.advance()
+
+        if if_false_data_type.type == "bytes" and self.current_token.type != TT_LPAREN:
+            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected '(' for bytes data-type")
+
+        if self.current_token.type == TT_LPAREN and if_false_data_type.type in ("string", "bytes"):
+            self.advance()
+            if_false_data_type._delimiter = self._read_delimiter()
+            if self.current_token.type != TT_RPAREN:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
+            self.advance()
+        elif self.current_token.type == TT_LBRACK:
+            is_list = True 
+            self.advance()
+            list_length_node = None
+            if self.current_token.type != TT_RBRACK:
+                current_token_tmp = self.current_token
+                list_length_node = self.expr()
+                if self.current_token.type != TT_RBRACK:
+                    self._rollback_to(current_token_tmp)
+                    list_length_node = self.comparison()
+            if self.current_token.type != TT_RBRACK:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ']'")
+            self.advance()
+
         if self.current_token.type != TT_RPAREN:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
         self.advance()
 
-        if_true: Union[IdentifierAccessNode, DataType] = IdentifierAccessNode(if_true_token.value)
-        if if_true_token.value in DATA_TYPES:
-            if_true = DataType(if_true_token.value)
-
-        if_false: Union[IdentifierAccessNode, DataType] = IdentifierAccessNode(if_false_token.value)
-        if if_false_token.value in DATA_TYPES:
-            if_false = DataType(if_false_token.value)
-
-        return TernaryDataTypeNode(comparison_node, if_true, if_false)
+        return TernaryDataTypeNode(comparison_node, if_true_data_type, if_false_data_type)
 
     def comparison(self) -> ComparisonNode:
         """

@@ -70,8 +70,8 @@ def test_struct_member_ternary_type():
     assert member.name == "member"
     assert member.infos.endian == Endian.BIG
     assert isinstance(member.infos.type, TernaryDataTypeNode)
-    assert isinstance(member.infos.type.if_true, DataType)
-    assert isinstance(member.infos.type.if_false, DataType)
+    assert isinstance(member.infos.type.if_true, StructMemberInfoNode)
+    assert isinstance(member.infos.type.if_false, StructMemberInfoNode)
 
     assert isinstance(member.infos.type.comparison, ComparisonNode)
     assert member.infos.type.comparison.left_node.value == 1

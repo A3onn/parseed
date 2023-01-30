@@ -26,7 +26,7 @@ class Python_Class(ParseedOutputGenerator):
         cb.add_line("def __init__(self, buf):")
         cb = cb.add_block()
 
-        cb.add_line("self.cursor = 0") # will be used sometimes by calling class in the python output file
+        cb.add_line("self.cursor = 0")  # will be used when a member's type is another struct defined in the source-file
         for member in struct.members:
             if isinstance(member, MatchNode):
                 if member.member_name is not None:  # this match-node is used to select the type of a member
@@ -93,16 +93,15 @@ class Python_Class(ParseedOutputGenerator):
                             cb.add_line(f"self.cursor += {datatype.size}")
                         cb = cb.end_block()
                 else:
-                    if datatype.is_string():
+                    if datatype.is_string() or datatype.is_bytes():
                         cb.add_line(f"self.{member.name} = b\"\"")
-                        cb.add_line(f"self.{member.name} = b\"\"")
-                        cb.add_line(f"while buf[self.cursor:self.cursor+len(b\"{datatype.string_delimiter}\")] != b\"{datatype.string_delimiter}\":")
+                        cb.add_line(f"while buf[self.cursor:self.cursor+len(b\"{datatype.delimiter}\")] != b\"{datatype.delimiter}\":")
                         cb = cb.add_block()
-                        cb.add_line(f"self.{member.name} += buf[self.cursor:self.cursor+len(b\"{datatype.string_delimiter}\")]")
-                        cb.add_line(f"self.cursor += len(b\"{datatype.string_delimiter}\")")
-
+                        cb.add_line(f"self.{member.name} += buf[self.cursor:self.cursor+len(b\"{datatype.delimiter}\")]")
+                        cb.add_line(f"self.cursor += len(b\"{datatype.delimiter}\")")
                         cb = cb.end_block()
-                        cb.add_line(f"self.{member.name} = self.{member.name}.decode(\"utf-8\")")
+                        if datatype.is_string():
+                            cb.add_line(f"self.{member.name} = self.{member.name}.decode(\"utf-8\")")
                     else:
                         cb.add_line(f"self.{member.name} = {self.member_read_struct(datatype, member.infos.endian)}")
                         cb.add_line(f"self.cursor += {datatype.size}")
@@ -112,7 +111,7 @@ class Python_Class(ParseedOutputGenerator):
         if isinstance(endian, TernaryEndianNode):
             return f"({self.member_read_struct(datatype, endian.if_true)} if {self.comparison_as_str(endian.comparison)} else {self.member_read_struct(datatype, endian.if_false)})"
 
-        res = "struct.unpack(\""
+        res = "sum(struct.unpack(\""
         res += "<" if endian == Endian.LITTLE else ">"
 
         c = ""
@@ -125,23 +124,23 @@ class Python_Class(ParseedOutputGenerator):
         elif datatype.size == 2:
             c = "h"
         elif datatype.size == 3:
-            c = "h"
+            c = "hb"
         elif datatype.size == 4:
             c = "i"
         elif datatype.size == 5:
-            c = "i"
+            c = "ib"
         elif datatype.size == 6:
-            c = "i"
+            c = "ih"
         elif datatype.size == 8:
             c = "q"
         elif datatype.size == 16:
-            c = "q"
+            c = "qq"
 
         if not datatype.signed and not datatype.is_float() and not datatype.is_double():
             c = c.upper()
         res += c
 
-        res += f"\", buf[self.cursor:self.cursor+{datatype.size}])[0]"
+        res += f"\", buf[self.cursor:self.cursor+{datatype.size}]))"
         return res
 
     def expression_as_str(self, node: Union[FloatNumberNode, IntNumberNode, BinOpNode, UnaryOpNode, IdentifierAccessNode]):
