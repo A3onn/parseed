@@ -63,7 +63,7 @@ class Python_Class(ParseedOutputGenerator):
                         cb.add_line(f"self.{member.name} = {tdtn.if_true.name}(buf[self.cursor:])") # pass the buffer to the class representing the type
                         cb.add_line(f"self.cursor += self.{member.name}.cursor") # continue to parse the buffer after the called class has parsed
                     else:
-                        cb.add_line(f"self.{member.name} = {self.member_read_struct(tdtn.if_true, member.infos.endian)}")
+                        cb.add_line(f"self.{member.name} = {self.member_read_struct(tdtn.if_true.as_data_type(), member.infos.endian)}")
                     cb = cb.end_block()
                     cb.add_line(f"else:")
                     cb = cb.add_block()
@@ -71,7 +71,7 @@ class Python_Class(ParseedOutputGenerator):
                         cb.add_line(f"self.{member.name} = {tdtn.if_false.name}(buf[self.cursor:])")
                         cb.add_line(f"self.cursor += self.{member.name}.cursor") # continue to parse the buffer after the called class has parsed
                     else:
-                        cb.add_line(f"self.{member.name} = {self.member_read_struct(tdtn.if_false, member.infos.endian)}")
+                        cb.add_line(f"self.{member.name} = {self.member_read_struct(tdtn.if_false.as_data_type(), member.infos.endian)}")
                     cb = cb.end_block()
                     continue
 

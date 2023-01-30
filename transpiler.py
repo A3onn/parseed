@@ -134,11 +134,11 @@ class ParseedOutputGenerator(ABC):
                 raise UnknownTypeError(member.infos._type.pos_start, member.infos._type.pos_end, member.infos.type, struct.name)
         elif isinstance(member.infos.type, TernaryDataTypeNode):
             # TODO: change error position to correct token
-            if not isinstance(member.infos.type.if_true, DataType):
-                if self.get_struct_by_name(member.infos.type.if_true) is None and self.get_bitfield_by_name(member.infos.type) == None:
+            if not member.infos.type.if_true.type in DATA_TYPES:
+                if self.get_struct_by_name(member.infos.type.if_true.type) is None and self.get_bitfield_by_name(member.infos.type.if_true.type) == None:
                     raise UnknownTypeError(member._name_token.pos_start, member._name_token.pos_end, member.infos.type.if_true.name, struct.name)
-            if not isinstance(member.infos.type.if_false, DataType):
-                if self.get_struct_by_name(member.infos.type.if_false) is None and self.get_bitfield_by_name(member.infos.type) == None:
+            if not member.infos.type.if_false.type in DATA_TYPES:
+                if self.get_struct_by_name(member.infos.type.if_false.type) is None and self.get_bitfield_by_name(member.infos.type.if_false.type) == None:
                     raise UnknownTypeError(member._name_token.pos_start, member._name_token.pos_end, member.infos.type.if_false.name, struct.name)
 
     def __check_duplicate_members(self, struct):
@@ -192,7 +192,7 @@ class ParseedOutputGenerator(ABC):
 
         if visited_member.infos.type in DATA_TYPES:  # base case, cannot visit native data types as they are not structs
             return
-        elif self.get_bitfield_by_name(visited_member.infos.type) is not None:  # base case too
+        elif self.get_bitfield_by_name(visited_member.infos.type) is not None:  # base case too as bitfields don't have members with types
             return
         elif visited_member.infos.type in structs_stack:
             raise RecursiveStructError([self.get_struct_by_name(s) for s in structs_stack])

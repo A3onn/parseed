@@ -373,15 +373,15 @@ class TernaryDataTypeNode(ASTNode):
         res += self._comparison.to_str(depth + 1)
         res += ("\t" * (depth + 1)) + "?\n"
 
-        if isinstance(self._if_true, IdentifierAccessNode):
+        if isinstance(self._if_true, IdentifierAccessNode) or isinstance(self._if_false, StructMemberInfoNode):
             res += self._if_true.to_str(depth + 2) + "\n"
         else:
             res += ("\t" * (depth + 1)) + str(self._if_true) + "\n"
 
         res += ("\t" * (depth + 1)) + ":\n"
 
-        if isinstance(self._if_false, IdentifierAccessNode):
-            res += self._if_false.to_str(depth + 2) + "\n)"
+        if isinstance(self._if_false, IdentifierAccessNode) or isinstance(self._if_false, StructMemberInfoNode):
+            res += self._if_false.to_str(depth + 2) + "\n"
         else:
             res += ("\t" * (depth + 1)) + str(self._if_false) + "\n"
         return res + ("\t" * depth) + ")" + "\n"
