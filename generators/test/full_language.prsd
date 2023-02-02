@@ -1,0 +1,107 @@
+// This file is meant to be used to test generators
+// It features every parts of the language
+
+BE struct Numbers_big_endian {
+    // the number after "number_" is the value of the member
+    uint8 number_128,
+    int8 number_129,
+    uint16 number_130,
+    int16 number_131,
+    uint24 number_132,
+    int24 number_133,
+    uint32 number_134,
+    int32 number_135,
+    uint40 number_136,
+    int40 number_137,
+    uint48 number_138,
+    int48 number_139,
+    uint64 number_140,
+    int64 number_141,
+    uint128 number_142,
+    int128 number_143,
+    float number_144,
+    double number_145,
+}
+
+LE struct Numbers_little_endian {
+    // the number after "number_" is the value of the member
+    uint8 number_128,
+    int8 number_129,
+    uint16 number_130,
+    int16 number_131,
+    uint24 number_132,
+    int24 number_133,
+    uint32 number_134,
+    int32 number_135,
+    uint40 number_136,
+    int40 number_137,
+    uint48 number_138,
+    int48 number_139,
+    uint64 number_140,
+    int64 number_141,
+    uint128 number_142,
+    int128 number_143,
+    float number_144,
+    double number_145,
+}
+
+struct Strings {
+    string string_null_delimitor, // value should be "string_null_delimitor"
+    string(1) string_0x1_delimitor, // value should be "string_0x1_delimitor"
+    string('a') string_a_char_delimitor, // value should be "string_a_char_delimitor"
+    string("test") string_test_string_delimitor, // value should be "string_test_string_delimitor"
+}
+
+struct Ternary_endian_operators {
+    (1 == 1 ? LE : BE) uint8 one_equal_one, // 127
+    (1 < 1 ? LE : BE) uint8 one_less_one, // 128
+    (1 <= 1 ? LE : BE) uint8 one_less_or_equal_one, // 129
+    (1 > 1 ? LE : BE) uint8 one_greater_one, // 130
+    (1 >= 1 ? LE : BE) uint8 one_greater_or_equal_one, // 131
+    (1 != 1 ? LE : BE) uint8 one_different_one, // 132
+}
+
+struct Ternary_type_operators {
+    (1 == 1 ? uint8 : int8) one_equal_one, // 127
+    (1 < 1 ? uint8 : int8) one_less_one, // 128
+    (1 <= 1 ? uint8 : int8) one_less_or_equal_one, // 129
+    (1 > 1 ? uint8 : int8) one_greater_one, // 130
+    (1 >= 1 ? uint8 : int8) one_greater_or_equal_one, // 131
+    (1 != 1 ? uint8 : int8) one_different_one, // 132
+}
+
+struct Ternary_endian_and_type_operators {
+    (1 == 1 ? LE : BE) (1 == 1 ? uint8 : int8) one_equal_one, // 127
+    (1 < 1 ? LE : BE) (1 < 1 ? uint8 : int8) one_less_one, // 128
+    (1 <= 1 ? LE : BE) (1 <= 1 ? uint8 : int8) one_less_or_equal_one, // 129
+    (1 > 1 ? LE : BE) (1 > 1 ? uint8 : int8) one_greater_one, // 130
+    (1 >= 1 ? LE : BE) (1 >= 1 ? uint8 : int8) one_greater_or_equal_one, // 131
+    (1 != 1 ? LE : BE) (1 != 1 ? uint8 : int8) one_different_one, // 132
+}
+
+struct Match
+
+bitfield Bitfield_one_byte {
+    a, // 1
+    b, // 0
+    c, // 1
+    d, // 0
+    e, // 1
+    f, // 0
+    g_two_bits(2), // 3
+}
+
+bitfield Bitfield_two_byte_non_used_bits(2) {
+    a, // 1
+}
+
+struct Root_struct {
+    Numbers_big_endian numbers_big_endian,
+    Numbers_little_endian numbers_little_endian,
+    Strings strings,
+    Ternary_endian_operators ternary_endian_operators,
+    Ternary_type_operators ternary_type_operators,
+    Ternary_endian_and_type_operators ternary_endian_and_type_operators,
+    Bitfield_one_byte bitfield_one_byte,
+    Bitfield_two_byte_non_used_bits bitfield_two_byte_non_used_bits,
+}
