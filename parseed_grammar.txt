@@ -61,9 +61,9 @@
 
 <ternary_data_type> ::= "(" <comparison> "?" (<data_type>|<identifier>) ":" (<data_type>|<identifier>) ")"
 
-<string_data_type> ::= "string" ( '(' (<expr> | <string> | <char>) ')' )? ;; "string" or "string(delimitor)"
+<string_data_type> ::= "string" ( '(' (<num_int> | <string> | <char>) ')' )? ;; "string" or "string(delimitor)"
 
-<bytes_data_type> ::= "bytes(" (<expr> | <string> | <char>) ")" ;; "bytes(delimitor)"
+<bytes_data_type> ::= "bytes(" (<num_int> | <string> | <char>) ")" ;; "bytes(delimitor)"
 
 
 ; identifier and numbers
@@ -71,7 +71,7 @@
 
 <num_float> ::= <num_int> "." <num_int>
 
-<num_int> ::= ([0-9])+
+<num_int> ::= ([0-9])+ | "\x" [0-9]{1,2}
 
 <char> ::= "'" [:print:] "'"
 

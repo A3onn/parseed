@@ -10,12 +10,12 @@ struct Strings {
     string hello_world_null_byte,
     string('a') hello_world_a_char_terminated,
     string("test") hello_world_test_string_terminated,
-    string(2+2-3) hello_world_one_terminated,
+    string(1) hello_world_one_terminated,
 }
 
 struct Bytes {
     bytes(0) test_zero_terminated,
-    bytes(0x15) TEST_fifteen_terminated,
+    bytes(\\x15) TEST_fifteen_terminated,
 }
 
 struct Floating_Point_Numbers {
@@ -116,5 +116,6 @@ def generate_numbers_binary_file(f, endian: str):
         f.write(struct.pack(endian_char + str(len("Hello worldtest")) + "s", b"Hello worldtest"))
         f.write(struct.pack(endian_char + str(len("Hello world\01")) + "s", b"Hello world\01"))
 
+        # struct Bytes
         f.write(struct.pack(endian_char + str(len("test\00")) + "s", b"test\00"))
         f.write(struct.pack(endian_char + str(len("TEST\00")) + "s", b"TEST\00"))

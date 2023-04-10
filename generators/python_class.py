@@ -54,7 +54,7 @@ class Python_Class(ParseedOutputGenerator):
                             else:
                                 cb.add_line(f"self.{member_match.name} = {self.member_read_struct(member_match.name, member_match.infos.endian)}")
                         cb = cb.end_block()
-            else:
+            else: # simple member
                 if isinstance(member.infos.type, TernaryDataTypeNode):
                     tdtn: TernaryDataTypeNode = member.infos.type
                     cb.add_line(f"if {self.comparison_as_str(tdtn.comparison)}:")
@@ -77,7 +77,7 @@ class Python_Class(ParseedOutputGenerator):
 
                 datatype: DataType = member.infos.as_data_type()
                 if member.infos.is_list:
-                    if member.infos.list_length is None:
+                    if member.infos.list_length is None: # no length given
                         cb.add_line(f"self.{member.name} = []")
                         # TODO: calculate remaining length of buffer
                     else:

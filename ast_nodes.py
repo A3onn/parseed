@@ -552,6 +552,7 @@ class StructMemberInfoNode(ASTNode):
     def as_data_type(self) -> Optional[DataType]:
         """
         Return the type as a DataType if the type is not a ternary operator.
+        The type can be an identifier.
 
         :return: The type as DataType.
         :rtype: DataType, optional
