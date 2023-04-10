@@ -34,13 +34,16 @@ def main():
     generator_class = next(filter(lambda cls: cls.__name__ == arguments.generator, ParseedOutputGenerator.__subclasses__()))
 
     if arguments.test_generator != None:
+        if arguments.output_file == "-":
+            print(f"Please specify an output name ('-o' or '--output').")
+            return 1
         if not os.path.exists(arguments.test_generator):
             print(f"'{arguments.test_generator}' does not exist.")
             return 1
-        if not os.path.isdir(arguments.test_generator):
+        elif not os.path.isdir(arguments.test_generator):
             print(f"'{arguments.test_generator}' is not a directory.")
             return 1
-        if not os.access(arguments.test_generator, os.W_OK):
+        elif not os.access(arguments.test_generator, os.W_OK):
             print(f"'{arguments.test_generator}' is not writable.")
             return 1
         return start_test_generator(generator_class, arguments.test_generator, arguments.output_file)
