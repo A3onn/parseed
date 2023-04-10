@@ -1,0 +1,27 @@
+[project]
+name = "Parseed"
+description = "A C-struct inspired language generating parsers in multiple programming languages."
+version = "0.0.1dev"
+authors = [
+  { name="Aeonn", email="theodebauvais@protonmail.com" },
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.5"
+classifiers = [
+    "Private :: Do Not Upload", # for now
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Typing :: Typed",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/A3onn/parseed"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -l"
+testpaths = [
+    "test",
+]
