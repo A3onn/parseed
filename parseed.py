@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 from lexer import Lexer, Token
+from test_generator import start_test_generator
 from parser import Parser
 from ast_nodes import ASTNode
 from transpiler import ParseedOutputGenerator, Writer
 from errors import ParseedBaseError
 from typing import List
 from glob import glob
-from os import path as os_path
 from pathlib import Path
 from importlib import import_module
-import argparse
+import argparse, os
 
 
 def main():
     # import generators dynamically
-    for file_path in glob("generators" + os_path.sep + "*.py"):
-        filename = os_path.basename(file_path)
+    for file_path in glob("generators" + os.path.sep + "*.py"):
+        filename = os.path.basename(file_path)
         # importing "generators.<file name without '.py'>"
         import_module("generators." + Path(filename).stem)
 
@@ -24,6 +24,7 @@ def main():
     argparser.add_argument("-o", "--output", help="Output file of the generated code ('-' for STDOUT).", dest="output_file", default="-")
     argparser.add_argument("-L", "--lexer", action="store_true", help="Print the lexer's list of tokens", dest="show_lexer")
     argparser.add_argument("-A", "--ast", action="store_true", help="Print the abstract syntax tree", dest="show_ast")
+    argparser.add_argument("-T", "--test-generator", help="Test a generator by generating a specific parser from the generator and its corresponding binary file to test on. The argument must be the directory where these 2 files will be generated.", dest="test_generator", default=None)
     argparser.add_argument("-g", "--generator", help="The generator to use", dest="generator",
                             choices=[c.__name__ for c in ParseedOutputGenerator.__subclasses__()], default=ParseedOutputGenerator.__subclasses__()[0].__name__)
 
@@ -31,6 +32,18 @@ def main():
 
     # reference of the generator's class
     generator_class = next(filter(lambda cls: cls.__name__ == arguments.generator, ParseedOutputGenerator.__subclasses__()))
+
+    if arguments.test_generator != None:
+        if not os.path.exists(arguments.test_generator):
+            print(f"'{arguments.test_generator}' does not exist.")
+            return 1
+        if not os.path.isdir(arguments.test_generator):
+            print(f"'{arguments.test_generator}' is not a directory.")
+            return 1
+        if not os.access(arguments.test_generator, os.W_OK):
+            print(f"'{arguments.test_generator}' is not writable.")
+            return 1
+        return start_test_generator(generator_class, arguments.test_generator, arguments.output_file)
 
     if arguments.file == "":
         while True:

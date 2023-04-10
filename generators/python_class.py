@@ -102,6 +102,9 @@ class Python_Class(ParseedOutputGenerator):
                         cb = cb.end_block()
                         if datatype.is_string():
                             cb.add_line(f"self.{member.name} = self.{member.name}.decode(\"utf-8\")")
+                    elif self.is_member_type_struct(member.infos.type):
+                        cb.add_line(f"self.{member.name} = {member.infos.type}(buf[self.cursor:])")
+                        cb.add_line(f"self.cursor += self.{member.name}.cursor") # continue to parse the buffer after the called class has parsed
                     else:
                         cb.add_line(f"self.{member.name} = {self.member_read_struct(datatype, member.infos.endian)}")
                         cb.add_line(f"self.cursor += {datatype.size}")
