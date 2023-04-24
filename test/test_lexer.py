@@ -109,8 +109,8 @@ def test_brack():
     assert tokens[4].type == TT_RBRACK
     assert tokens[5].type == TT_RBRACK
 
-def test_parenthesis_apostrophe_quotation_mark():
-    lexer = Lexer("(( )()) \"\" \" ' ''", "")
+def test_parenthesis():
+    lexer = Lexer("(( )()) ", "")
     tokens = lexer.run()
     assert tokens[0].type == TT_LPAREN
     assert tokens[1].type == TT_LPAREN
@@ -118,12 +118,40 @@ def test_parenthesis_apostrophe_quotation_mark():
     assert tokens[3].type == TT_LPAREN
     assert tokens[4].type == TT_RPAREN
     assert tokens[5].type == TT_RPAREN
-    assert tokens[6].type == TT_QUOTAT_MARK
-    assert tokens[7].type == TT_QUOTAT_MARK
-    assert tokens[8].type == TT_QUOTAT_MARK
-    assert tokens[9].type == TT_APOST
-    assert tokens[10].type == TT_APOST
-    assert tokens[11].type == TT_APOST
+
+def test_strings():
+    lexer = Lexer("\"test\" \" test \"", "")
+    tokens = lexer.run()
+    assert tokens[0].type == TT_STRING
+    assert tokens[0].value == "test"
+    assert tokens[1].type == TT_STRING
+    assert tokens[1].value == " test "
+
+    with pytest.raises(ExpectedMoreCharError):
+        lexer = Lexer("\"test", "")
+        tokens = lexer.run()
+
+def test_chars():
+    lexer = Lexer("'c' '0' '\\00' '\\0' '\\''", "")
+    tokens = lexer.run()
+    assert tokens[0].type == TT_CHAR
+    assert tokens[0].value == "c"
+    assert tokens[1].type == TT_CHAR
+    assert tokens[1].value == "0"
+    assert tokens[2].type == TT_CHAR
+    assert tokens[2].value == r"\00"
+    assert tokens[3].type == TT_CHAR
+    assert tokens[3].value == r"\0"
+    assert tokens[4].type == TT_CHAR
+    assert tokens[4].value == "\\'"
+
+    with pytest.raises(InvalidSyntaxError):
+        lexer = Lexer("'invalid'", "")
+        tokens = lexer.run()
+
+    with pytest.raises(ExpectedMoreCharError):
+        lexer = Lexer("'a", "")
+        tokens = lexer.run()
 
 def test_comma_colon_semicolon_dot_question_mark():
     lexer = Lexer(",, ; ; .. . :: : ? ??", "")

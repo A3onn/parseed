@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from typing import List, Optional
 from string import digits as DIGITS, ascii_letters as LETTERS
-from errors import IllegalCharacterError, ExpectedMoreCharError
+from errors import IllegalCharacterError, ExpectedMoreCharError, InvalidSyntaxError
 from utils import *
 
 LETTERS_DIGITS = LETTERS + DIGITS
@@ -61,9 +61,9 @@ TT_COMMENT = "COMMENT"
 TT_COMMA = "COMMA"
 TT_DOT = "DOT"
 TT_SEMICOL = "SEMICOL"
-TT_APOST = "APOST"  # apostrophe
-TT_QUOTAT_MARK = "QUOTAT_MARK"
 TT_BACKSLASH = "BACKSLASH"
+TT_STRING = "STRING"
+TT_CHAR = "CHAR"
 
 # for ternary operator
 TT_COLON = "COLON"
@@ -125,14 +125,12 @@ class Lexer:
             if self.current_char in [" ", "\t", "\n"]:
                 self._next_token()
             elif self.current_char == "'":
-                tokens.append(Token(TT_APOST, pos_start=self.pos))
-                self._next_token()
+                tokens.append(self._make_char())
             elif self.current_char == "\\":
                 tokens.append(Token(TT_BACKSLASH, pos_start=self.pos))
                 self._next_token()
             elif self.current_char == "\"":
-                tokens.append(Token(TT_QUOTAT_MARK, pos_start=self.pos))
-                self._next_token()
+                tokens.append(self._make_string())
             elif self.current_char in DIGITS:
                 tokens.append(self._make_number_or_dot())
             elif self.current_char == "?":
@@ -352,6 +350,50 @@ class Lexer:
             self._next_token()
             return Token(TT_COMP_OR, pos_start=pos_start, pos_end=self.pos)
         return Token(TT_BIN_OR, pos_start=pos_start, pos_end=self.pos)
+    
+    def _make_string(self) -> Token:
+        """
+        Handle token for strings.
+        """
+        pos_start: Position = self.pos.get_copy()
+        self._next_token()
+        res: str = ""
+        while True:
+            res += self._read_until("\"")
+
+            if self.current_char is None:
+                raise ExpectedMoreCharError(pos_start, self.pos, ["\""])
+            
+            if self.text[self.pos.idx-1] == "\\":
+                res = res[:-1]
+                res += "\""
+                self._next_token()
+            else:
+                self._next_token()
+                return Token(TT_STRING, res)
+
+    def _make_char(self) -> Token:
+        """
+        Handle token for a char.
+        """
+        pos_start: Position = self.pos.get_copy()
+        res: str = ""
+        self._next_token()
+        while True:
+            res += self._read_until("\'")
+
+            if self.current_char is None:
+                raise ExpectedMoreCharError(pos_start, self.pos, ["\""])
+
+            if self.text[self.pos.idx-1] == "\\":
+                res += "'"
+                self._next_token()
+            else:
+                if res[0] != "\\" and len(res) > 1:
+                    raise InvalidSyntaxError(pos_start, self.pos, f"A char must have a length of 1 or have a format of \"\\xx\"")
+
+                self._next_token()
+                return Token(TT_CHAR, res)
 
     def _read_until(self, stop_chars: str) -> str:
         """
@@ -364,7 +406,6 @@ class Lexer:
             res += self.current_char
             self._next_token()
         return res
-
 
 def convert_token_as_str(token: Token) -> str:
     """
@@ -431,10 +472,10 @@ def convert_token_as_str(token: Token) -> str:
         return "."
     elif token.type == TT_SEMICOL:
         return ";"
-    elif token.type == TT_APOST:
-        return "'"
-    elif token.type == TT_QUOTAT_MARK:
-        return '"'
+    elif token.type == TT_STRING:
+        return "\"" + token.value + "\""
+    elif token.type == TT_CHAR:
+        return "'" + token.value + "'"
     elif token.type == TT_BACKSLASH:
         return "\\"
     elif token.type == TT_COLON:

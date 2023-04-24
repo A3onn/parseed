@@ -144,6 +144,8 @@ class InvalidSyntaxError(ParseedSimpleUnderlinedError):
         """
         super().__init__(pos_start, pos_end, "Invalid syntax error", details)
 
+    def __str__(self):
+        return super().__str__()
 
 class ExpectedMoreCharError(ParseedSimpleUnderlinedError):
     """

@@ -233,6 +233,18 @@ def test_struct_members_string():
     assert stmts[0].members[0].infos.as_data_type().delimiter == "\\'"
     stmts[0].to_str()
 
+    stmts = Parser(get_tokens(r'struct test { string("test ") test, }')).run()
+    assert stmts[0].members[0].infos.type == "string"
+    assert stmts[0].members[0].infos.delimiter == "test "
+    assert stmts[0].members[0].infos.as_data_type().delimiter == "test "
+    stmts[0].to_str()
+
+    stmts = Parser(get_tokens(r'struct test { string("test  test") test, }')).run()
+    assert stmts[0].members[0].infos.type == "string"
+    assert stmts[0].members[0].infos.delimiter == "test  test"
+    assert stmts[0].members[0].infos.as_data_type().delimiter == "test  test"
+    stmts[0].to_str()
+
 def test_struct_members_bytes():
     stmts = Parser(get_tokens(r'struct test { bytes("\0") test, }')).run()
     assert stmts[0].members[0].infos.type == "bytes"

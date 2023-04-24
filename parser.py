@@ -248,30 +248,10 @@ class Parser:
             delimiter += "\\"
             self.advance()
 
-        if self.current_token.type == TT_APOST:
-            # SIMPLE CHAR AS DELIMITER
-            self.advance()
-            if self.current_token.type == TT_BACKSLASH:
-                # example: '\0'
-                self.advance()
-                token_str: str = convert_token_as_str(self.current_token)
-                if len(token_str) != 1:
-                    raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "invalid character")
-                delimiter += "\\" + token_str
-            else:
-                token_str: str = convert_token_as_str(self.current_token)
-                if len(token_str) != 1:
-                    raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "invalid character")
-                delimiter += token_str
-            self.advance()
-            if self.current_token.type != TT_APOST:
-                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected apostrophe")
-        elif self.current_token.type == TT_QUOTAT_MARK:
-            # STRING AS DELIMITER
-            self.advance()
-            delimiter += self._consume_string()
-            if self.current_token.type != TT_QUOTAT_MARK:
-                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected quotation mark")
+        if self.current_token.type == TT_STRING:
+            delimiter += self.current_token.value
+        elif self.current_token.type == TT_CHAR:
+            delimiter += self.current_token.value
         elif self.current_token.type == TT_NUM_INT:
             delimiter += str(self.current_token.value)
         elif self.current_token.type == TT_IDENTIFIER and self.current_token.value.startswith("x"):
