@@ -30,3 +30,7 @@ Here is an example:
 - Add more examples:
     - ELF
     - GIF
+
+# Done
+
+- Lexer

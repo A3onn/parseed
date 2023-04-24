@@ -25,3 +25,6 @@ addopts = "-ra -l"
 testpaths = [
     "test",
 ]
+
+[tool.pyright] # for parser.py
+reportShadowedImports = false

@@ -34,6 +34,9 @@ class Parser:
         return self.statements()
 
     def advance(self) -> Token:
+        """
+        Return the next token.
+        """
         self.token_index += 1
         if self.token_index < len(self.tokens):
             self.current_token = self.tokens[self.token_index]
@@ -43,12 +46,18 @@ class Parser:
         return self.current_token
 
     def statements(self) -> list:
+        """
+        <statements> ::= <statement>+
+        """
         res: list = []
         while self.current_token.type != TT_EOF:
             res.append(self.statement())
         return res
 
     def statement(self):
+        """
+        <statement> ::=  <bitfield_stmt> | <struct_stmt>
+        """
         token: Token = self.current_token
 
         if token.type == TT_KEYWORD:
@@ -231,6 +240,9 @@ class Parser:
         return StructMemberInfoNode(member_type, endian, is_list, list_length_node)
 
     def _read_delimiter(self) -> str:
+        """
+        Parse a delimiter for string and bytes data-types.
+        """
         delimiter: str = ""
         if self.current_token.type == TT_BACKSLASH:
             delimiter += "\\"
@@ -349,6 +361,11 @@ class Parser:
         return MatchNode(condition, cases, member_name)
 
     def _handle_ternary_member_type_or_endian(self, struct_endian) -> Union[TernaryEndianNode, TernaryDataTypeNode]:
+        """
+        Handle parsing ternary endian and ternary type by checking if an error is thrown when parsing ternary endian.
+
+        If an error is thrown when parsing with ternary endian, it means it is a ternary data-type.
+        """
         tmp_curr_token = self.current_token
         try:
             return self.ternary_endian()
@@ -506,9 +523,15 @@ class Parser:
         raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected value")
 
     def no_identifier_expr(self) -> Any:
+        """
+        <no_identifier_expr> ::= <no_identifier_term> (("+" | "-" | <logical_operator>) <no_identifier_term>)*
+        """
         return self.binary_op(self.no_identifier_term, [TT_PLUS, TT_MINUS, TT_BIN_OR, TT_BIN_AND, TT_BIN_NOT, TT_BIN_XOR, TT_BIN_LSHIFT, TT_BIN_RSHIFT])
 
     def no_identifier_term(self) -> Any:
+        """
+        <no_identifier_term> ::= <no_identifier_factor> (("*" | "/") <no_identifier_factor>)*
+        """
         return self.binary_op(self.no_identifier_factor, [TT_MULT, TT_DIV])
 
     def factor(self) -> Any:
@@ -555,9 +578,15 @@ class Parser:
         raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected identifier or value")
 
     def expr(self) -> Any:
+        """
+        <expr> ::= <term> (("+" | "-" | <logical_operator>) <term>)*
+        """
         return self.binary_op(self.term, [TT_PLUS, TT_MINUS, TT_BIN_OR, TT_BIN_AND, TT_BIN_NOT, TT_BIN_XOR, TT_BIN_LSHIFT, TT_BIN_RSHIFT])
 
     def term(self) -> Any:
+        """
+        <term> ::= <factor> (("*" | "/") <factor>)*
+        """
         return self.binary_op(self.factor, [TT_MULT, TT_DIV])
 
     def binary_op(self, func, operators) -> BinOpNode:
@@ -578,6 +607,9 @@ class Parser:
         return left_token
 
     def _consume_string(self) -> str:
+        """
+        Consume tokens until reaching a quotation mark and return everything consumed as a string.
+        """
         res: str = ""
 
         while True:

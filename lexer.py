@@ -101,6 +101,9 @@ class Lexer:
         self.text: str = text
 
     def run(self) -> List[Token]:
+        """
+        Run the lexer on the text given in the constructor and return a list of Token.
+        """
         self._next_token()  # init lexer
         return self._make_tokens()
 
@@ -205,6 +208,9 @@ class Lexer:
         return tokens
 
     def _make_identifier(self) -> Token:
+        """
+        Tokenize a word by checking if it is an identifier, data-type or a keyword.
+        """
         res_identifier: str = ""
         pos_start: Position = self.pos.get_copy()
 
@@ -224,6 +230,9 @@ class Lexer:
         return Token(token_type, res_identifier, pos_start, self.pos)
 
     def _make_number_or_dot(self) -> Token:
+        """
+        Tokenize a word by checking if it is a number (integer or float) or a simple dot ('.').
+        """
         pos_start: Position = self.pos.get_copy()
         res_num: str = ""
         dot_count: int = 0
@@ -247,6 +256,9 @@ class Lexer:
             return Token(TT_NUM_FLOAT, res_num, pos_start, self.pos)
 
     def _make_div_or_comment(self) -> Token:
+        """
+        Tokenize a word by checking if it is a comment ('//') or a simple divide.
+        """
         pos_start: Position = self.pos.get_copy()
         div_count: int = 1
 
@@ -262,6 +274,9 @@ class Lexer:
 
     # comparisons
     def _make_not_equal(self) -> Token:
+        """
+        Handle token for not equal comparison ('!=').
+        """
         pos_start: Position = self.pos.get_copy()
         self._next_token()
 
@@ -272,6 +287,9 @@ class Lexer:
         return Token(TT_COMP_NE, pos_start=pos_start, pos_end=self.pos)
 
     def _make_equal(self) -> Token:
+        """
+        Handle token for equal comparison ('==').
+        """
         pos_start: Position = self.pos.get_copy()
         self._next_token()
 
@@ -282,6 +300,9 @@ class Lexer:
         return Token(TT_COMP_EQ, pos_start=pos_start, pos_end=self.pos)
 
     def _make_less_than_or_left_bitshift(self) -> Token:
+        """
+        Handle token for less than, ('<'), less or equal ('<=') or left bitshift ('<<').
+        """
         pos_start: Position = self.pos.get_copy()
         self._next_token()
 
@@ -294,6 +315,9 @@ class Lexer:
         return Token(TT_COMP_LT, pos_start=pos_start, pos_end=self.pos)
 
     def _make_greater_than_or_right_bitshift(self) -> Token:
+        """
+        Handle token for greater than, ('<'), greater or equal ('<=') or right bitshift ('>>').
+        """
         pos_start: Position = self.pos.get_copy()
         self._next_token()
 
@@ -306,6 +330,9 @@ class Lexer:
         return Token(TT_COMP_GT, pos_start=pos_start, pos_end=self.pos)
 
     def _make_bin_and_or_comp_and(self) -> Token:
+        """
+        Handle token for comparison and ('&&') or binary and ('&').
+        """
         pos_start: Position = self.pos.get_copy()
         self._next_token()
 
@@ -315,6 +342,9 @@ class Lexer:
         return Token(TT_BIN_AND, pos_start=pos_start, pos_end=self.pos)
 
     def _make_bin_or_or_comp_or(self) -> Token:
+        """
+        Handle token for comparison or ('||') or binary or ('|').
+        """
         pos_start: Position = self.pos.get_copy()
         self._next_token()
 
@@ -337,6 +367,12 @@ class Lexer:
 
 
 def convert_token_as_str(token: Token) -> str:
+    """
+    Give a Token its corresponding string.
+
+    :param token: Token to convert.
+    :type token: Token
+    """
     if token.type == TT_EOF:
         return ""
     elif token.type == TT_PLUS:
