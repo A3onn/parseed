@@ -585,27 +585,3 @@ class Parser:
 
             left_token = BinOpNode(left_token, MathOperatorNode(op_token), right_token)
         return left_token
-
-    def _consume_string(self) -> str:
-        """
-        Consume tokens until reaching a quotation mark and return everything consumed as a string.
-        """
-        res: str = ""
-
-        while True:
-            if self.current_token.type == TT_QUOTAT_MARK:
-                break
-            elif self.current_token.type == TT_BACKSLASH:
-                self.advance()
-                if self.current_token.type == TT_QUOTAT_MARK:
-                    res += '"'
-                else:
-                    res += "\\" + convert_token_as_str(self.current_token)
-            else:
-                if self.current_token.type == TT_EOF:
-                    # if there is an error just in case
-                    break
-                res += self.current_token.value
-            self.advance()
-
-        return res
