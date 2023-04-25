@@ -66,17 +66,13 @@ struct Root_Struct {
 """
 
 def start_test_generator(generator_class: ParseedOutputGenerator, output_dir: str, output_name: str) -> int:
+    # errors 
     lexer = Lexer(PARSER_CODE, "-")
     parser = Parser(lexer.run())
     ast = parser.run()
 
     writer = Writer()
-
-    try:
-        generator_class(ast).generate(writer)
-    except ParseedBaseError as e:
-        print(e)  # just print the error
-        return 1
+    generator_class(ast).generate(writer)
 
     with open(output_dir + os.sep + output_name, "w") as f:
         f.write(writer.generate_code())

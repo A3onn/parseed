@@ -802,7 +802,6 @@ class BitfieldDefNode(ASTNode):
         tmp._left_node = self.members[-2].size
         tmp._math_op = MathOperatorNode(Token(TT_PLUS))
         tmp._right_node = self.members[-1].size
-        print(self.members[-2].to_str())
         return res
 
     @property

@@ -19,6 +19,9 @@ classifiers = [
 [project.urls]
 "Homepage" = "https://github.com/A3onn/parseed"
 
+[build-system]
+requires = ["rich"]
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "-ra -l"

@@ -83,6 +83,13 @@ class ParseedOutputGenerator(ABC):
     Abstract class that must be used as a base class for generators.
     This class contains one abstract method that is 'generate'.
     """
+
+    """
+    Syntax hightlighter used to print the code generated.
+    Leave to an empty string to not use syntax highlighting.
+    """
+    PYGMENT_HIGHLIGHTER: str = ""
+
     def __init__(self, ast: List[Any]):
         self.structs: List[StructDefNode] = []
         self.bitfields: List[BitfieldDefNode] = []

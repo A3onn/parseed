@@ -3,6 +3,9 @@ from transpiler import *
 from ast_nodes import *
 
 class Python_Class(ParseedOutputGenerator):
+
+    PYGMENT_HIGHLIGHTER = "Python"
+
     def generate(self, writer: Writer):
         cb = writer.add_block()
         cb.add_line("#!/usr/bin/env python3")
