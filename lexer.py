@@ -370,7 +370,7 @@ class Lexer:
                 self._next_token()
             else:
                 self._next_token()
-                return Token(TT_STRING, res)
+                return Token(TT_STRING, res, pos_start, self.pos)
 
     def _make_char(self) -> Token:
         """
@@ -393,7 +393,7 @@ class Lexer:
                     raise InvalidSyntaxError(pos_start, self.pos, f"A char must have a length of 1 or have a format of \"\\xx\"")
 
                 self._next_token()
-                return Token(TT_CHAR, res)
+                return Token(TT_CHAR, res, pos_start, self.pos)
 
     def _read_until(self, stop_chars: str) -> str:
         """
