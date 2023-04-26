@@ -3,6 +3,7 @@ from typing import List, Any, Union, Dict
 from lexer import *
 from ast_nodes import *
 from errors import InvalidStateError, InvalidSyntaxError
+from binascii import unhexlify
 
 
 class Parser:
@@ -218,7 +219,7 @@ class Parser:
             return StructMemberInfoNode(member_type, endian)
         elif self.current_token.type == TT_LPAREN and isinstance(member_type, Token) and member_type.value in ("string", "bytes"):
             self.advance()
-            delimiter: str = self._read_delimiter()
+            delimiter: Union[CharNode, StringNode, IntNumberNode] = self._read_delimiter()
             if self.current_token.type != TT_RPAREN:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
             self.advance()
@@ -239,29 +240,36 @@ class Parser:
 
         return StructMemberInfoNode(member_type, endian, is_list, list_length_node)
 
-    def _read_delimiter(self) -> str:
+    def _read_delimiter(self) -> Union[CharNode, StringNode, IntNumberNode]:
         """
         Parse a delimiter for string and bytes data-types.
         """
-        delimiter: str = ""
+        has_slash: bool = False
         if self.current_token.type == TT_BACKSLASH:
-            delimiter += "\\"
+            has_slash = True
             self.advance()
 
         if self.current_token.type == TT_STRING:
-            delimiter += self.current_token.value
+            delimiter = self.current_token.value
+            self.advance()
+            return StringNode(Token(TT_STRING, delimiter))
         elif self.current_token.type == TT_CHAR:
-            delimiter += self.current_token.value
+            delimiter = self.current_token.value
+            self.advance()
+            return CharNode(Token(TT_CHAR, delimiter))
         elif self.current_token.type == TT_NUM_INT:
-            delimiter += str(self.current_token.value)
-        elif self.current_token.type == TT_IDENTIFIER and self.current_token.value.startswith("x"):
-            delimiter += str(self.current_token.value)
-        else:
-            raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected character as delimiter")
+            delimiter = self.current_token.value
+            self.advance()
+            return IntNumberNode(Token(TT_NUM_INT, delimiter))
+        elif self.current_token.type == TT_IDENTIFIER and self.current_token.value.startswith("x") and has_slash:
+            try:
+                value = int.from_bytes(unhexlify(self.current_token.value[1:]), "big")
+                self.advance()
+                return IntNumberNode(Token(TT_NUM_INT, value))
+            except Exception as e:
+                raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "invalid hex value: " + str(e))
 
-        self.advance()
-        
-        return delimiter
+        raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "invalid character as delimiter")
 
     def struct_member_def(self, struct_endian: Endian) -> StructMemberDeclareNode:
         """

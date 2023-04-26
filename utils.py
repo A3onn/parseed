@@ -121,16 +121,17 @@ class DataType:
     name: str = ""
     size: int = -1
     signed = False
-    delimiter = ""
+    delimiter = None
+    # TODO: add delimiter type: string, char, int
 
-    def __init__(self, name: str, delimiter=r"\0"):
+    def __init__(self, name: str, delimiter=None):
         """
         :param name: Name of the type, must not be an identifier.
         :type name: str
         """
         self.name = name
         self.size = -1
-        self.delimiter = delimiter
+        self.delimiter = delimiter.value
         if name == "uint8":
             self.size = 1
             self.signed = False
