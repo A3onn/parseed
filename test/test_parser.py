@@ -256,6 +256,13 @@ def test_struct_members_string():
     assert stmts[0].members[0].infos.as_data_type().delimiter == "test  test"
     stmts[0].to_str()
 
+    stmts = Parser(get_tokens(r'struct test { string(some_identifier) test, }')).run()
+    assert stmts[0].members[0].infos.type == "string"
+    assert isinstance(stmts[0].members[0].infos.delimiter, IdentifierAccessNode)
+    assert stmts[0].members[0].infos.delimiter.name == "some_identifier"
+    assert stmts[0].members[0].infos.as_data_type() == None
+    stmts[0].to_str()
+
 def test_struct_members_bytes():
     stmts = Parser(get_tokens(r'struct test { bytes("\0") test, }')).run()
     assert stmts[0].members[0].infos.type == "bytes"
@@ -315,11 +322,14 @@ def test_struct_members_bytes():
     assert stmts[0].members[0].infos.as_data_type().delimiter == "\\'"
     stmts[0].to_str()
 
-def test_struct_member_string_errors():
-    with pytest.raises(InvalidSyntaxError):
-        # missing quotes around the delimiter
-        Parser(get_tokens(r'struct test { string(some_string) test, }')).run()
+    stmts = Parser(get_tokens(r'struct test { bytes(some_identifier) test, }')).run()
+    assert stmts[0].members[0].infos.type == "bytes"
+    assert isinstance(stmts[0].members[0].infos.delimiter, IdentifierAccessNode)
+    assert stmts[0].members[0].infos.delimiter.name == "some_identifier"
+    assert stmts[0].members[0].infos.as_data_type() == None
+    stmts[0].to_str()
 
+def test_struct_member_string_errors():
     with pytest.raises(InvalidSyntaxError):
         # missing quotes around the delimiter
         Parser(get_tokens(r'struct test { string(some string) test, }')).run()
@@ -340,10 +350,6 @@ def test_struct_member_bytes_errors():
     with pytest.raises(InvalidSyntaxError):
         # missing delimiter's value
         Parser(get_tokens(r'struct test { bytes() test, }')).run()
-
-    with pytest.raises(InvalidSyntaxError):
-        # missing quotes around the delimiter
-        Parser(get_tokens(r'struct test { bytes(some_bytes) test, }')).run()
 
     with pytest.raises(InvalidSyntaxError):
         # missing quotes around the delimiter
@@ -375,10 +381,6 @@ def test_struct_member_ternary_type_errors():
     # but there are to check if in ternary operators everything works correctly too
     with pytest.raises(InvalidSyntaxError):
         # missing quotes around the delimiter
-        Parser(get_tokens("struct test { (2 == 1 ? string(some_string) : uint16) test, }")).run()
-
-    with pytest.raises(InvalidSyntaxError):
-        # missing quotes around the delimiter
         Parser(get_tokens("struct test { (2 == 1 ? string(some string) : uint16) test, }")).run()
 
     with pytest.raises(InvalidSyntaxError):
@@ -396,10 +398,6 @@ def test_struct_member_ternary_type_errors():
     with pytest.raises(InvalidSyntaxError):
         # missing delimiter's value
         Parser(get_tokens("struct test { (2 == 1 ? bytes() : uint16) test, }")).run()
-
-    with pytest.raises(InvalidSyntaxError):
-        # missing quotes around the delimiter
-        Parser(get_tokens("struct test { (2 == 1 ? bytes(some_bytes) : uint16) test, }")).run()
 
     with pytest.raises(InvalidSyntaxError):
         # missing quotes around the delimiter

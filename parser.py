@@ -250,17 +250,17 @@ class Parser:
             self.advance()
 
         if self.current_token.type == TT_STRING:
-            delimiter = self.current_token.value
+            delimiter = self.current_token
             self.advance()
-            return StringNode(Token(TT_STRING, delimiter))
+            return StringNode(delimiter)
         elif self.current_token.type == TT_CHAR:
-            delimiter = self.current_token.value
+            delimiter = self.current_token
             self.advance()
-            return CharNode(Token(TT_CHAR, delimiter))
+            return CharNode(delimiter)
         elif self.current_token.type == TT_NUM_INT:
-            delimiter = self.current_token.value
+            delimiter = self.current_token
             self.advance()
-            return IntNumberNode(Token(TT_NUM_INT, delimiter))
+            return IntNumberNode(delimiter)
         elif self.current_token.type == TT_IDENTIFIER and self.current_token.value.startswith("x") and has_slash:
             try:
                 value = int.from_bytes(unhexlify(self.current_token.value[1:]), "big")
@@ -268,6 +268,10 @@ class Parser:
                 return IntNumberNode(Token(TT_NUM_INT, value))
             except Exception as e:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "invalid hex value: " + str(e))
+        elif self.current_token.type == TT_IDENTIFIER:
+            delimiter = self.current_token
+            self.advance()
+            return IdentifierAccessNode(delimiter.value)
 
         raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "invalid character as delimiter")
 

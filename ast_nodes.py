@@ -597,7 +597,7 @@ class StructMemberInfoNode(ASTNode):
         :return: The type as DataType.
         :rtype: DataType, optional
         """
-        if isinstance(self.type, TernaryDataTypeNode):
+        if isinstance(self.type, TernaryDataTypeNode) or isinstance(self.delimiter, IdentifierAccessNode):
             return None
         return DataType(self.type, delimiter=self.delimiter)
 
