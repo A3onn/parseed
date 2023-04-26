@@ -374,14 +374,14 @@ class TernaryDataTypeNode(ASTNode):
         res += ("\t" * (depth + 1)) + "?\n"
 
         if isinstance(self._if_true, IdentifierAccessNode) or isinstance(self._if_false, StructMemberInfoNode):
-            res += self._if_true.to_str(depth + 2) + "\n"
+            res += self._if_true.to_str(depth + 1) + "\n"
         else:
             res += ("\t" * (depth + 1)) + str(self._if_true) + "\n"
 
         res += ("\t" * (depth + 1)) + ":\n"
 
         if isinstance(self._if_false, IdentifierAccessNode) or isinstance(self._if_false, StructMemberInfoNode):
-            res += self._if_false.to_str(depth + 2) + "\n"
+            res += self._if_false.to_str(depth + 1) + "\n"
         else:
             res += ("\t" * (depth + 1)) + str(self._if_false) + "\n"
         return res + ("\t" * depth) + ")" + "\n"
@@ -501,7 +501,7 @@ class StructMemberInfoNode(ASTNode):
             if self._list_length_node is not None:
                 list_str = ("\t" * (depth + 1)) + "[\n" + self._list_length_node.to_str(depth + 2) + ("\t" * (depth + 1)) + "]\n"
             else:
-                list_str = "[]\n"
+                list_str = ("\t" * (depth + 1)) + "[]\n"
 
         res: str = ("\t" * depth) + "StructMemberInfoNode(\n"
         if endian_str != "":

@@ -60,6 +60,7 @@ def main():
             return 1
 
     if arguments.file == "":
+        console.print(f"Using generator: [italic bold]{generator_class.__name__}[/italic bold]")
         while True:
             try:
                 lexer = Lexer(console.input("Parseed [blue]>[/blue] "), "<stdin>")
