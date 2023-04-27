@@ -175,7 +175,7 @@ class Parser:
         <endian> ::= "LE" | "BE"
         <ternary_endian> ::= "(" <comparison> "?" <endian> ":" <endian> ")"
         """
-        endian = struct_endian
+        endian: Union[Endian, TernaryEndianNode] = struct_endian
         # check endian without ternary
         if self.current_token.type == TT_KEYWORD and self.current_token.value == LITTLE_ENDIAN_KEYWORD:
             endian = Endian.LITTLE
@@ -265,7 +265,7 @@ class Parser:
             try:
                 value = int.from_bytes(unhexlify(self.current_token.value[1:]), "big")
                 self.advance()
-                return IntNumberNode(Token(TT_NUM_INT, value))
+                return IntNumberNode(Token(TT_NUM_INT, str(value)))
             except Exception as e:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "invalid hex value: " + str(e))
         elif self.current_token.type == TT_IDENTIFIER:

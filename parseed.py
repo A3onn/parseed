@@ -51,7 +51,8 @@ def main():
             return 1
 
         try:
-            return start_test_generator(generator_class, arguments.test_generator, arguments.output_file)
+            start_test_generator(generator_class, arguments.test_generator, arguments.output_file)
+            return 0
         except OSError as e:
             err_console.print(f"{sys_argv[0]}: {str(e)}")
             return 1
@@ -117,7 +118,7 @@ def run(lexer, arguments, generator_class):
             err_console.print(e)
 
 
-def AST_pprint(ast: List[ASTNode]) -> str:
+def AST_pprint(ast: List[ASTNode]):
     res: str = ""
     if ast is None:
         res = "<Empty>"

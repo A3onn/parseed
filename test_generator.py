@@ -65,7 +65,7 @@ struct Root_Struct {
 }
 """
 
-def start_test_generator(generator_class: ParseedOutputGenerator, output_dir: str, output_name: str) -> int:
+def start_test_generator(generator_class: ParseedOutputGenerator, output_dir: str, output_name: str):
     # errors 
     lexer = Lexer(PARSER_CODE, "-")
     parser = Parser(lexer.run())
