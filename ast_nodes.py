@@ -47,6 +47,9 @@ class FloatNumberNode(ASTNode):
         Value of this node as a float.
         """
         return float(self._value_token.value)
+    
+    def __str__(self) -> str:
+        return self.to_str()
 
 
 class IntNumberNode(ASTNode):
@@ -70,6 +73,9 @@ class IntNumberNode(ASTNode):
         Value of this node as an int.
         """
         return int(self._value_token.value)
+    
+    def __str__(self) -> str:
+        return self.to_str()
 
 
 class CharNode(ASTNode):
@@ -89,6 +95,9 @@ class CharNode(ASTNode):
         Value of this node as a string.
         """
         return str(self._value_token.value)
+    
+    def __str__(self) -> str:
+        return self.to_str()
 
 
 class StringNode(ASTNode):
@@ -108,6 +117,9 @@ class StringNode(ASTNode):
         Value of this node as a string.
         """
         return str(self._value_token.value)
+    
+    def __str__(self) -> str:
+        return self.to_str()
 
 
 # operators
@@ -165,6 +177,9 @@ class MathOperatorNode(ASTNode):
 
     def __eq__(self, o) -> bool:
         return self.type == o
+    
+    def __str__(self) -> str:
+        return self.to_str()
 
 
 class BinOpNode(ASTNode):
@@ -212,6 +227,9 @@ class BinOpNode(ASTNode):
         Right node of the operation.
         """
         return self._right_node
+    
+    def __str__(self) -> str:
+        return self.to_str()
 
 
 class UnaryOpNode(ASTNode):
@@ -248,6 +266,9 @@ class UnaryOpNode(ASTNode):
         Node place a the right of the operand (thus the value).
         """
         return self._node
+    
+    def __str__(self) -> str:
+        return self.to_str()
 
 
 # struct
@@ -288,6 +309,9 @@ class IdentifierAccessNode(ASTNode):
         """
         for name in self.name.split("."):
             yield IdentifierAccessNode(name)
+    
+    def __str__(self) -> str:
+        return self.to_str()
 
 
 class ComparisonOperatorNode(ASTNode):
@@ -342,6 +366,10 @@ class ComparisonOperatorNode(ASTNode):
 
     def __eq__(self, o) -> bool:
         return self.type == o
+    
+    def __str__(self) -> str:
+        return self.to_str()
+
 
 class ComparisonNode(ASTNode):
     """
@@ -386,6 +414,9 @@ class ComparisonNode(ASTNode):
         Relational operator of the comparison.
         """
         return self._comparison_op
+    
+    def __str__(self) -> str:
+        return self.to_str()
 
 
 class TernaryDataTypeNode(ASTNode):
@@ -443,6 +474,9 @@ class TernaryDataTypeNode(ASTNode):
         Data-type used if the comparison is false.
         """
         return self._if_false
+    
+    def __str__(self) -> str:
+        return self.to_str()
 
 
 class TernaryEndianNode(ASTNode):
@@ -493,6 +527,9 @@ class TernaryEndianNode(ASTNode):
         Node used if the comparison is false.
         """
         return self._if_false
+    
+    def __str__(self) -> str:
+        return self.to_str()
 
 
 class StructMemberInfoNode(ASTNode):
@@ -675,6 +712,9 @@ class StructMemberInfoNode(ASTNode):
         if getattr(self, "_signed", None) is None:
             raise AttributeError("This member has no sign.")
         return self._signed
+    
+    def __str__(self) -> str:
+        return self.to_str()
 
 
 class StructMemberDeclareNode(ASTNode):
@@ -711,6 +751,9 @@ class StructMemberDeclareNode(ASTNode):
         Member's name.
         """
         return str(self._name_token.value)
+    
+    def __str__(self) -> str:
+        return self.to_str()
 
 
 class MatchNode(ASTNode):
@@ -768,6 +811,9 @@ class MatchNode(ASTNode):
         """
         return self._member_name
 
+    def __str__(self) -> str:
+        return self.to_str()
+
 
 class StructDefNode(ASTNode):
     """
@@ -813,6 +859,9 @@ class StructDefNode(ASTNode):
         """
         return self._endian
 
+    def __str__(self) -> str:
+        return self.to_str()
+
 
 # bitfield
 class BitfieldMemberNode(ASTNode):
@@ -851,6 +900,9 @@ class BitfieldMemberNode(ASTNode):
         if self._bits_count_node is None:
             return IntNumberNode(Token(TT_NUM_INT, "1"))
         return self._bits_count_node
+
+    def __str__(self) -> str:
+        return self.to_str()
 
 
 class BitfieldDefNode(ASTNode):
@@ -925,3 +977,6 @@ class BitfieldDefNode(ASTNode):
         Members of this bitfield.
         """
         return self._bitfield_members
+
+    def __str__(self) -> str:
+        return self.to_str()
