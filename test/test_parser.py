@@ -355,6 +355,25 @@ def test_struct_member_ternary_type():
     assert stmts[0].members[0].infos.type.if_false.type == "bytes"
     stmts[0].to_str()
 
+    stmts = Parser(get_tokens("struct test { (1 == 1 ? uint8[2] : uint8) member, }")).run()
+    assert isinstance(stmts[0].members[0].infos.type, TernaryDataTypeNode)
+    assert stmts[0].members[0].infos.type.if_true.type == "uint8"
+    assert stmts[0].members[0].infos.type.if_true.is_list == True
+    assert isinstance(stmts[0].members[0].infos.type.if_true.list_length, IntNumberNode)
+    assert stmts[0].members[0].infos.type.if_true.list_length.value == 2
+    assert stmts[0].members[0].infos.type.if_false.type == "uint8"
+    assert stmts[0].members[0].infos.type.if_false.is_list == False
+    stmts[0].to_str()
+
+    # comparison in list length in ternary operator
+    stmts = Parser(get_tokens("struct test { (1 == 1 ? uint8[1 == 1] : uint8) member, }")).run()
+    assert isinstance(stmts[0].members[0].infos.type, TernaryDataTypeNode)
+    assert isinstance(stmts[0].members[0].infos.type.if_true.list_length, ComparisonNode)
+    assert stmts[0].members[0].infos.type.if_true.list_length.left_node.value == 1
+    assert stmts[0].members[0].infos.type.if_true.list_length.comparison_op == ComparisonOperatorNode.EQUAL
+    assert stmts[0].members[0].infos.type.if_true.list_length.right_node.value == 1
+    stmts[0].to_str()
+
 def test_struct_member_ternary_type_errors():
     # same tests as string and bytes without the ternary operator,
     # but there are to check if in ternary operators everything works correctly too

@@ -421,8 +421,8 @@ class Parser:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
             self.advance()
         elif self.current_token.type == TT_LBRACK:
-            is_list = True
             self.advance()
+            is_list = True
             list_length_node = None
             if self.current_token.type != TT_RBRACK:
                 current_token_tmp = self.current_token
@@ -433,6 +433,8 @@ class Parser:
             if self.current_token.type != TT_RBRACK:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ']'")
             self.advance()
+            if_true_data_type._is_list = is_list
+            if_true_data_type._list_length_node = list_length_node
 
         if self.current_token.type != TT_COLON:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ':'")
@@ -452,8 +454,8 @@ class Parser:
             self.advance()
         elif self.current_token.type == TT_LBRACK:
             is_list = True 
-            self.advance()
             list_length_node = None
+            self.advance()
             if self.current_token.type != TT_RBRACK:
                 current_token_tmp = self.current_token
                 list_length_node = self.expr()
@@ -463,6 +465,8 @@ class Parser:
             if self.current_token.type != TT_RBRACK:
                 raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ']'")
             self.advance()
+            if_false_data_type._is_list = is_list
+            if_false_data_type._list_length_node = list_length_node
 
         if self.current_token.type != TT_RPAREN:
             raise InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, "expected ')'")
