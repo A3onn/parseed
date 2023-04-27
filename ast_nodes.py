@@ -680,8 +680,11 @@ class StructMemberInfoNode(ASTNode):
     @property
     def list_length(self) -> Union[None, UnaryOpNode, BinOpNode, ComparisonNode]:
         """
-        The length of this member (if it is a list, otherwise None).
+        The length of this member if it is a list (could be None if the length is not specified).
+        Raise an AttributeError if it is not a list.
         """
+        if not self.is_list:
+            raise AttributeError("This member is not a list.")
         return self._list_length_node
 
     @property
