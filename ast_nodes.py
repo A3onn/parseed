@@ -2,7 +2,6 @@
 from typing import Generator, List, Optional, Union, Dict, NewType
 from lexer import *
 from abc import ABC, abstractmethod
-from utils import DataType
 
 # Just to have better typing annotations
 ComparisonOperatorType = NewType("ComparisonOperatorType", str)
@@ -501,36 +500,102 @@ class StructMemberInfoNode(ASTNode):
     Represents the type of a member.
     This class contains the type, the endianness, if it is a list and it length (if it has one).
     """
-    def __init__(self, type_token: Union[Token, TernaryDataTypeNode], endian: Union[Endian, TernaryEndianNode] = Endian.BIG, is_list: bool = False, list_length_node: Union[None, UnaryOpNode, BinOpNode, ComparisonNode] = None, delimiter: Union[CharNode, StringNode, IdentifierAccessNode, IntNumberNode] = StringNode(Token(TT_STRING, r"\0"))):
+    def __init__(self, type_token: Union[Token, IdentifierAccessNode, TernaryDataTypeNode], endian: Union[Endian, TernaryEndianNode] = Endian.BIG, is_list: bool = False, list_length_node: Union[None, UnaryOpNode, BinOpNode, ComparisonNode] = None, delimiter: Union[CharNode, StringNode, IdentifierAccessNode, IntNumberNode] = StringNode(Token(TT_STRING, r"\0"))):
         r"""
         :param type_token: Token or ternary operator for the type of the member.
-        :type type_token: Union[Token,TernaryDataTypeNode]
+        :type type_token: Union[Token, IdentifierAccessNode, TernaryDataTypeNode]
         :param endian: Endianness of the member, defaults to big.
         :type endian: Union[Endian, TernaryEndianNode]
         :param is_list: If the member is a list, defaults to False.
         :type is_list: bool, optional
         :param list_length_node: Length of the list (as a integer or a comparison if the member is repeated) if this member is a list, can be None to indicates no length is specified, defaults to None.
         :type list_length_node: Union[None,UnaryOpNode,BinOpNode,ComparisonNode]
-        :param delimiter: If the type is a string or a bytes, the delimiter of the string or the bytes, default to StringNode('\\0').
+        :param delimiter: If the type is a string or a bytes, the delimiter of the string or the bytes, default to StringNode("\\0").
         :type delimiter: Union[CharNode, StringNode, IdentifierAccessNode, IntNumberNode]
         """
-        self._type: Union[Token, TernaryDataTypeNode] = type_token
+        self._type: Union[Token, IdentifierAccessNode, TernaryDataTypeNode] = type_token
         self._endian: Union[Endian, TernaryEndianNode] = endian
         self._is_list: bool = is_list
         self._list_length_node: Union[None, UnaryOpNode, BinOpNode, ComparisonNode] = list_length_node
-        self._delimiter: Union[CharNode, StringNode, IdentifierAccessNode, IntNumberNode] = delimiter
+        self._delimiter: Union[CharNode, StringNode, IdentifierAccessNode, IntNumberNode, None] = delimiter
+
+        if isinstance(self._type, Token) and self._type.value in DATA_TYPES and self._type.value not in ["string", "bytes"]:
+            self._calculate_infos()
+
+    def _calculate_infos(self):
+        """
+        Calculate the size and if the type is signed.
+        """
+        name = self._type.value
+        if name == "uint8":
+            self._size = 1
+            self._signed = False
+        elif name == "int8":
+            self._size = 1
+            self._signed = True
+        elif name == "uint16":
+            self._size = 2
+            self._signed = False
+        elif name == "int16":
+            self._size = 2
+            self._signed = True
+        elif name == "uint24":
+            self._size = 3
+            self._signed = False
+        elif name == "int24":
+            self._size = 3
+            self._signed = True
+        elif name == "uint32":
+            self._size = 4
+            self._signed = False
+        elif name == "int32":
+            self._size = 4
+            self._signed = True
+        elif name == "uint40":
+            self._size = 5
+            self._signed = False
+        elif name == "int40":
+            self._size = 5
+            self._signed = True
+        elif name == "uint48":
+            self._size = 6
+            self._signed = False
+        elif name == "int48":
+            self._size = 6
+            self._signed = True
+        elif name == "uint64":
+            self._size = 8
+            self._signed = False
+        elif name == "int64":
+            self._size = 8
+            self._signed = True
+        elif name == "uint128":
+            self._size = 16
+            self._signed = False
+        elif name == "int128":
+            self._size = 16
+            self._signed = False
+        elif name == "float":
+            self._size = 4
+        elif name == "double":
+            self._size = 8
+        elif name == "byte":
+            self._size = 1
+            self._signed = False
 
     def to_str(self, depth: int = 0) -> str:
         type_str: str = ""
         endian_str: str = ""
         list_str: str = ""
 
-        if isinstance(self._type, TernaryDataTypeNode):
+        if not isinstance(self._type, Token):
             type_str = self._type.to_str(depth + 1)
         else:
             type_str = ("\t" * (depth + 1)) + str(self._type) + "\n"
             if self._type.value in ("string", "bytes"):
-                type_str += self._delimiter.to_str(depth+1)
+                type_str += ("\t" * (depth + 1)) + "(\n"
+                type_str += self._delimiter.to_str(depth+2)
+                type_str += ("\t" * (depth + 1)) + ")\n"
 
         if isinstance(self._endian, TernaryEndianNode):
             endian_str = self._endian.to_str(depth + 1)
@@ -553,7 +618,7 @@ class StructMemberInfoNode(ASTNode):
         return res
 
     @property
-    def type(self) -> Union[str, TernaryDataTypeNode]:
+    def type(self) -> Union[str, IdentifierAccessNode, TernaryDataTypeNode]:
         """
         Type of the member.
         """
@@ -583,23 +648,33 @@ class StructMemberInfoNode(ASTNode):
         return self._list_length_node
 
     @property
-    def delimiter(self) -> Union[CharNode, StringNode, IdentifierAccessNode, IntNumberNode]:
+    def delimiter(self) -> Union[CharNode, StringNode, IdentifierAccessNode, IntNumberNode, None]:
         """
         Delimiter of the string or bytes, if the type is a string or a bytes.
         """
         return self._delimiter
 
-    def as_data_type(self) -> Optional[DataType]:
+    @property
+    def size(self) -> int:
         """
-        Return the type as a DataType if the type is not a ternary operator.
-        The type can be an identifier.
+        Return the size of the data-type if it is a basic data-type (ex: uint8, int128).
+        Raise an AttributeError if the type is an identifier or a ternary data-type.
+        """
 
-        :return: The type as DataType.
-        :rtype: DataType, optional
+        if getattr(self, "_size", None) is None:
+            raise AttributeError("This member has no size.")
+        return self._size
+
+    @property
+    def signed(self) -> bool:
         """
-        if isinstance(self.type, TernaryDataTypeNode) or isinstance(self.delimiter, IdentifierAccessNode):
-            return None
-        return DataType(self.type, delimiter=self.delimiter)
+        Return if this member signed if it is a basic data-type (ex: uint8, int128).
+        Raise an AttributeError if the type is an identifier or a ternary data-type.
+        """
+
+        if getattr(self, "_signed", None) is None:
+            raise AttributeError("This member has no sign.")
+        return self._signed
 
 
 class StructMemberDeclareNode(ASTNode):
