@@ -258,8 +258,6 @@ class Python_Class(ParseedOutputGenerator):
                     cb.add_line(f'res += ("\\t"*depth) + "{member.name} = " + self.{member.name}._custom_str(depth+1) + "\\n"')
                 elif member.infos.is_string():
                     cb.add_line(f'res += ("\\t"*depth) + "{member.name} = " + self.{member.name} + "\\n"')
-                elif member.infos.is_list:
-                    cb.add_line(f'res += ("\\t"*depth) + "{member.name} = [" + "\\n".join([m._custom_str(depth+1) for m in self.{member.name}]) + ("\\t"*depth) + "]"')
                 else:
                     if member.infos.is_basic_type():
                         cb.add_line(f'res += ("\\t"*depth) + "{member.name} = " + str(self.{member.name}) + "\\n"')
