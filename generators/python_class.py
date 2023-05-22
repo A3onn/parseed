@@ -41,7 +41,7 @@ class Python_Class(ParseedOutputGenerator):
                         else:
                             cb.add_line(f"elif {self.expression_as_str(member.condition)} == {self.expression_as_str(case)}:")
                         cb = cb.add_block()
-                        cb.add_line(f"self.{member.member_name} = {self.member_read_struct(member.cases[case].as_data_type(), member.cases[case].endian)}")
+                        cb.add_line(f"self.{member.member_name} = {self.member_read_struct(member.cases[case], member.cases[case].endian)}")
                         cb = cb.end_block()
                 else:  # multiple members declared
                     for index, case in enumerate(member.cases.keys()):
@@ -66,7 +66,7 @@ class Python_Class(ParseedOutputGenerator):
                         cb.add_line(f"self.{member.name} = {tdtn.if_true.name}(buf[self.cursor:])") # pass the buffer to the class representing the type
                         cb.add_line(f"self.cursor += self.{member.name}.cursor") # continue to parse the buffer after the called class has parsed
                     else:
-                        cb.add_line(f"self.{member.name} = {self.member_read_struct(tdtn.if_true.as_data_type(), member.infos.endian)}")
+                        cb.add_line(f"self.{member.name} = {self.member_read_struct(tdtn.if_true, member.infos.endian)}")
                     cb = cb.end_block()
                     cb.add_line(f"else:")
                     cb = cb.add_block()
@@ -74,11 +74,10 @@ class Python_Class(ParseedOutputGenerator):
                         cb.add_line(f"self.{member.name} = {tdtn.if_false.name}(buf[self.cursor:])")
                         cb.add_line(f"self.cursor += self.{member.name}.cursor") # continue to parse the buffer after the called class has parsed
                     else:
-                        cb.add_line(f"self.{member.name} = {self.member_read_struct(tdtn.if_false.as_data_type(), member.infos.endian)}")
+                        cb.add_line(f"self.{member.name} = {self.member_read_struct(tdtn.if_false, member.infos.endian)}")
                     cb = cb.end_block()
                     continue
 
-                datatype: DataType = member.infos.as_data_type()
                 if member.infos.is_list:
                     if member.infos.list_length is None: # no length given
                         cb.add_line(f"self.{member.name} = []")
@@ -92,61 +91,61 @@ class Python_Class(ParseedOutputGenerator):
                             cb.add_line(f"self.{member.name}.append({member.infos.type}_tmp)")
                             cb.add_line(f"self.cursor += {member.infos.type}_tmp.cursor") # continue to parse the buffer after the called class has parsed
                         else:
-                            cb.add_line(f"self.{member.name}.append(" + self.member_read_struct(datatype, member.infos.endian) + ")")
-                            cb.add_line(f"self.cursor += {datatype.size}")
+                            cb.add_line(f"self.{member.name}.append(" + self.member_read_struct(member.infos, member.infos.endian) + ")")
+                            cb.add_line(f"self.cursor += {member.infos.size}")
                         cb = cb.end_block()
                 else:
-                    if datatype.is_string() or datatype.is_bytes():
+                    if member.infos.is_string() or member.infos.is_bytes():
                         cb.add_line(f"self.{member.name} = b\"\"")
-                        cb.add_line(f"while buf[self.cursor:self.cursor+len(b\"{datatype.delimiter}\")] != b\"{datatype.delimiter}\":")
+                        cb.add_line(f"while buf[self.cursor:self.cursor+len(b\"{member.infos.delimiter}\")] != b\"{member.infos.delimiter}\":")
                         cb = cb.add_block()
-                        cb.add_line(f"self.{member.name} += buf[self.cursor:self.cursor+len(b\"{datatype.delimiter}\")]")
-                        cb.add_line(f"self.cursor += len(b\"{datatype.delimiter}\")")
+                        cb.add_line(f"self.{member.name} += buf[self.cursor:self.cursor+len(b\"{member.infos.delimiter}\")]")
+                        cb.add_line(f"self.cursor += len(b\"{member.infos.delimiter}\")")
                         cb = cb.end_block()
-                        if datatype.is_string():
+                        if member.infos.is_string():
                             cb.add_line(f"self.{member.name} = self.{member.name}.decode(\"utf-8\")")
                     elif self.is_member_type_struct(member.infos.type):
                         cb.add_line(f"self.{member.name} = {member.infos.type}(buf[self.cursor:])")
                         cb.add_line(f"self.cursor += self.{member.name}.cursor") # continue to parse the buffer after the called class has parsed
                     else:
-                        cb.add_line(f"self.{member.name} = {self.member_read_struct(datatype, member.infos.endian)}")
-                        cb.add_line(f"self.cursor += {datatype.size}")
+                        cb.add_line(f"self.{member.name} = {self.member_read_struct(member.infos, member.infos.endian)}")
+                        cb.add_line(f"self.cursor += {member.infos.size}")
         cb = cb.end_block()
 
-    def member_read_struct(self, datatype: DataType, endian: Union[Endian, TernaryEndianNode]) -> str:
+    def member_read_struct(self, infos: StructMemberInfoNode, endian: Union[Endian, TernaryEndianNode]) -> str:
         if isinstance(endian, TernaryEndianNode):
-            return f"({self.member_read_struct(datatype, endian.if_true)} if {self.comparison_as_str(endian.comparison)} else {self.member_read_struct(datatype, endian.if_false)})"
+            return f"({self.member_read_struct(infos, endian.if_true)} if {self.comparison_as_str(endian.comparison)} else {self.member_read_struct(infos, endian.if_false)})"
 
         res = "sum(struct.unpack(\""
         res += "<" if endian == Endian.LITTLE else ">"
 
         c = ""
-        if datatype.is_float():
+        if infos.is_float():
             c = "f"
-        elif datatype.is_double():
+        elif infos.is_double():
             c = "d"
-        elif datatype.size == 1:
+        elif infos.size == 1:
             c = "b"
-        elif datatype.size == 2:
+        elif infos.size == 2:
             c = "h"
-        elif datatype.size == 3:
+        elif infos.size == 3:
             c = "hb"
-        elif datatype.size == 4:
+        elif infos.size == 4:
             c = "i"
-        elif datatype.size == 5:
+        elif infos.size == 5:
             c = "ib"
-        elif datatype.size == 6:
+        elif infos.size == 6:
             c = "ih"
-        elif datatype.size == 8:
+        elif infos.size == 8:
             c = "q"
-        elif datatype.size == 16:
+        elif infos.size == 16:
             c = "qq"
 
-        if not datatype.signed and not datatype.is_float() and not datatype.is_double():
+        if not infos.signed and not infos.is_float() and not infos.is_double():
             c = c.upper()
         res += c
 
-        res += f"\", buf[self.cursor:self.cursor+{datatype.size}]))"
+        res += f"\", buf[self.cursor:self.cursor+{infos.size}]))"
         return res
 
     def expression_as_str(self, node: Union[FloatNumberNode, IntNumberNode, BinOpNode, UnaryOpNode, IdentifierAccessNode]):
@@ -242,10 +241,9 @@ class Python_Class(ParseedOutputGenerator):
                             cb = cb.end_block()
                         cb = cb.end_block()
             else:
-                datatype: DataType = member.infos.as_data_type()
                 if isinstance(member.infos.type, TernaryDataTypeNode):
                     cb.add_line(f"res += \"\\t{member.name} = \" + str(self.{member.name}) + \"\\n\"")
-                elif datatype.is_string():
+                elif member.infos.is_string():
                     cb.add_line(f"res += \"\\t{member.name} = \" + self.{member.name} + \"\\n\"")
                 elif member.infos.is_list:
                     cb.add_line(f"res += \"\\t{member.name} = \" + \", \".join([str(m) for m in self.{member.name}]) + \"\\n\"")

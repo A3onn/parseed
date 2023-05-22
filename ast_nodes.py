@@ -719,6 +719,30 @@ class StructMemberInfoNode(ASTNode):
     def __str__(self) -> str:
         return self.to_str()
 
+    def is_string(self) -> bool:
+        """
+        Return if this member's type is a string.
+        """
+        return self._type.value == "string"
+
+    def is_bytes(self) -> bool:
+        """
+        Return if this member's type is a bytes.
+        """
+        return self._type.value == "bytes"
+    
+    def is_float(self) -> bool:
+        """
+        Return if this member's type is a float.
+        """
+        return isinstance(self.type, str) and self.type == "float"
+
+    def is_double(self) -> bool:
+        """
+        Return if this member's type is a double.
+        """
+        return isinstance(self.type, str) and self.type == "double"
+
 
 class StructMemberDeclareNode(ASTNode):
     """
