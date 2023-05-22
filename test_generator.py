@@ -33,7 +33,7 @@ struct Unsigned_Numbers {
     uint40 five,
     uint48 six,
     uint64 seven,
-    uint128 height,
+    uint128 eight,
 }
 
 struct Signed_Numbers {
@@ -44,7 +44,7 @@ struct Signed_Numbers {
     int40 minus_five,
     int48 minus_six,
     int64 minus_seven,
-    int128 minus_height,
+    int128 minus_eight,
 }
 
 struct Floating_Point_Numbers {
