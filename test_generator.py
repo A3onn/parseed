@@ -6,21 +6,23 @@ from parser import Parser
 import os, struct
 
 PARSER_CODE = """
-struct Strings {
-    string hello_world_null_byte,
-    string('a') hello_world_a_char_terminated,
-    string("test") hello_world_test_string_terminated,
-    string(1) hello_world_one_terminated,
+struct Root_Struct {
+    Big_Endian big_endian,
+    Little_Endian little_endian,
 }
 
-struct Bytes {
-    bytes(0) test_zero_terminated,
-    bytes(\\x15) TEST_fifteen_terminated,
+BE struct Big_Endian {
+    Unsigned_Numbers unsigned_numbers,
+    Signed_Numbers signed_numbers,
+    Floating_Point_Numbers floating_point_numbers,
+    Strings strings,
 }
 
-struct Floating_Point_Numbers {
-    float one_dot_one,
-    double two_dot_two,
+LE struct Little_Endian {
+    Unsigned_Numbers unsigned_numbers,
+    Signed_Numbers signed_numbers,
+    Floating_Point_Numbers floating_point_numbers,
+    Strings strings,
 }
 
 struct Unsigned_Numbers {
@@ -45,23 +47,21 @@ struct Signed_Numbers {
     int128 minus_height,
 }
 
-BE struct Big_Endian {
-    Unsigned_Numbers unsigned_numbers,
-    Signed_Numbers signed_numbers,
-    Floating_Point_Numbers floating_point_numbers,
-    Strings strings,
+struct Floating_Point_Numbers {
+    float one_dot_one,
+    double two_dot_two,
 }
 
-LE struct Little_Endian {
-    Unsigned_Numbers unsigned_numbers,
-    Signed_Numbers signed_numbers,
-    Floating_Point_Numbers floating_point_numbers,
-    Strings strings,
+struct Strings {
+    string hello_world_null_byte,
+    string('a') hello_world_a_char_terminated,
+    string("test") hello_world_test_string_terminated,
+    string(1) hello_world_one_terminated,
 }
 
-struct Root_Struct {
-    Big_Endian big_endian,
-    Little_Endian little_endian,
+struct Bytes {
+    bytes(0) test_zero_terminated,
+    bytes(\\x15) TEST_fifteen_terminated,
 }
 """
 
