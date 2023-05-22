@@ -97,11 +97,21 @@ class Python_Class(ParseedOutputGenerator):
                 else:
                     if member.infos.is_string() or member.infos.is_bytes():
                         cb.add_line(f"self.{member.name} = b\"\"")
-                        cb.add_line(f"while buf[self.cursor:self.cursor+len(b\"{member.infos.delimiter}\")] != b\"{member.infos.delimiter}\":")
-                        cb = cb.add_block()
-                        cb.add_line(f"self.{member.name} += buf[self.cursor:self.cursor+len(b\"{member.infos.delimiter}\")]")
-                        cb.add_line(f"self.cursor += len(b\"{member.infos.delimiter}\")")
-                        cb = cb.end_block()
+                        if isinstance(member.infos.delimiter, IdentifierAccessNode):
+                            cb.add_line(f"while buf[self.cursor:self.cursor+{member.infos.delimiter.name})] != {member.infos.delimiter.name}:")
+                            cb = cb.add_block()
+                            cb.add_line(f"self.{member.name} += buf[self.cursor:self.cursor+len(b\"{member.infos.delimiter}\")]")
+                            cb.add_line(f"self.cursor += len(b\"{member.infos.delimiter}\")")
+                            cb = cb.end_block()
+                        elif isinstance(member.infos.delimiter, IntNumberNode):
+                            # TODO:
+                            pass
+                        else: # delimiter is either a StringNode or a CharNode
+                            cb.add_line(f"while buf[self.cursor:self.cursor+len(b\"{member.infos.delimiter.value}\")] != b\"{member.infos.delimiter.value}\":")
+                            cb = cb.add_block()
+                            cb.add_line(f"self.{member.name} += buf[self.cursor:self.cursor+len(b\"{member.infos.delimiter.value}\")]")
+                            cb.add_line(f"self.cursor += len(b\"{member.infos.delimiter.value}\")")
+                            cb = cb.end_block()
                         if member.infos.is_string():
                             cb.add_line(f"self.{member.name} = self.{member.name}.decode(\"utf-8\")")
                     elif self.is_member_type_struct(member.infos.type):
@@ -141,7 +151,7 @@ class Python_Class(ParseedOutputGenerator):
         elif infos.size == 16:
             c = "qq"
 
-        if not infos.signed and not infos.is_float() and not infos.is_double():
+        if not infos.is_float() and not infos.is_double() and not infos.signed:
             c = c.upper()
         res += c
 
@@ -218,37 +228,50 @@ class Python_Class(ParseedOutputGenerator):
             return "or"
 
     def generate_str(self, struct: StructDefNode, cb: CodeBlock):
-        cb.add_line("def __str__(self):")
+        cb.add_line("def _custom_str(self, depth=0):")
         cb = cb.add_block()
-        cb.add_line(f"res = \"{struct.name}(\\n\"")
+        cb.add_line(f'res = "{struct.name}(\\n"')
+
+        cb.add_line(f'depth += 1') # increase depth here to have attributes indented and not the struct's name
+
         for member in struct.members:
             if isinstance(member, MatchNode):
-                if member.member_name is not None:
+                if member.member_name is not None: # match statement to choose the type of the identifier
                     cb.add_line(f"if isinstance(self.{member.member_name}, list):")
                     cb = cb.add_block()
-                    cb.add_line(f"res += \"\\t{member.member_name} = \" + \", \".join([str(m) for m in self.{member.member_name}]) + \"\\n\"")
+                    cb.add_line(f'res += ("\\t"*depth) + "{member.member_name} = " + "\\n".join([m.custom_str(depth+1) for m in self.{member.member_name}._custom_str(depth+1)]) + "\\n"')
                     cb = cb.end_block()
                     cb.add_line(f"else:")
                     cb = cb.add_block()
-                    cb.add_line(f"res += \"\\t{member.member_name} = \" + str(self.{member.member_name}) + \"\\n\"")
+                    cb.add_line(f'res += ("\\t"*depth) + "{member.member_name} = " + self.{member.member_name}._custom_str(depth+1) + "\\n"')
                     cb = cb.end_block()
                 else:
                     for case in member.cases.keys():
                         for member_match in member.cases[case]:
-                            cb.add_line(f"if hasattr(self, \"{member_match.name}\"):")
+                            cb.add_line(f'if hasattr(self, "{member_match.name}"):')
                             cb = cb.add_block()
-                            cb.add_line(f"res += \"\\t{member_match.name} = \" + self.{member_match.name}")
+                            cb.add_line(f'res += ("\\t"*depth) + "{member_match.name} = " + self.{member_match.name}')
                             cb = cb.end_block()
                         cb = cb.end_block()
             else:
                 if isinstance(member.infos.type, TernaryDataTypeNode):
-                    cb.add_line(f"res += \"\\t{member.name} = \" + str(self.{member.name}) + \"\\n\"")
+                    cb.add_line(f'res += ("\\t"*depth) + "{member.name} = " + self.{member.name}._custom_str(depth+1) + "\\n"')
                 elif member.infos.is_string():
-                    cb.add_line(f"res += \"\\t{member.name} = \" + self.{member.name} + \"\\n\"")
+                    cb.add_line(f'res += ("\\t"*depth) + "{member.name} = " + self.{member.name} + "\\n"')
                 elif member.infos.is_list:
-                    cb.add_line(f"res += \"\\t{member.name} = \" + \", \".join([str(m) for m in self.{member.name}]) + \"\\n\"")
+                    cb.add_line(f'res += ("\\t"*depth) + "{member.name} = [" + "\\n".join([m._custom_str(depth+1) for m in self.{member.name}]) + ("\\t"*depth) + "]"')
                 else:
-                    cb.add_line(f"res += \"\\t{member.name} = \" + str(self.{member.name}) + \"\\n\"")
+                    if member.infos.is_basic_type():
+                        cb.add_line(f'res += ("\\t"*depth) + "{member.name} = " + str(self.{member.name}) + "\\n"')
+                    else:
+                        cb.add_line(f'res += ("\\t"*depth) + "{member.name} = " + self.{member.name}._custom_str(depth+1) + "\\n"')
 
-        cb.add_line("res += \")\"")
+        cb.add_line('res += ("\\t"*(depth-1)) + ")"')
         cb.add_line("return res")
+
+        cb = cb.end_block()
+        cb.add_empty_line()
+        cb.add_line("def __str__(self):")
+        cb = cb.add_block()
+        cb.add_line("return self._custom_str()")
+        cb = cb.end_block()

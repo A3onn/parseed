@@ -743,6 +743,12 @@ class StructMemberInfoNode(ASTNode):
         """
         return isinstance(self.type, str) and self.type == "double"
 
+    def is_basic_type(self) -> bool:
+        """
+        Return if this member's type is a basic data-type (for example: uint8, string, float, int128).
+        If this member's type is a TernaryDataTypeNode, it returns False.
+        """
+        return isinstance(self.type, str) and self.type in DATA_TYPES
 
 class StructMemberDeclareNode(ASTNode):
     """
