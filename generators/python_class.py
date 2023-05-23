@@ -126,37 +126,17 @@ class Python_Class(ParseedOutputGenerator):
         if isinstance(endian, TernaryEndianNode):
             return f"({self.member_read_struct(infos, endian.if_true)} if {self.comparison_as_str(endian.comparison)} else {self.member_read_struct(infos, endian.if_false)})"
 
-        res = "sum(struct.unpack(\""
-        res += "<" if endian == Endian.LITTLE else ">"
 
-        c = ""
         if infos.is_float():
-            c = "f"
+            res = "struct.unpack('<f'" if endian == Endian.LITTLE else "struct.unpack('>f'"
+            res += f", buf[self.cursor:self.cursor+{infos.size}])[0]"
+            return res
         elif infos.is_double():
-            c = "d"
-        elif infos.size == 1:
-            c = "b"
-        elif infos.size == 2:
-            c = "h"
-        elif infos.size == 3:
-            c = "hb"
-        elif infos.size == 4:
-            c = "i"
-        elif infos.size == 5:
-            c = "ib"
-        elif infos.size == 6:
-            c = "ih"
-        elif infos.size == 8:
-            c = "q"
-        elif infos.size == 16:
-            c = "qq"
+            res = "struct.unpack('<d'" if endian == Endian.LITTLE else "struct.unpack('>d'"
+            res += f", buf[self.cursor:self.cursor+{infos.size}])[0]"
+            return res
 
-        if not infos.is_float() and not infos.is_double() and not infos.signed:
-            c = c.upper()
-        res += c
-
-        res += f"\", buf[self.cursor:self.cursor+{infos.size}]))"
-        return res
+        return f"int.from_bytes(buf[self.cursor:self.cursor+{infos.size}], byteorder='{'big' if infos.endian == Endian.BIG else 'little'}', signed={infos.signed})"
 
     def expression_as_str(self, node: Union[FloatNumberNode, IntNumberNode, BinOpNode, UnaryOpNode, IdentifierAccessNode]):
         res = ""

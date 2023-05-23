@@ -611,7 +611,7 @@ class StructMemberInfoNode(ASTNode):
             self._signed = False
         elif name == "int128":
             self._size = 16
-            self._signed = False
+            self._signed = True 
         elif name == "float":
             self._size = 4
         elif name == "double":
