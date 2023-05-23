@@ -114,9 +114,10 @@ class Python_Class(ParseedOutputGenerator):
                         else: # delimiter is either a StringNode or a CharNode
                             cb.add_line(f"while buf[self.cursor:self.cursor+len(b\"{member.infos.delimiter.value}\")] != b\"{member.infos.delimiter.value}\":")
                             cb = cb.add_block()
-                            cb.add_line(f"self.{member.name} += buf[self.cursor:self.cursor+len(b\"{member.infos.delimiter.value}\")]")
-                            cb.add_line(f"self.cursor += len(b\"{member.infos.delimiter.value}\")")
+                            cb.add_line(f"self.{member.name} += buf[self.cursor:self.cursor+1]")
+                            cb.add_line(f"self.cursor += 1")
                             cb = cb.end_block()
+                            cb.add_line(f'self.cursor += len(b\"{member.infos.delimiter.value}\")')
                         if member.infos.is_string():
                             cb.add_line(f"self.{member.name} = self.{member.name}.decode(\"utf-8\")")
                     elif self.is_member_type_struct(member.infos.type):

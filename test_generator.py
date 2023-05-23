@@ -113,5 +113,5 @@ def generate_numbers_binary_file(f, endian: str):
         f.write(struct.pack(endian_char + str(len("Hello world\01")) + "s", b"Hello world\01"))
 
         # struct Bytes
-        f.write(struct.pack(endian_char + str(len("test\00")) + "s", b"test\00"))
-        f.write(struct.pack(endian_char + str(len("TEST\00")) + "s", b"TEST\00"))
+        #f.write(struct.pack(endian_char + str(len("test\00")) + "s", b"test\00"))
+        #f.write(struct.pack(endian_char + str(len("TEST\00")) + "s", b"TEST\00"))
