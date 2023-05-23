@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from transpiler import *
 from ast_nodes import *
+from math import ceil
 
 class Python_Class(ParseedOutputGenerator):
 
@@ -104,8 +105,12 @@ class Python_Class(ParseedOutputGenerator):
                             cb.add_line(f"self.cursor += len(b\"{member.infos.delimiter}\")")
                             cb = cb.end_block()
                         elif isinstance(member.infos.delimiter, IntNumberNode):
-                            # TODO:
-                            pass
+                            bytes_length: int = ceil(member.infos.delimiter.value.bit_length() / 8)
+                            cb.add_line(f'while int.from_bytes(buf[self.cursor:self.cursor+{bytes_length}], byteorder="big", signed=False) != {member.infos.delimiter.value}:')
+                            cb = cb.add_block()
+                            cb.add_line(f"self.{member.name} += buf[self.cursor:self.cursor+{bytes_length}]")
+                            cb.add_line(f"self.cursor += {bytes_length}")
+                            cb = cb.end_block()
                         else: # delimiter is either a StringNode or a CharNode
                             cb.add_line(f"while buf[self.cursor:self.cursor+len(b\"{member.infos.delimiter.value}\")] != b\"{member.infos.delimiter.value}\":")
                             cb = cb.add_block()
