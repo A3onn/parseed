@@ -5,8 +5,8 @@
 
 
 ; bitfield
-<bitfield_stmt> ::= "bitfield" <identifier> "{" <bitfield_member_def>+ "}"
-                    | "bitfield" <identifier> "(" <no_identifier_expr> ")" "{" <bitfield_member_def>+ "}"
+<bitfield_stmt> ::= <endian>+ "bitfield" <identifier> "{" <bitfield_member_def>+ "}"
+                    | <endian>+ "bitfield" <identifier> "(" <no_identifier_expr> ")" "{" <bitfield_member_def>+ "}"
 
 <bitfield_member_def> ::= <identifier> "(" <no_identifier_expr> ")"? ","
 
